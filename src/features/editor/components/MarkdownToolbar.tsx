@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   Bold as BoldIcon,
   Italic as ItalicIcon,
@@ -52,9 +53,10 @@ interface MarkdownToolbarProps {
 // Constants
 const DROPDOWN_MENU_CLASSES =
   "absolute top-full left-0 mt-1 bg-white dark:bg-gray-800 border border-input rounded-md shadow-lg z-[100] min-w-[180px] max-w-[calc(100vw-1rem)]";
+// Popup classes: Always use fixed positioning with portal to avoid overflow issues in ResizableSplitPane
 const POPUP_CLASSES =
-  "fixed sm:absolute sm:top-full sm:left-0 sm:mt-1 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 sm:translate-x-0 sm:translate-y-0 bg-white dark:bg-gray-800 border border-input rounded-md shadow-xl z-[9997] p-4 min-w-[280px] max-w-[calc(100vw-2rem)] w-[calc(100vw-2rem)] sm:w-auto sm:shadow-lg";
-const POPUP_BACKDROP_CLASSES = "fixed inset-0 bg-black/50 z-[9996] sm:hidden";
+  "bg-white dark:bg-gray-800 border border-input rounded-md shadow-xl z-[9997] p-4 min-w-[280px] max-w-[calc(100vw-2rem)] w-[calc(100vw-2rem)] sm:w-auto sm:shadow-lg";
+const POPUP_BACKDROP_CLASSES = "fixed";
 
 // Table generation constants
 const MAX_TABLE_COLUMNS = 10;
@@ -108,6 +110,73 @@ export function MarkdownToolbar({
   const linkPopupRef = useRef<HTMLDivElement>(null);
   const imagePopupRef = useRef<HTMLDivElement>(null);
   const tablePopupRef = useRef<HTMLDivElement>(null);
+  const linkButtonRef = useRef<HTMLDivElement>(null);
+  const imageButtonRef = useRef<HTMLDivElement>(null);
+  const tableButtonRef = useRef<HTMLDivElement>(null);
+
+  // State for popup positions (updated on scroll/resize)
+  const [linkPopupPosition, setLinkPopupPosition] = useState({
+    top: "50%",
+    left: "50%",
+  });
+  const [imagePopupPosition, setImagePopupPosition] = useState({
+    top: "50%",
+    left: "50%",
+  });
+  const [tablePopupPosition, setTablePopupPosition] = useState({
+    top: "50%",
+    left: "50%",
+  });
+
+  // Get button position for popup positioning
+  const getButtonPosition = (
+    buttonRef: React.RefObject<HTMLDivElement | null>
+  ) => {
+    if (!buttonRef.current) return { top: "50%", left: "50%" };
+    const rect = buttonRef.current.getBoundingClientRect();
+    const popupWidth = 280; // min-w-[280px]
+    const margin = 8;
+
+    // Calculate left position, avoid going off-screen
+    let left = rect.left;
+    if (left + popupWidth > window.innerWidth - margin) {
+      left = Math.max(margin, window.innerWidth - popupWidth - margin);
+    }
+
+    return {
+      top: `${rect.bottom + 4}px`, // 4px gap below button
+      left: `${left}px`,
+    };
+  };
+
+  // Update popup positions when popups are shown or window is resized/scrolled
+  useEffect(() => {
+    if (!showLinkPopup && !showImagePopup && !showTablePopup) return;
+
+    const updatePositions = () => {
+      if (showLinkPopup && linkButtonRef.current) {
+        setLinkPopupPosition(getButtonPosition(linkButtonRef));
+      }
+      if (showImagePopup && imageButtonRef.current) {
+        setImagePopupPosition(getButtonPosition(imageButtonRef));
+      }
+      if (showTablePopup && tableButtonRef.current) {
+        setTablePopupPosition(getButtonPosition(tableButtonRef));
+      }
+    };
+
+    // Initial update
+    updatePositions();
+
+    // Update on scroll/resize
+    window.addEventListener("scroll", updatePositions, true); // true = capture phase
+    window.addEventListener("resize", updatePositions);
+
+    return () => {
+      window.removeEventListener("scroll", updatePositions, true);
+      window.removeEventListener("resize", updatePositions);
+    };
+  }, [showLinkPopup, showImagePopup, showTablePopup]);
 
   // ==================== Popup/Dropdown Management ====================
   const closeLinkPopup = () => {
@@ -244,6 +313,8 @@ export function MarkdownToolbar({
   const formatLink = () => {
     const selectedText = getSelectedText?.() || "";
     linkSelectedTextRef.current = selectedText;
+    // Update position before showing popup
+    setLinkPopupPosition(getButtonPosition(linkButtonRef));
     setShowLinkPopup(true);
     setLinkText(selectedText);
     setLinkUrl("");
@@ -265,6 +336,8 @@ export function MarkdownToolbar({
   const formatImage = () => {
     const selectedText = getSelectedText?.() || "";
     imageSelectedTextRef.current = selectedText;
+    // Update position before showing popup
+    setImagePopupPosition(getButtonPosition(imageButtonRef));
     setShowImagePopup(true);
     setImageAlt(selectedText);
     setImageUrl("");
@@ -332,6 +405,8 @@ export function MarkdownToolbar({
   };
 
   const formatTable = () => {
+    // Update position before showing popup
+    setTablePopupPosition(getButtonPosition(tableButtonRef));
     setShowTablePopup(true);
     setTableColumns(String(DEFAULT_TABLE_COLUMNS));
     setTableRows(String(DEFAULT_TABLE_ROWS));
@@ -531,133 +606,169 @@ export function MarkdownToolbar({
         <ToolbarDivider />
 
         <div className="relative">
-          <ToolbarButton
-            onClick={formatLink}
-            title="Link"
-            icon={<LinkIcon className="w-4 h-4" />}
-          />
-          {showLinkPopup && (
-            <>
-              <div
-                className={POPUP_BACKDROP_CLASSES}
-                onClick={closeLinkPopup}
-                aria-hidden="true"
-              />
-              <div className={POPUP_CLASSES} ref={linkPopupRef}>
-                <PopupForm
-                  onSubmit={handleLinkSubmit}
-                  onCancel={closeLinkPopup}
-                  fields={[
-                    {
-                      label: "Link Text",
-                      value: linkText,
-                      onChange: (e) => setLinkText(e.target.value),
-                      placeholder: "Link text",
-                      autoFocus: true,
-                    },
-                    {
-                      label: "URL",
-                      value: linkUrl,
-                      onChange: (e) => setLinkUrl(e.target.value),
-                      placeholder: "https://example.com",
-                    },
-                  ]}
-                  isSubmitDisabled={!linkText.trim() || !linkUrl.trim()}
+          <div ref={linkButtonRef}>
+            <ToolbarButton
+              onClick={formatLink}
+              title="Link"
+              icon={<LinkIcon className="w-4 h-4" />}
+            />
+          </div>
+          {showLinkPopup &&
+            typeof window !== "undefined" &&
+            createPortal(
+              <>
+                <div
+                  className={POPUP_BACKDROP_CLASSES}
+                  onClick={closeLinkPopup}
+                  aria-hidden="true"
                 />
-              </div>
-            </>
-          )}
+                <div
+                  className={POPUP_CLASSES}
+                  ref={linkPopupRef}
+                  style={{
+                    position: "fixed",
+                    ...linkPopupPosition,
+                  }}
+                >
+                  <PopupForm
+                    onSubmit={handleLinkSubmit}
+                    onCancel={closeLinkPopup}
+                    fields={[
+                      {
+                        label: "Link Text",
+                        value: linkText,
+                        onChange: (e) => setLinkText(e.target.value),
+                        placeholder: "Link text",
+                        autoFocus: true,
+                      },
+                      {
+                        label: "URL",
+                        value: linkUrl,
+                        onChange: (e) => setLinkUrl(e.target.value),
+                        placeholder: "https://example.com",
+                      },
+                    ]}
+                    isSubmitDisabled={!linkText.trim() || !linkUrl.trim()}
+                  />
+                </div>
+              </>,
+              document.body
+            )}
         </div>
 
         <div className="relative">
-          <ToolbarButton
-            onClick={formatImage}
-            title="Image"
-            icon={<ImageIcon className="w-4 h-4" />}
-          />
-          {showImagePopup && (
-            <>
-              <div
-                className={POPUP_BACKDROP_CLASSES}
-                onClick={closeImagePopup}
-                aria-hidden="true"
-              />
-              <div className={POPUP_CLASSES} ref={imagePopupRef}>
-                <PopupForm
-                  onSubmit={handleImageSubmit}
-                  onCancel={closeImagePopup}
-                  fields={[
-                    {
-                      label: "Alt Text",
-                      value: imageAlt,
-                      onChange: (e) => setImageAlt(e.target.value),
-                      placeholder: "Image description",
-                      autoFocus: true,
-                    },
-                    {
-                      label: "Image URL",
-                      value: imageUrl,
-                      onChange: (e) => setImageUrl(e.target.value),
-                      placeholder: "https://example.com/image.jpg",
-                    },
-                  ]}
-                  isSubmitDisabled={!imageUrl.trim()}
+          <div ref={imageButtonRef}>
+            <ToolbarButton
+              onClick={formatImage}
+              title="Image"
+              icon={<ImageIcon className="w-4 h-4" />}
+            />
+          </div>
+          {showImagePopup &&
+            typeof window !== "undefined" &&
+            createPortal(
+              <>
+                <div
+                  className={POPUP_BACKDROP_CLASSES}
+                  onClick={closeImagePopup}
+                  aria-hidden="true"
                 />
-              </div>
-            </>
-          )}
+                <div
+                  className={POPUP_CLASSES}
+                  ref={imagePopupRef}
+                  style={{
+                    position: "fixed",
+                    ...imagePopupPosition,
+                  }}
+                >
+                  <PopupForm
+                    onSubmit={handleImageSubmit}
+                    onCancel={closeImagePopup}
+                    fields={[
+                      {
+                        label: "Alt Text",
+                        value: imageAlt,
+                        onChange: (e) => setImageAlt(e.target.value),
+                        placeholder: "Image description",
+                        autoFocus: true,
+                      },
+                      {
+                        label: "Image URL",
+                        value: imageUrl,
+                        onChange: (e) => setImageUrl(e.target.value),
+                        placeholder: "https://example.com/image.jpg",
+                      },
+                    ]}
+                    isSubmitDisabled={!imageUrl.trim()}
+                  />
+                </div>
+              </>,
+              document.body
+            )}
         </div>
 
         <div className="relative">
-          <ToolbarButton
-            onClick={formatTable}
-            title="Table"
-            icon={<TableIcon className="w-4 h-4" />}
-          />
-          {showTablePopup && (
-            <>
-              <div
-                className={POPUP_BACKDROP_CLASSES}
-                onClick={closeTablePopup}
-                aria-hidden="true"
-              />
-              <div className={POPUP_CLASSES} ref={tablePopupRef}>
-                <PopupForm
-                  onSubmit={handleTableSubmit}
-                  onCancel={closeTablePopup}
-                  fields={[
-                    {
-                      label: "Number of Columns",
-                      value: tableColumns,
-                      onChange: (e) => setTableColumns(e.target.value),
-                      placeholder: "3",
-                      autoFocus: true,
-                      type: "number",
-                      min: 1,
-                      max: MAX_TABLE_COLUMNS,
-                    },
-                    {
-                      label: "Number of Rows",
-                      value: tableRows,
-                      onChange: (e) => setTableRows(e.target.value),
-                      placeholder: "2",
-                      type: "number",
-                      min: 1,
-                      max: MAX_TABLE_ROWS,
-                    },
-                  ]}
-                  isSubmitDisabled={
-                    !tableColumns.trim() ||
-                    parseInt(tableColumns, 10) <= 0 ||
-                    parseInt(tableColumns, 10) > MAX_TABLE_COLUMNS ||
-                    !tableRows.trim() ||
-                    parseInt(tableRows, 10) <= 0 ||
-                    parseInt(tableRows, 10) > MAX_TABLE_ROWS
-                  }
+          <div ref={tableButtonRef}>
+            <ToolbarButton
+              onClick={formatTable}
+              title="Table"
+              icon={<TableIcon className="w-4 h-4" />}
+            />
+          </div>
+          {showTablePopup &&
+            typeof window !== "undefined" &&
+            createPortal(
+              <>
+                <div
+                  className={POPUP_BACKDROP_CLASSES}
+                  onClick={closeTablePopup}
+                  aria-hidden="true"
                 />
-              </div>
-            </>
-          )}
+                <div
+                  className={POPUP_CLASSES}
+                  ref={tablePopupRef}
+                  style={{
+                    position: "fixed",
+                    ...tablePopupPosition,
+                  }}
+                >
+                  <PopupForm
+                    onSubmit={handleTableSubmit}
+                    onCancel={closeTablePopup}
+                    fields={[
+                      {
+                        label: "Number of Columns",
+                        value: tableColumns,
+                        onChange: (e) => setTableColumns(e.target.value),
+                        placeholder: "3",
+                        autoFocus: true,
+                        type: "number",
+                        min: 1,
+                        max: MAX_TABLE_COLUMNS,
+                      },
+                      {
+                        label: "Number of Rows",
+                        value: tableRows,
+                        onChange: (e) => setTableRows(e.target.value),
+                        placeholder: "2",
+                        type: "number",
+                        min: 1,
+                        max: MAX_TABLE_ROWS,
+                      },
+                    ]}
+                    isSubmitDisabled={
+                      !tableColumns.trim() ||
+                      parseInt(tableColumns, 10) <= 0 ||
+                      parseInt(tableColumns, 10) > MAX_TABLE_COLUMNS ||
+                      !tableRows.trim() ||
+                      parseInt(tableRows, 10) <= 0 ||
+                      parseInt(tableRows, 10) > MAX_TABLE_ROWS
+                    }
+                  />
+                </div>
+              </>,
+              document.body
+            )}
         </div>
 
         <ToolbarDivider />
