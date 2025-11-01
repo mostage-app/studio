@@ -741,7 +741,6 @@ export function MarkdownToolbar({
                         value: tableColumns,
                         onChange: (e) => setTableColumns(e.target.value),
                         placeholder: "3",
-                        autoFocus: true,
                         type: "number",
                         min: 1,
                         max: MAX_TABLE_COLUMNS,
