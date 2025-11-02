@@ -56,7 +56,7 @@ const DROPDOWN_MENU_CLASSES =
 // Popup classes: Always use fixed positioning with portal to avoid overflow issues in ResizableSplitPane
 const POPUP_CLASSES =
   "bg-white dark:bg-gray-800 border border-input rounded-md shadow-xl z-[9997] p-4 min-w-[280px] max-w-[calc(100vw-2rem)] w-[calc(100vw-2rem)] sm:w-auto sm:shadow-lg";
-const POPUP_BACKDROP_CLASSES = "fixed";
+const POPUP_BACKDROP_CLASSES = "fixed inset-0 bg-black/50 z-[9996] sm:hidden";
 
 // Table generation constants
 const MAX_TABLE_COLUMNS = 10;
@@ -132,8 +132,31 @@ export function MarkdownToolbar({
   const getButtonPosition = (
     buttonRef: React.RefObject<HTMLDivElement | null>
   ) => {
-    if (!buttonRef.current) return { top: "50%", left: "50%" };
+    if (!buttonRef.current) {
+      // Mobile: center on screen
+      if (window.innerWidth < 640) {
+        return {
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+        };
+      }
+      return { top: "50%", left: "50%" };
+    }
+
     const rect = buttonRef.current.getBoundingClientRect();
+    const isMobile = window.innerWidth < 640; // sm breakpoint
+
+    // Mobile: center on screen
+    if (isMobile) {
+      return {
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%, -50%)",
+      };
+    }
+
+    // Desktop: position below button
     const popupWidth = 280; // min-w-[280px]
     const margin = 8;
 
