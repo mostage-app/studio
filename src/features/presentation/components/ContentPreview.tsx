@@ -222,8 +222,8 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex items-center justify-between p-2 sm:p-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-        <h3 className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">
+      <div className="flex items-center justify-between p-3 border-b border-input bg-muted">
+        <h3 className="text-sm font-semibold text-card-foreground">
           Live Preview
         </h3>
         <div className="flex items-center gap-2 sm:gap-3">

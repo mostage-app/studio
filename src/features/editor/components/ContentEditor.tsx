@@ -2,7 +2,6 @@
 
 import { ContentEditorProps } from "../types/editor.types";
 import { useState, useRef, useEffect } from "react";
-import { ChevronDown } from "lucide-react";
 import { AIModal } from "./AIModal";
 import { SaveModal } from "./SaveModal";
 import { NewFileConfirmationModal } from "./NewFileConfirmationModal";
@@ -30,7 +29,6 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
   updateEditingSlide,
 }) => {
   // ==================== State Management ====================
-  const [isExpanded, setIsExpanded] = useState(true);
   const [showAIModal, setShowAIModal] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showNewFileConfirmation, setShowNewFileConfirmation] = useState(false);
@@ -911,128 +909,87 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
   return (
     <div className="h-full flex flex-col border-b border-input bg-muted">
       {/* Content Editor Header */}
-      <div
-        className="flex items-center justify-between p-3 cursor-pointer hover:bg-secondary/50 transition-colors"
-        onClick={() => setIsExpanded(!isExpanded)}
-        title={isExpanded ? "Collapse editor" : "Expand editor"}
-      >
+      <div className="flex items-center justify-between p-[1.1rem]">
         <h3 className="text-sm font-semibold text-card-foreground">
           Content Editor
         </h3>
-        <ChevronDown
-          className={`w-4 h-4 text-muted-foreground transition-transform ${
-            isExpanded ? "rotate-180" : ""
-          }`}
-        />
       </div>
 
-      {/* Collapsible Content */}
-      {isExpanded && (
-        <div className="flex-1 overflow-hidden flex flex-col">
-          {/* Markdown Toolbar */}
-          <MarkdownToolbar
-            onInsert={insertText}
-            onToggleFormatting={toggleFormatting}
-            onToggleList={toggleList}
-            onApplyHeading={applyHeading}
-            onApplyQuote={applyQuote}
-            onApplyParagraph={applyParagraph}
-            onApplyCodeBlock={applyCodeBlock}
-            onOpenNewFileConfirmation={() => setShowNewFileConfirmation(true)}
-            onOpenFile={handleFileOpen}
-            onOpenSaveModal={() => setShowSaveModal(true)}
-            onOpenAIModal={() => setShowAIModal(true)}
-            onOpenAuthModal={onOpenAuthModal || (() => {})}
-            getSelectedText={getSelectedText}
-            onUndo={undo}
-            onRedo={redo}
-            canUndo={canUndo}
-            canRedo={canRedo}
-          />
+      {/* Content */}
+      <div className="flex-1 overflow-hidden flex flex-col">
+        {/* Markdown Toolbar */}
+        <MarkdownToolbar
+          onInsert={insertText}
+          onToggleFormatting={toggleFormatting}
+          onToggleList={toggleList}
+          onApplyHeading={applyHeading}
+          onApplyQuote={applyQuote}
+          onApplyParagraph={applyParagraph}
+          onApplyCodeBlock={applyCodeBlock}
+          onOpenNewFileConfirmation={() => setShowNewFileConfirmation(true)}
+          onOpenFile={handleFileOpen}
+          onOpenSaveModal={() => setShowSaveModal(true)}
+          onOpenAIModal={() => setShowAIModal(true)}
+          onOpenAuthModal={onOpenAuthModal || (() => {})}
+          getSelectedText={getSelectedText}
+          onUndo={undo}
+          onRedo={redo}
+          canUndo={canUndo}
+          canRedo={canRedo}
+        />
 
-          <textarea
-            ref={textareaRef}
-            value={value}
-            onChange={(e) => {
-              handleUndoRedoChange(e.target.value);
-            }}
-            onKeyDown={(e) => {
-              // Handle keyboard shortcuts for Undo/Redo
-              // Use e.code instead of e.key for language-independent detection
-              // e.code represents the physical key pressed, not the character produced
-              const isCtrlOrCmd = e.ctrlKey || e.metaKey;
+        <textarea
+          ref={textareaRef}
+          value={value}
+          onChange={(e) => {
+            handleUndoRedoChange(e.target.value);
+          }}
+          onKeyDown={(e) => {
+            // Handle keyboard shortcuts for Undo/Redo
+            // Use e.code instead of e.key for language-independent detection
+            // e.code represents the physical key pressed, not the character produced
+            const isCtrlOrCmd = e.ctrlKey || e.metaKey;
 
-              // Undo: Ctrl+Z (Windows/Linux) or Cmd+Z (Mac) - universal standard
-              // Must NOT have Shift key pressed
-              // KeyZ is the physical Z key regardless of keyboard layout
-              if (isCtrlOrCmd && !e.shiftKey && e.code === "KeyZ") {
-                e.preventDefault();
-                if (canUndo) {
-                  undo();
-                }
+            // Undo: Ctrl+Z (Windows/Linux) or Cmd+Z (Mac) - universal standard
+            // Must NOT have Shift key pressed
+            // KeyZ is the physical Z key regardless of keyboard layout
+            if (isCtrlOrCmd && !e.shiftKey && e.code === "KeyZ") {
+              e.preventDefault();
+              if (canUndo) {
+                undo();
               }
-              // Redo:
-              // - Ctrl+Y (Windows standard) or Cmd+Y (Mac) - KeyY
-              // - Ctrl+Shift+Z (Linux/Mac standard) or Cmd+Shift+Z - KeyZ with Shift
-              // We support both for cross-platform compatibility
-              else if (
-                isCtrlOrCmd &&
-                (e.code === "KeyY" || (e.code === "KeyZ" && e.shiftKey))
-              ) {
-                e.preventDefault();
-                if (canRedo) {
-                  redo();
-                }
+            }
+            // Redo:
+            // - Ctrl+Y (Windows standard) or Cmd+Y (Mac) - KeyY
+            // - Ctrl+Shift+Z (Linux/Mac standard) or Cmd+Shift+Z - KeyZ with Shift
+            // We support both for cross-platform compatibility
+            else if (
+              isCtrlOrCmd &&
+              (e.code === "KeyY" || (e.code === "KeyZ" && e.shiftKey))
+            ) {
+              e.preventDefault();
+              if (canRedo) {
+                redo();
               }
-            }}
-            onKeyUp={handleCursorChange}
-            onMouseUp={handleCursorChange}
-            onFocus={handleCursorChange}
-            placeholder={placeholder}
-            className="
+            }
+          }}
+          onKeyUp={handleCursorChange}
+          onMouseUp={handleCursorChange}
+          onFocus={handleCursorChange}
+          placeholder={placeholder}
+          className="
               flex-1 w-full p-4 border-0 resize-none outline-none
               bg-background text-foreground
               font-mono text-sm leading-relaxed
               placeholder-muted-foreground
               whitespace-nowrap
             "
-            style={{
-              fontFamily:
-                'ui-monospace, SFMono-Regular, "SF Mono", Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
-            }}
-          />
-        </div>
-      )}
-
-      {/* Hidden Fun Section - Only shows when collapsed */}
-      {!isExpanded && (
-        <div className="bg-white dark:bg-slate-800 p-4 border-t border-gray-200 dark:border-gray-600 shadow-sm h-full max-h-full flex flex-col justify-center">
-          <div className="text-center space-y-3">
-            <div className="text-4xl">🎭</div>
-            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Secret Developer Mode
-            </h4>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              &ldquo;The best code is no code at all&rdquo; - Some wise
-              developer
-            </p>
-            <div className="text-xs text-gray-400 dark:text-gray-500 space-y-1">
-              <p>
-                Hi, I&apos;m{" "}
-                <a
-                  href="https://mirmousavi.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-500 hover:underline"
-                >
-                  Mostafa
-                </a>
-                , if you need the secret developer key, just ask me.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
+          style={{
+            fontFamily:
+              'ui-monospace, SFMono-Regular, "SF Mono", Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+          }}
+        />
+      </div>
 
       {/* AI Modal */}
       <AIModal

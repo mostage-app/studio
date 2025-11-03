@@ -2,29 +2,75 @@
 
 import { useUITheme } from "@/shared/contexts/UIThemeContext";
 import { Sun, Moon } from "lucide-react";
+import { useState, useEffect } from "react";
 
 export function UIThemeToggle() {
-  const { resolvedUITheme, toggleUITheme } = useUITheme();
+  const { resolvedUITheme, setUITheme, toggleUITheme } = useUITheme();
+  const [isMobile, setIsMobile] = useState(false);
 
-  const handleToggle = () => {
-    toggleUITheme();
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const handleLightTheme = () => {
+    setUITheme("light");
   };
 
-  return (
-    <button
-      onClick={handleToggle}
-      className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 text-sm font-medium text-card-foreground bg-card border border-input rounded-sm hover:bg-secondary cursor-pointer focus:outline-none transition-colors"
-      title={`Switch to ${resolvedUITheme === "light" ? "dark" : "light"} mode`}
-    >
-      {resolvedUITheme === "light" ? (
-        <Moon className="w-4 h-4" />
-      ) : (
-        <Sun className="w-4 h-4" />
-      )}
+  const handleDarkTheme = () => {
+    setUITheme("dark");
+  };
 
-      <span className="hidden sm:inline">
-        {resolvedUITheme === "light" ? "Dark" : "Light"}
-      </span>
-    </button>
+  // Mobile: Single toggle button
+  if (isMobile) {
+    return (
+      <button
+        onClick={toggleUITheme}
+        className="flex items-center justify-center w-8 h-8 text-muted-foreground hover:text-foreground hover:bg-muted border border-input rounded-md bg-background transition-all duration-200 focus:outline-none"
+        title={`Switch to ${
+          resolvedUITheme === "light" ? "dark" : "light"
+        } mode`}
+      >
+        {resolvedUITheme === "light" ? (
+          <Moon className="w-4 h-4" />
+        ) : (
+          <Sun className="w-4 h-4" />
+        )}
+      </button>
+    );
+  }
+
+  // Desktop: Two separate buttons
+  return (
+    <div className="flex items-center border border-input rounded-md bg-background overflow-hidden">
+      <button
+        onClick={handleLightTheme}
+        className={`flex items-center justify-center w-8 h-8 transition-all duration-200 focus:outline-none ${
+          resolvedUITheme === "light"
+            ? "text-foreground bg-accent"
+            : "text-muted-foreground hover:text-foreground hover:bg-muted"
+        }`}
+        title="Light mode"
+      >
+        <Sun className="w-4 h-4" />
+      </button>
+      <div className="w-px h-8 bg-border" />
+      <button
+        onClick={handleDarkTheme}
+        className={`flex items-center justify-center w-8 h-8 transition-all duration-200 focus:outline-none ${
+          resolvedUITheme === "dark"
+            ? "text-foreground bg-accent"
+            : "text-muted-foreground hover:text-foreground hover:bg-muted"
+        }`}
+        title="Dark mode"
+      >
+        <Moon className="w-4 h-4" />
+      </button>
+    </div>
   );
 }
