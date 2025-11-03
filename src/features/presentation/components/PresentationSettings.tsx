@@ -4,9 +4,16 @@ import {
   PresentationToolbarProps,
   PresentationConfig,
 } from "../types/presentation.types";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Check } from "lucide-react";
 import { analytics } from "@/shared/utils/analytics";
+
+// Indicator component for showing changed tabs
+const ChangedIndicator: React.FC = () => {
+  return (
+    <span className="absolute top-2 right-0.5 w-1 h-1 rounded-full bg-blue-500 dark:bg-blue-400"></span>
+  );
+};
 
 export const PresentationSettings: React.FC<PresentationToolbarProps> = ({
   config,
@@ -15,6 +22,74 @@ export const PresentationSettings: React.FC<PresentationToolbarProps> = ({
   const [activeTab, setActiveTab] = useState<
     "general" | "plugins" | "header-footer" | "background"
   >("general");
+
+  // Store initial config to detect changes (only set on mount)
+  const initialConfigRef = useRef<PresentationConfig>(
+    JSON.parse(JSON.stringify(config))
+  );
+  const [changedTabs, setChangedTabs] = useState<Set<string>>(new Set());
+
+  // Detect changes in each tab
+  useEffect(() => {
+    const tabs: {
+      name: "general" | "plugins" | "header-footer" | "background";
+      checkFn: (
+        current: PresentationConfig,
+        initial: PresentationConfig
+      ) => boolean;
+    }[] = [
+      {
+        name: "general",
+        checkFn: (current, initial) => {
+          return (
+            current.theme !== initial.theme ||
+            current.scale !== initial.scale ||
+            current.loop !== initial.loop ||
+            current.urlHash !== initial.urlHash ||
+            JSON.stringify(current.transition) !==
+              JSON.stringify(initial.transition) ||
+            JSON.stringify(current.centerContent) !==
+              JSON.stringify(initial.centerContent)
+          );
+        },
+      },
+      {
+        name: "header-footer",
+        checkFn: (current, initial) => {
+          return (
+            JSON.stringify(current.header) !== JSON.stringify(initial.header) ||
+            JSON.stringify(current.footer) !== JSON.stringify(initial.footer)
+          );
+        },
+      },
+      {
+        name: "background",
+        checkFn: (current, initial) => {
+          return (
+            JSON.stringify(current.background) !==
+            JSON.stringify(initial.background)
+          );
+        },
+      },
+      {
+        name: "plugins",
+        checkFn: (current, initial) => {
+          return (
+            JSON.stringify(current.plugins) !== JSON.stringify(initial.plugins)
+          );
+        },
+      },
+    ];
+
+    const newChangedTabs = new Set<string>();
+    tabs.forEach((tab) => {
+      if (tab.checkFn(config, initialConfigRef.current)) {
+        newChangedTabs.add(tab.name);
+      }
+    });
+
+    setChangedTabs(newChangedTabs);
+  }, [config]);
 
   // Handle tab change with analytics tracking
   const handleTabChange = (
@@ -146,43 +221,47 @@ export const PresentationSettings: React.FC<PresentationToolbarProps> = ({
         <div className="flex border-b border-gray-200 dark:border-gray-600 overflow-x-auto">
           <button
             onClick={() => handleTabChange("general")}
-            className={`px-2 py-2 text-xs font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0 ${
+            className={`px-2 py-2 text-xs font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0 relative ${
               activeTab === "general"
                 ? "border-blue-500 text-blue-600 dark:text-blue-400"
                 : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
             }`}
           >
             General
+            {changedTabs.has("general") && <ChangedIndicator />}
           </button>
           <button
             onClick={() => handleTabChange("header-footer")}
-            className={`px-2 py-2 text-xs font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0 ${
+            className={`px-2 py-2 text-xs font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0 relative ${
               activeTab === "header-footer"
                 ? "border-blue-500 text-blue-600 dark:text-blue-400"
                 : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
             }`}
           >
             Header & Footer
+            {changedTabs.has("header-footer") && <ChangedIndicator />}
           </button>
           <button
             onClick={() => handleTabChange("background")}
-            className={`px-2 py-2 text-xs font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0 ${
+            className={`px-2 py-2 text-xs font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0 relative ${
               activeTab === "background"
                 ? "border-blue-500 text-blue-600 dark:text-blue-400"
                 : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
             }`}
           >
             Background
+            {changedTabs.has("background") && <ChangedIndicator />}
           </button>
           <button
             onClick={() => handleTabChange("plugins")}
-            className={`px-2 py-2 text-xs font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0 ${
+            className={`px-2 py-2 text-xs font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0 relative ${
               activeTab === "plugins"
                 ? "border-blue-500 text-blue-600 dark:text-blue-400"
                 : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
             }`}
           >
             Plugins
+            {changedTabs.has("plugins") && <ChangedIndicator />}
           </button>
         </div>
 
