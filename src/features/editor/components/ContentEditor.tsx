@@ -983,6 +983,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
               font-mono text-sm leading-relaxed
               placeholder-muted-foreground
               whitespace-nowrap
+              min-h-[300px]
             "
           style={{
             fontFamily:
