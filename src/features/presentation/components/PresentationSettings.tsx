@@ -207,7 +207,7 @@ export const PresentationSettings: React.FC<PresentationToolbarProps> = ({
   };
 
   return (
-    <div className="bg-muted">
+    <div className="bg-muted border-b border-gray-200 dark:border-gray-700 sm:border-b-0">
       {/* Toolbar Header */}
       <div className="flex items-center justify-between p-3">
         <h3 className="text-sm font-semibold text-card-foreground">
