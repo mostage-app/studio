@@ -88,6 +88,13 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
   const recreateMostage = useCallback(
     (content: string, presentationConfig: PresentationConfig) => {
       if (containerRef.current) {
+        // Save current slide before destroying instance
+        let savedSlide = 1; // Default to first slide
+        if (mostageRef.current) {
+          const currentSlideIndex = mostageRef.current.getCurrentSlide();
+          savedSlide = currentSlideIndex + 1; // Convert to 1-based
+        }
+
         // Clean up existing instance
         if (mostageRef.current) {
           mostageRef.current.destroy();
@@ -116,9 +123,13 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
 
         mostageRef.current.start().then(() => {
           if (mostageRef.current) {
-            setSlideCount(mostageRef.current.getTotalSlides());
-            setCurrentSlide(1); // Always start from first slide
-            mostageRef.current.goToSlide(0); // Go to first slide
+            const totalSlides = mostageRef.current.getTotalSlides();
+            setSlideCount(totalSlides);
+
+            // Restore saved slide if it's still valid
+            const slideToRestore = Math.min(savedSlide, totalSlides);
+            setCurrentSlide(slideToRestore);
+            mostageRef.current.goToSlide(slideToRestore - 1); // Convert to 0-based
           }
         });
       }
