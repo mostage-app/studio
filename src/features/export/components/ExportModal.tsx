@@ -131,7 +131,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
       </div>
       <div>
         <h2 className="text-lg sm:text-xl font-semibold text-foreground">
-          Export Presentation
+          Download Presentation
         </h2>
       </div>
     </div>

@@ -162,7 +162,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
       </div>
       <div>
         <h2 className="text-lg sm:text-xl font-semibold text-foreground">
-          Import Presentation
+          Upload Presentation
         </h2>
       </div>
     </div>

@@ -409,18 +409,18 @@ export const MainLayout: React.FC<EditorProps> = ({
           <button
             onClick={handleOpenImportModal}
             className="inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 text-sm font-medium text-foreground bg-background hover:bg-secondary border border-input rounded-md transition-colors"
-            title="Import presentation"
+            title="Upload presentation"
           >
             <Upload className="w-4 h-4" />
-            <span className="hidden sm:inline">Import</span>
+            <span className="hidden sm:inline">Upload</span>
           </button>
           <button
             onClick={handleOpenExportModal}
             className="inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 text-sm font-medium text-foreground bg-background hover:bg-secondary border border-input rounded-md transition-colors"
-            title="Export presentation"
+            title="Download presentation"
           >
             <Download className="w-4 h-4" />
-            <span className="hidden sm:inline">Export</span>
+            <span className="hidden sm:inline">Download</span>
           </button>
 
           <div className="hidden sm:block w-px h-6 bg-input mx-2" />
