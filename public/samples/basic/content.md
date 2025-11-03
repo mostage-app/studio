@@ -40,6 +40,6 @@
 
 <!-- confetti -->
 
-![LOGO](https://mo.js.org/demo/images/logo.svg)
+![LOGO](https://mostage.app/images/logo.svg)
 
 ---
