@@ -209,7 +209,7 @@ export default function PrivacyPolicyPage() {
               repository.
             </p>
             <a
-              href="https://github.com/mirmousaviii/mostage-editor"
+              href="https://github.com/mostage-app/studio"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline text-sm"

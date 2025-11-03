@@ -57,22 +57,22 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
         <ul className="list-disc list-inside text-sm sm:text-base text-gray-600 dark:text-gray-300 leading-relaxed mb-8">
           <li>
             <a
-              href="https://mostage.js.org"
+              href="https://mostage.app/develop.html"
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-500 hover:underline"
             >
-              mostage.js.org
+              mostage.app/develop
             </a>
           </li>
           <li>
             <a
-              href="https://github.com/mirmousaviii/mostage"
+              href="https://github.com/mostage-app/mostage"
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-500 hover:underline"
             >
-              github.com/mirmousaviii/mostage
+              github.com/mostage-app/mostage
             </a>
           </li>
         </ul>
@@ -103,12 +103,22 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
           </li>
           <li>
             <a
-              href="https://github.com/mirmousaviii/mostage-editor"
+              href="https://studio.mostage.app"
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-500 hover:underline"
             >
-              github.com/mirmousaviii/mostage-editor
+              studio.mostage.app
+            </a>
+          </li>
+          <li>
+            <a
+              href="https://github.com/mostage-app/studio"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-500 hover:underline"
+            >
+              github.com/mostage-app/studio
             </a>
           </li>
         </ul>
@@ -130,7 +140,7 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
           </li>
           <li>
             <a
-              href="https://github.com/mirmousaviii/mostage"
+              href="https://github.com/mostage-app"
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-500 hover:underline"
@@ -189,7 +199,7 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
           Website
         </a>
         <a
-          href="https://github.com/sponsors/mirmousaviii"
+          href="https://github.com/sponsors/mostage-app"
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/50 transition-colors text-xs sm:text-sm"

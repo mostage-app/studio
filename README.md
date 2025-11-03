@@ -1,17 +1,13 @@
-# Mostage App
+# Mostage Studio
 
-A presentation editor powered by [Mostage](https://github.com/mirmousaviii/mostage) - the markdown-based presentation framework.
+A presentation editor powered by [Mostage](https://github.com/mostage-app/mostage) - the markdown-based presentation framework.
 
-## Mostage
+## Mostage JS
 
 A presentation framework based on Markdown and HTML. Available as NPM package, CLI and Web Editor.
 
-- [mo.js.org](https://mo.js.org/)
-- [github.com/mirmousaviii/mostage](https://github.com/mirmousaviii/mostage)
-
-## Live Demo
-
-Visit the live demo: [mostage.js.org](https://mostage.js.org/)
+- [mostage.app/develop](https://mostage.app/develop.html)
+- [github.com/mostage-app/mostage](https://github.com/mostage-app/mostage)
 
 ## Available Scripts
 
