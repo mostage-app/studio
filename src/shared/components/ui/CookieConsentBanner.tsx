@@ -14,23 +14,23 @@ export function CookieConsentBanner({
   onDecline,
 }: CookieConsentBannerProps) {
   return (
-    <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:max-w-md bg-white dark:bg-gray-800 rounded-md shadow-xl border border-gray-200 dark:border-gray-700 z-[10000] backdrop-blur-sm">
+    <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:max-w-md bg-slate-50 dark:bg-slate-900 rounded-md shadow-xl border border-slate-200 dark:border-slate-700 z-[10000] backdrop-blur-sm">
       <div className="p-4">
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-md flex items-center justify-center">
-            <Cookie className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+          <div className="w-8 h-8 bg-slate-200 dark:bg-slate-700 rounded-md flex items-center justify-center">
+            <Cookie className="w-4 h-4 text-slate-700 dark:text-slate-300" />
           </div>
-          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
-            Privacy & Analytics
+          <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+            Privacy & Cookies
           </h3>
         </div>
 
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 leading-relaxed">
+        <p className="text-sm text-slate-600 dark:text-slate-400 mb-4 leading-relaxed">
           We collect anonymous usage data to improve our service. Your privacy
           is protected and you can opt out anytime.{" "}
           <a
             href="/privacy"
-            className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline font-medium"
+            className="text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-100 underline font-medium"
             target="_blank"
             rel="noopener noreferrer"
           >
