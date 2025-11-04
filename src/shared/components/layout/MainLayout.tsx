@@ -52,7 +52,8 @@ import { AboutModal } from "@/features/app-info/components/AboutModal";
 import { ExportModal } from "@/features/export/components/ExportModal";
 import { ImportModal } from "@/features/import/components/ImportModal";
 import { NewSampleModal } from "@/features/editor/components/NewSampleModal";
-import { MobileWarning } from "@/shared/components/ui";
+import { MobileWarning, OnboardingTour } from "@/shared/components/ui";
+import { tourSteps } from "@/shared/config/tour.config";
 import React, { useState, useCallback, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -120,6 +121,9 @@ export const MainLayout: React.FC<EditorProps> = ({
   const { config: presentationConfig, updateConfig: setPresentationConfig } =
     usePresentation();
 
+  // Tour state
+  const [showTour, setShowTour] = useState(false);
+
   // Handle responsive layout
   useEffect(() => {
     const handleResize = () => {
@@ -142,6 +146,29 @@ export const MainLayout: React.FC<EditorProps> = ({
 
     // Cleanup
     return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Check if tour should be shown on first visit
+  useEffect(() => {
+    const hasSeenTour = localStorage.getItem("tour-completed-v1");
+    if (!hasSeenTour) {
+      // Delay tour start slightly to ensure DOM is ready
+      const timer = setTimeout(() => {
+        setShowTour(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  // Handle tour close
+  const handleTourClose = useCallback(() => {
+    setShowTour(false);
+    localStorage.setItem("tour-completed-v1", "true");
+  }, []);
+
+  // Handle starting tour from About modal
+  const handleStartTour = useCallback(() => {
+    setShowTour(true);
   }, []);
 
   // Event handlers for Editor pane (left on desktop, bottom on mobile)
@@ -643,6 +670,7 @@ export const MainLayout: React.FC<EditorProps> = ({
       <AboutModal
         isOpen={showAboutModal}
         onClose={() => setShowAboutModal(false)}
+        onStartTour={handleStartTour}
       />
 
       <AuthModal
@@ -674,6 +702,13 @@ export const MainLayout: React.FC<EditorProps> = ({
 
       {/* Mobile Warning */}
       <MobileWarning />
+
+      {/* Onboarding Tour */}
+      <OnboardingTour
+        steps={tourSteps}
+        isActive={showTour}
+        onClose={handleTourClose}
+      />
     </div>
   );
 };
