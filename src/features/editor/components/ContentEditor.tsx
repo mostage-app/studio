@@ -945,15 +945,16 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
             handleUndoRedoChange(e.target.value);
           }}
           onKeyDown={(e) => {
-            // Handle keyboard shortcuts for Undo/Redo
+            // Handle keyboard shortcuts
             // Use e.code instead of e.key for language-independent detection
             // e.code represents the physical key pressed, not the character produced
             const isCtrlOrCmd = e.ctrlKey || e.metaKey;
+            const isShift = e.shiftKey;
 
             // Undo: Ctrl+Z (Windows/Linux) or Cmd+Z (Mac) - universal standard
             // Must NOT have Shift key pressed
             // KeyZ is the physical Z key regardless of keyboard layout
-            if (isCtrlOrCmd && !e.shiftKey && e.code === "KeyZ") {
+            if (isCtrlOrCmd && !isShift && e.code === "KeyZ") {
               e.preventDefault();
               if (canUndo) {
                 undo();
@@ -965,12 +966,32 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
             // We support both for cross-platform compatibility
             else if (
               isCtrlOrCmd &&
-              (e.code === "KeyY" || (e.code === "KeyZ" && e.shiftKey))
+              (e.code === "KeyY" || (e.code === "KeyZ" && isShift))
             ) {
               e.preventDefault();
               if (canRedo) {
                 redo();
               }
+            }
+            // Bold: Ctrl+B / Cmd+B
+            else if (isCtrlOrCmd && !isShift && e.code === "KeyB") {
+              e.preventDefault();
+              toggleFormatting("**");
+            }
+            // Italic: Ctrl+I / Cmd+I
+            else if (isCtrlOrCmd && !isShift && e.code === "KeyI") {
+              e.preventDefault();
+              toggleFormatting("_");
+            }
+            // Underline: Ctrl+U / Cmd+U
+            else if (isCtrlOrCmd && !isShift && e.code === "KeyU") {
+              e.preventDefault();
+              toggleFormatting("<u>", "</u>");
+            }
+            // Strikethrough: Ctrl+Shift+S / Cmd+Shift+S
+            else if (isCtrlOrCmd && isShift && e.code === "KeyS") {
+              e.preventDefault();
+              toggleFormatting("~~");
             }
           }}
           onKeyUp={handleCursorChange}
