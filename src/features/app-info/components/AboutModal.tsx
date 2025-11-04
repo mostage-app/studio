@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { ExternalLink, Info, Settings } from "lucide-react";
+import { ExternalLink, Info, Settings, HelpCircle } from "lucide-react";
 import { Modal } from "@/shared/components/ui/Modal";
 import { analytics } from "@/shared/utils/analytics";
 import { useCookieConsentContext } from "@/shared/components";
@@ -11,9 +11,10 @@ import pkgMostage from "../../../../node_modules/mostage/package.json";
 interface AboutModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onStartTour?: () => void;
 }
 
-export function AboutModal({ isOpen, onClose }: AboutModalProps) {
+export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
   const { resetConsent } = useCookieConsentContext();
 
   // Track about modal view when it opens
@@ -30,7 +31,7 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
       </div>
       <div>
         <h2 className="text-lg sm:text-xl font-semibold text-foreground">
-          About Mostage App
+          About Mostage
         </h2>
       </div>
     </div>
@@ -180,7 +181,7 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
           <Settings className="w-3 h-3 sm:w-4 sm:h-4" />
           Privacy Settings
         </button>
-        <a
+        {/* <a
           href="/privacy"
           target="_blank"
           rel="noopener noreferrer"
@@ -188,8 +189,8 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
         >
           <Info className="w-3 h-3 sm:w-4 sm:h-4" />
           Privacy Policy
-        </a>
-        <a
+        </a> */}
+        {/* <a
           href="https://mostage.app/"
           target="_blank"
           rel="noopener noreferrer"
@@ -197,7 +198,19 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
         >
           <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4" />
           Website
-        </a>
+        </a> */}
+        {onStartTour && (
+          <button
+            onClick={() => {
+              onClose();
+              onStartTour();
+            }}
+            className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80 transition-colors text-xs sm:text-sm"
+          >
+            <HelpCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+            Start Tour
+          </button>
+        )}
         <a
           href="https://github.com/sponsors/mostage-app"
           target="_blank"
