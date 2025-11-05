@@ -8,8 +8,6 @@ import { NewFileConfirmationModal } from "./NewFileConfirmationModal";
 import { MarkdownToolbar } from "./MarkdownToolbar";
 import {
   findWordBoundaries,
-  isTextFormatted,
-  checkMarkersAroundSelection,
   handleSelectedTextFormatting as formatSelectedText,
   handleEmptySelectionFormatting as formatEmptySelection,
   getCurrentLineBoundaries,
@@ -141,7 +139,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
   // ==================== Formatting Toggle Functions ====================
   /**
    * Main function to toggle formatting (bold, italic, etc.)
-   * Routes to appropriate handler based on selection state
+   * Simple logic: only works with selected text or word under cursor
    */
   const toggleFormatting = (marker: string, closingMarker?: string) => {
     const textarea = textareaRef.current;
@@ -153,8 +151,8 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
     const closing = closingMarker || marker;
 
     if (selectedText.trim()) {
-      const isFormatted = isTextFormatted(selectedText, marker, closing);
-      const markersAroundResult = checkMarkersAroundSelection(
+      // Text is selected - format or unformat the selected text only
+      const result = formatSelectedText(
         value,
         start,
         end,
@@ -163,22 +161,12 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
         closing
       );
 
-      const result = formatSelectedText(
-        value,
-        start,
-        end,
-        selectedText,
-        marker,
-        closing,
-        isFormatted,
-        markersAroundResult
-      );
-
       if (result) {
         executeCommand(result.newText);
         updateTextareaSelection(result.newStart, result.newEnd);
       }
     } else {
+      // No text selected - work with word under cursor
       const result = formatEmptySelection(
         value,
         start,
