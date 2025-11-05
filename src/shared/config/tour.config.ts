@@ -66,11 +66,11 @@ export const tourSteps: TourStep[] = [
       "Learn more about Mostage. You can also find Tour and Privacy settings here.",
     position: "bottom",
   },
-  {
-    target: '[title="Sign In / Sign Up"]',
-    title: "Account",
-    content:
-      "Sign in to your account to save your presentations and access your dashboard.",
-    position: "bottom",
-  },
+  // {
+  //   target: '[title="Sign In / Sign Up"]',
+  //   title: "Account",
+  //   content:
+  //     "Sign in to your account to save your presentations and access your dashboard.",
+  //   position: "bottom",
+  // },
 ];
