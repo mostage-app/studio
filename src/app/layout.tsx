@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Mostage App",
-  description: "Presentation Editor powered by Mostage",
+  description: "Presentation Framework",
 };
 
 export default function RootLayout({

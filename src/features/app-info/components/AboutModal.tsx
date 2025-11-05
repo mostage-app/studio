@@ -205,7 +205,7 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
               onClose();
               onStartTour();
             }}
-            className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80 transition-colors text-xs sm:text-sm"
+            className="hidden sm:flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80 transition-colors text-xs sm:text-sm"
           >
             <HelpCircle className="w-3 h-3 sm:w-4 sm:h-4" />
             Start Tour
