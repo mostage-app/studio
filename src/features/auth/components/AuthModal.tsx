@@ -39,7 +39,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     if (isSignUp) {
       // Sign Up error message
       setError(
-        "Sorry, you can't sign up because no one has donated yet! Please donate first then wait for it 😉"
+        "Sorry, The sign up is not public yet. Please try again next week."
       );
       // Track signup error
       analytics.trackAuthError("signup_error");
