@@ -61,7 +61,7 @@
   },
   "background": [
     {
-      "imagePath": "https://mo.js.org/demo/images/background.svg",
+      "imagePath": "https://mostage.app/demo/images/background.svg",
       "size": "cover",
       "position": "center",
       "repeat": "no-repeat",
@@ -70,7 +70,7 @@
       "allSlidesExcept": [4, 5]
     },
     {
-      "imagePath": "https://mo.js.org/demo/images/background-end.svg",
+      "imagePath": "https://mostage.app/demo/images/background-end.svg",
       "size": "cover",
       "position": "center",
       "repeat": "no-repeat",
