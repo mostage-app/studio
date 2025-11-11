@@ -1,31 +1,59 @@
-// Authentication service for managing user authentication
+// Authentication service for managing user authentication tokens and user data
 
 export class AuthService {
-  private static readonly TOKEN_KEY = "mostage-auth-token";
+  private static readonly ACCESS_TOKEN_KEY = "mostage-access-token";
+  private static readonly ID_TOKEN_KEY = "mostage-id-token";
+  private static readonly REFRESH_TOKEN_KEY = "mostage-refresh-token";
   private static readonly USER_KEY = "mostage-user-data";
 
-  static saveToken(token: string): void {
+  static saveTokens(tokens: {
+    accessToken: string;
+    idToken: string;
+    refreshToken: string;
+  }): void {
     try {
-      localStorage.setItem(this.TOKEN_KEY, token);
+      localStorage.setItem(this.ACCESS_TOKEN_KEY, tokens.accessToken);
+      localStorage.setItem(this.ID_TOKEN_KEY, tokens.idToken);
+      localStorage.setItem(this.REFRESH_TOKEN_KEY, tokens.refreshToken);
     } catch (error) {
-      console.error("Failed to save auth token:", error);
+      console.error("Failed to save auth tokens:", error);
     }
   }
 
-  static getToken(): string | null {
+  static getAccessToken(): string | null {
     try {
-      return localStorage.getItem(this.TOKEN_KEY);
+      return localStorage.getItem(this.ACCESS_TOKEN_KEY);
     } catch (error) {
-      console.error("Failed to get auth token:", error);
+      console.error("Failed to get access token:", error);
       return null;
     }
   }
 
-  static removeToken(): void {
+  static getIdToken(): string | null {
     try {
-      localStorage.removeItem(this.TOKEN_KEY);
+      return localStorage.getItem(this.ID_TOKEN_KEY);
     } catch (error) {
-      console.error("Failed to remove auth token:", error);
+      console.error("Failed to get ID token:", error);
+      return null;
+    }
+  }
+
+  static getRefreshToken(): string | null {
+    try {
+      return localStorage.getItem(this.REFRESH_TOKEN_KEY);
+    } catch (error) {
+      console.error("Failed to get refresh token:", error);
+      return null;
+    }
+  }
+
+  static removeTokens(): void {
+    try {
+      localStorage.removeItem(this.ACCESS_TOKEN_KEY);
+      localStorage.removeItem(this.ID_TOKEN_KEY);
+      localStorage.removeItem(this.REFRESH_TOKEN_KEY);
+    } catch (error) {
+      console.error("Failed to remove auth tokens:", error);
     }
   }
 
@@ -56,11 +84,11 @@ export class AuthService {
   }
 
   static clearAuth(): void {
-    this.removeToken();
+    this.removeTokens();
     this.removeUser();
   }
 
   static isAuthenticated(): boolean {
-    return !!this.getToken();
+    return !!this.getAccessToken();
   }
 }

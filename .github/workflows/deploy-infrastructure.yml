@@ -1,0 +1,61 @@
+name: Deploy Infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      stack_name:
+        description: "Stack name to deploy"
+        required: false
+        default: "MostageStudioAuthStack"
+      region:
+        description: "AWS Region"
+        required: false
+        default: "eu-central-1"
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    name: Deploy Infrastructure
+    runs-on: ubuntu-latest
+    environment:
+      name: aws-production
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ github.event.inputs.region || 'eu-central-1' }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: infrastructure/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./infrastructure
+        run: npm ci
+
+      - name: Install CDK CLI
+        run: npm install -g aws-cdk
+
+      - name: Build infrastructure
+        working-directory: ./infrastructure
+        run: npm run build
+
+      - name: CDK Diff
+        working-directory: ./infrastructure
+        run: npm run cdk:diff -- --stack ${{ github.event.inputs.stack_name || 'MostageStudioAuthStack' }}
+        continue-on-error: true
+
+      - name: CDK Deploy
+        working-directory: ./infrastructure
+        run: npm run cdk:deploy -- --stack ${{ github.event.inputs.stack_name || 'MostageStudioAuthStack' }} --require-approval never

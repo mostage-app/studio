@@ -1,8 +1,10 @@
 export interface User {
   id: string;
+  username: string;
   email: string;
-  name: string;
+  name?: string;
   avatar?: string;
+  createdAt?: string;
 }
 
 export interface AuthState {
@@ -17,13 +19,32 @@ export interface AuthModalProps {
 }
 
 export interface LoginCredentials {
-  email: string;
+  username: string;
   password: string;
 }
 
 export interface RegisterCredentials {
-  name: string;
+  username: string;
   email: string;
   password: string;
-  confirmPassword: string;
+  name: string;
+}
+
+export interface VerifyCredentials {
+  username: string;
+  code: string;
+}
+
+export interface ResendCodeCredentials {
+  username: string;
+}
+
+export interface ForgotPasswordCredentials {
+  username: string;
+}
+
+export interface ConfirmForgotPasswordCredentials {
+  username: string;
+  code: string;
+  newPassword: string;
 }

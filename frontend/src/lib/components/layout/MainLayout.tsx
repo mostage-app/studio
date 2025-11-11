@@ -48,6 +48,8 @@ import {
   LAYOUT_MODES,
 } from "@/lib/common/LayoutModeToggle";
 import { AuthModal } from "@/features/auth/components/AuthModal";
+import { AccountModal } from "@/features/auth/components/AccountModal";
+import { useAuthContext } from "@/features/auth/components/AuthProvider";
 import { AboutModal } from "@/features/app-info/components/AboutModal";
 import { ExportModal } from "@/features/export/components/ExportModal";
 import { ImportModal } from "@/features/import/components/ImportModal";
@@ -58,7 +60,16 @@ import React, { useState, useCallback, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import logo from "@/assets/images/logo.svg";
-import { FileText, Download, Upload, User, Info, Plus } from "lucide-react";
+import {
+  FileText,
+  Download,
+  Upload,
+  User,
+  Info,
+  Plus,
+  LogOut,
+  UserCircle,
+} from "lucide-react";
 import {
   exportToHTML,
   exportToPDF,
@@ -94,9 +105,13 @@ export const MainLayout: React.FC<EditorProps> = ({
   editingSlide,
   updateEditingSlide,
 }) => {
+  // Auth
+  const { isAuthenticated, user, logout } = useAuthContext();
+
   // Modal states
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showAccountModal, setShowAccountModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showNewSampleModal, setShowNewSampleModal] = useState(false);
@@ -470,14 +485,37 @@ export const MainLayout: React.FC<EditorProps> = ({
             <Info className="w-4 h-4" />
             <span className="hidden sm:inline">About</span>
           </button>
-          <button
-            onClick={handleOpenAuthModal}
-            className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 text-sm font-medium text-card-foreground bg-card border border-input rounded-sm hover:bg-secondary cursor-pointer focus:outline-none transition-colors"
-            title="Sign In / Sign Up"
-          >
-            <User className="w-4 h-4" />
-            <span className="hidden sm:inline">Sign In</span>
-          </button>
+          {isAuthenticated ? (
+            <>
+              <button
+                onClick={() => setShowAccountModal(true)}
+                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 text-sm font-medium text-card-foreground bg-card border border-input rounded-sm hover:bg-secondary cursor-pointer focus:outline-none transition-colors"
+                title="Account"
+              >
+                <UserCircle className="w-4 h-4" />
+                <span className="hidden sm:inline">Account</span>
+              </button>
+              <button
+                onClick={async () => {
+                  await logout();
+                }}
+                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 text-sm font-medium text-card-foreground bg-card border border-input rounded-sm hover:bg-secondary cursor-pointer focus:outline-none transition-colors"
+                title="Sign Out"
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="hidden sm:inline">Sign Out</span>
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={handleOpenAuthModal}
+              className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 text-sm font-medium text-card-foreground bg-card border border-input rounded-sm hover:bg-secondary cursor-pointer focus:outline-none transition-colors"
+              title="Sign In / Sign Up"
+            >
+              <User className="w-4 h-4" />
+              <span className="hidden sm:inline">Sign In</span>
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -676,6 +714,11 @@ export const MainLayout: React.FC<EditorProps> = ({
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
+      />
+
+      <AccountModal
+        isOpen={showAccountModal}
+        onClose={() => setShowAccountModal(false)}
       />
 
       <ExportModal

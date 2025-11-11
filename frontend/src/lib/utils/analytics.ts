@@ -72,19 +72,38 @@ export const analytics = {
   },
 
   // Track authentication events
-  trackAuthModalOpen: (mode: "login" | "signup") => {
+  trackAuthModalOpen: (
+    mode: "login" | "signup" | "verify" | "forgotPassword" | "resetPassword"
+  ) => {
     trackEvent("auth_modal_open", "Authentication", mode);
   },
 
-  trackAuthAttempt: (mode: "login" | "signup") => {
+  trackAuthAttempt: (
+    mode: "login" | "signup" | "verify" | "forgotPassword" | "resetPassword"
+  ) => {
     trackEvent("auth_attempt", "Authentication", mode);
   },
 
-  trackAuthError: (errorType: "login_error" | "signup_error") => {
+  trackAuthSuccess: (
+    mode: "login" | "signup" | "verify" | "forgotPassword" | "resetPassword"
+  ) => {
+    trackEvent("auth_success", "Authentication", mode);
+  },
+
+  trackAuthError: (
+    errorType:
+      | "login_error"
+      | "signup_error"
+      | "verify_error"
+      | "forgotPassword_error"
+      | "resetPassword_error"
+  ) => {
     trackEvent("auth_error", "Authentication", errorType);
   },
 
-  trackAuthModeSwitch: (newMode: "login" | "signup") => {
+  trackAuthModeSwitch: (
+    newMode: "login" | "signup" | "verify" | "forgotPassword" | "resetPassword"
+  ) => {
     trackEvent("auth_mode_switch", "Authentication", newMode);
   },
 };
