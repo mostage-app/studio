@@ -13,16 +13,22 @@ To enable analytics in your project, follow these steps:
 
 ### 2. Environment Variable Setup
 
-#### For Local Development:
+#### For Local Development
 
-Create `.env.local` file in the project root:
+Create `.env.local` file in the `frontend/` directory:
 
 ```bash
 # Google Analytics 4 Measurement ID
 NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
 ```
 
-#### For GitHub Pages/Production:
+You can copy from `.env.example`:
+
+```bash
+cp frontend/.env.example frontend/.env.local
+```
+
+#### For GitHub Pages/Production
 
 1. Go to your repository **Settings**
 2. Navigate to **Secrets and variables** → **Actions**
@@ -30,7 +36,7 @@ NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
    - **Name**: `NEXT_PUBLIC_GA_MEASUREMENT_ID`
    - **Value**: Your actual GA4 Measurement ID
 
-#### For GitHub Pages Environment Variables:
+#### For GitHub Pages Environment Variables
 
 1. Go to **Pages** settings
 2. Add environment variable:

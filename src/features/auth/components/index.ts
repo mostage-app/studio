@@ -1,1 +1,0 @@
-export { AuthModal } from "./AuthModal";
