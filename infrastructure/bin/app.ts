@@ -10,4 +10,6 @@ new AuthStack(app, "MostageStudioAuthStack", {
     region: process.env.CDK_DEFAULT_REGION || "eu-central-1",
   },
   description: "Authentication infrastructure for Mostage Studio",
+  userPoolName: process.env.USER_POOL_NAME,
+  userPoolClientName: process.env.USER_POOL_CLIENT_NAME,
 });
