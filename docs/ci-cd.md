@@ -72,6 +72,8 @@ The project uses GitHub Actions for automated testing, building, and deployment.
 
 - `stack_name` (default: `MostageStudioAuthStack`) - CloudFormation stack name
 - `region` (default: `eu-central-1`) - AWS region
+- `user_pool_name` (default: `mostage-studio-users`) - Cognito User Pool name
+- `user_pool_client_name` (default: `mostage-studio-web-client`) - Cognito User Pool Client name
 
 **Process**:
 
@@ -164,7 +166,11 @@ Infrastructure deployment is **manual only** for security:
 
 1. Go to **Actions → Deploy Infrastructure**
 2. Click **Run workflow**
-3. (Optional) Set `stack_name` and `region`
+3. (Optional) Set:
+   - `stack_name` - CloudFormation stack name
+   - `region` - AWS region
+   - `user_pool_name` - Cognito User Pool name (e.g., `mostage-studio-users-prod`)
+   - `user_pool_client_name` - Cognito User Pool Client name (e.g., `mostage-studio-web-client-prod`)
 4. Click **Run workflow**
 
 ## Troubleshooting

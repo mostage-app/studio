@@ -2,16 +2,25 @@ import * as cdk from "aws-cdk-lib";
 import * as cognito from "aws-cdk-lib/aws-cognito";
 import { Construct } from "constructs";
 
+export interface AuthStackProps extends cdk.StackProps {
+  userPoolName?: string;
+  userPoolClientName?: string;
+}
+
 export class AuthStack extends cdk.Stack {
   public readonly userPool: cognito.UserPool;
   public readonly userPoolClient: cognito.UserPoolClient;
 
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, props?: AuthStackProps) {
     super(scope, id, props);
+
+    const userPoolName = props?.userPoolName || "mostage-studio-users";
+    const userPoolClientName =
+      props?.userPoolClientName || "mostage-studio-web-client";
 
     // Create Cognito User Pool with username support
     this.userPool = new cognito.UserPool(this, "MostageStudioUserPool", {
-      userPoolName: "mostage-studio-users",
+      userPoolName: userPoolName,
       signInAliases: {
         email: true,
         username: true,
@@ -51,7 +60,7 @@ export class AuthStack extends cdk.Stack {
       "MostageStudioUserPoolClient",
       {
         userPool: this.userPool,
-        userPoolClientName: "mostage-studio-web-client",
+        userPoolClientName: userPoolClientName,
         generateSecret: false, // Required for public clients (web apps)
         authFlows: {
           userPassword: true,
