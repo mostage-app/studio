@@ -3,7 +3,6 @@
 import { useState, useCallback, useEffect } from "react";
 import {
   AuthState,
-  User,
   LoginCredentials,
   RegisterCredentials,
   VerifyCredentials,
@@ -52,7 +51,9 @@ export const useAuth = () => {
               isAuthenticated: true,
               isLoading: false,
             });
-            AuthService.saveUser(result.user);
+            AuthService.saveUser(
+              result.user as unknown as Record<string, unknown>
+            );
             return;
           }
         }
@@ -86,7 +87,9 @@ export const useAuth = () => {
         );
 
         if (userResult.success && userResult.user) {
-          AuthService.saveUser(userResult.user);
+          AuthService.saveUser(
+            userResult.user as unknown as Record<string, unknown>
+          );
           setState({
             user: userResult.user,
             isAuthenticated: true,
@@ -253,7 +256,9 @@ export const useAuth = () => {
         // Refresh user data
         const userResult = await CognitoService.getCurrentUser(accessToken);
         if (userResult.success && userResult.user) {
-          AuthService.saveUser(userResult.user);
+          AuthService.saveUser(
+            userResult.user as unknown as Record<string, unknown>
+          );
           setState((prev) => ({
             ...prev,
             user: userResult.user || prev.user,

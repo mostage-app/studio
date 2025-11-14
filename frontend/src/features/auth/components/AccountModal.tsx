@@ -12,7 +12,6 @@ import {
   Loader2,
   Calendar,
   Trash2,
-  ArrowUpRight,
 } from "lucide-react";
 import { Modal } from "@/lib/components/ui/Modal";
 import { useAuthContext } from "./AuthProvider";

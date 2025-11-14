@@ -106,7 +106,7 @@ export const MainLayout: React.FC<EditorProps> = ({
   updateEditingSlide,
 }) => {
   // Auth
-  const { isAuthenticated, user, logout } = useAuthContext();
+  const { isAuthenticated, logout } = useAuthContext();
 
   // Modal states
   const [showAboutModal, setShowAboutModal] = useState(false);
