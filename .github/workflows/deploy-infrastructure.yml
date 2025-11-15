@@ -48,7 +48,7 @@ jobs:
 
       - name: Terraform Init
         working-directory: ./infrastructure
-        run: terraform init -backend-config=backend-${{ github.event.inputs.environment }}.hcl
+        run: terraform init -backend-config=config/backend-${{ github.event.inputs.environment }}.hcl
 
       - name: Terraform Validate
         working-directory: ./infrastructure

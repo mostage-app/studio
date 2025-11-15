@@ -21,10 +21,9 @@ frontend/next-env.d.ts
 infrastructure/cdk.out/
 infrastructure/dist/
 infrastructure/.terraform/
-infrastructure/.terraform.lock.hcl
+# Note: .terraform.lock.hcl should be committed (Terraform 0.14+)
 infrastructure/*.tfstate
 infrastructure/*.tfstate.*
-infrastructure/.terraform.lock.hcl
 infrastructure/terraform.tfvars
 
 

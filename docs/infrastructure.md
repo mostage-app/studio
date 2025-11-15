@@ -2,7 +2,36 @@
 
 This document describes the Terraform infrastructure code for Mostage Studio.
 
-The infrastructure code is located in the `infrastructure/` directory.
+The infrastructure code is located in the `infrastructure/` directory and is organized using **modules** for scalability and maintainability.
+
+## Structure
+
+The infrastructure follows a modular architecture:
+
+```
+infrastructure/
+├── modules/                    # Reusable service modules
+│   └── cognito/               # Cognito authentication module
+│       ├── main.tf            # Module resources
+│       ├── variables.tf       # Module variables
+│       └── outputs.tf         # Module outputs
+├── main.tf                    # Root module (calls service modules)
+├── variables.tf               # Root variables
+├── outputs.tf                 # Root outputs
+├── versions.tf                # Provider versions
+├── config/                    # Configuration files
+│   ├── backend-dev.hcl      # Backend config for development
+│   └── backend-prod.hcl     # Backend config for production
+└── scripts/                   # Utility scripts
+    └── setup-terraform-backend.sh  # Setup script for remote state
+```
+
+### Benefits of Modular Structure
+
+- **Scalability**: Easy to add new services by creating new modules
+- **Maintainability**: Each service is isolated in its own module
+- **Reusability**: Modules can be reused across different projects
+- **Organization**: Clear separation of concerns
 
 ## Prerequisites
 
@@ -28,18 +57,18 @@ The infrastructure code is located in the `infrastructure/` directory.
 
 3. **Initialize Terraform**:
 
-   For **Development**:
+   **Development**:
 
    ```bash
    cd infrastructure
-   terraform init -backend-config=backend-dev.hcl
+   terraform init -backend-config=config/backend-dev.hcl
    ```
 
-   For **Production**:
+   **Production**:
 
    ```bash
    cd infrastructure
-   terraform init -backend-config=backend-prod.hcl
+   terraform init -backend-config=config/backend-prod.hcl
    ```
 
    This will download the required providers (AWS provider) and configure the appropriate state backend.
@@ -53,7 +82,7 @@ The infrastructure code is located in the `infrastructure/` directory.
 1. **Review the plan**:
 
    ```bash
-   terraform plan -var="environment=dev" -backend-config=backend-dev.hcl
+   terraform plan -var="environment=dev"
    ```
 
    This shows what resources will be created for development.
@@ -61,7 +90,7 @@ The infrastructure code is located in the `infrastructure/` directory.
 2. **Apply the changes**:
 
    ```bash
-   terraform apply -var="environment=dev" -backend-config=backend-dev.hcl
+   terraform apply -var="environment=dev"
    ```
 
    Type `yes` when prompted to confirm.
@@ -90,13 +119,13 @@ The infrastructure code is located in the `infrastructure/` directory.
 1. **Review the plan**:
 
    ```bash
-   terraform plan -var="environment=prod" -backend-config=backend-prod.hcl
+   terraform plan -var="environment=prod"
    ```
 
 2. **Apply the changes**:
 
    ```bash
-   terraform apply -var="environment=prod" -backend-config=backend-prod.hcl
+   terraform apply -var="environment=prod"
    ```
 
 3. **Get outputs**:
@@ -126,13 +155,13 @@ The infrastructure code is located in the `infrastructure/` directory.
 1. **Plan changes**:
 
    ```bash
-   terraform plan -var="environment=dev" -backend-config=backend-dev.hcl
+   terraform plan -var="environment=dev"
    ```
 
 2. **Apply changes**:
 
    ```bash
-   terraform apply -var="environment=dev" -backend-config=backend-dev.hcl
+   terraform apply -var="environment=dev"
    ```
 
 #### Production
@@ -140,23 +169,30 @@ The infrastructure code is located in the `infrastructure/` directory.
 1. **Plan changes**:
 
    ```bash
-   terraform plan -var="environment=prod" -backend-config=backend-prod.hcl
+   terraform plan -var="environment=prod"
    ```
 
 2. **Apply changes**:
 
    ```bash
-   terraform apply -var="environment=prod" -backend-config=backend-prod.hcl
+   terraform apply -var="environment=prod"
    ```
 
 ## Available Commands
 
-- `terraform init` - Initialize Terraform (download providers)
-- `terraform plan` - Preview changes
-- `terraform apply` - Apply changes
-- `terraform destroy` - Destroy all resources (⚠️ removes all resources)
+Standard Terraform commands:
+
+- `terraform init -backend-config=config/backend-dev.hcl` - Initialize Terraform for development (download providers)
+- `terraform init -backend-config=config/backend-prod.hcl` - Initialize Terraform for production
+- `terraform plan -var="environment=dev"` - Preview changes for development
+- `terraform plan -var="environment=prod"` - Preview changes for production
+- `terraform apply -var="environment=dev"` - Apply changes for development
+- `terraform apply -var="environment=prod"` - Apply changes for production
+- `terraform destroy -var="environment=dev"` - Destroy all resources for development (⚠️ removes all resources)
+- `terraform destroy -var="environment=prod"` - Destroy all resources for production (⚠️ removes all resources)
 - `terraform validate` - Validate configuration
-- `terraform fmt` - Format configuration files
+- `terraform fmt -recursive` - Format configuration files
+- `terraform fmt -check -recursive` - Check formatting
 - `terraform output` - Show outputs
 
 ## State Management
@@ -169,7 +205,7 @@ Run the setup script to create the S3 bucket and DynamoDB table:
 
 ```bash
 cd infrastructure
-./setup-backend.sh
+./scripts/setup-terraform-backend.sh
 ```
 
 This script will:
@@ -239,7 +275,7 @@ If you prefer to set up manually:
 
 The backend configuration is provided via separate config files for each environment:
 
-**Development** (`backend-dev.hcl`):
+**Development** (`config/backend-dev.hcl`):
 
 ```hcl
 bucket         = "mostage-studio-terraform-state"
@@ -249,7 +285,7 @@ dynamodb_table = "terraform-state-lock"
 encrypt        = true
 ```
 
-**Production** (`backend-prod.hcl`):
+**Production** (`config/backend-prod.hcl`):
 
 ```hcl
 bucket         = "mostage-studio-terraform-state"
@@ -261,10 +297,44 @@ encrypt        = true
 
 **Note**: Use the appropriate backend config file when initializing Terraform:
 
-- Development: `terraform init -backend-config=backend-dev.hcl`
-- Production: `terraform init -backend-config=backend-prod.hcl`
+- Development: `terraform init -backend-config=config/backend-dev.hcl`
+- Production: `terraform init -backend-config=config/backend-prod.hcl`
 
-## Stack Resources
+## Modules
+
+### Cognito Module (`modules/cognito/`)
+
+The Cognito module provides authentication services:
+
+- **Cognito User Pool**: Manages user authentication
+- **Cognito User Pool Client**: Web application client for frontend
+
+#### Module Usage
+
+```hcl
+module "cognito" {
+  source = "./modules/cognito"
+
+  user_pool_name         = "my-user-pool"
+  user_pool_client_name  = "my-web-client"
+  tags = {
+    Environment = "production"
+  }
+}
+```
+
+#### Module Resources
+
+- `aws_cognito_user_pool.main` - Cognito User Pool
+- `aws_cognito_user_pool_client.main` - Cognito User Pool Client
+
+#### Module Outputs
+
+- `user_pool_id` - User Pool ID
+- `user_pool_arn` - User Pool ARN
+- `user_pool_client_id` - Client ID
+
+#### Environment Resources
 
 Each environment (dev/prod) has its own separate resources:
 
@@ -276,6 +346,39 @@ Each environment (dev/prod) has its own separate resources:
   - Production: `mostage-studio-web-client-prod`
 
 **Important**: Users in development and production are completely isolated. Changes in one environment do not affect the other.
+
+### Adding New Services
+
+To add a new AWS service (e.g., S3, Lambda, API Gateway):
+
+1. Create a new module directory: `mkdir -p modules/your-service`
+2. Define resources in `modules/your-service/main.tf`
+3. Add variables in `modules/your-service/variables.tf`
+4. Add outputs in `modules/your-service/outputs.tf`
+5. Call the module in root `main.tf`
+6. Add outputs to root `outputs.tf`
+
+**Example**:
+
+```hcl
+# In main.tf
+module "my_service" {
+  source = "./modules/my-service"
+
+  name = "my-service-${var.environment}"
+  tags = {
+    Service = "MyService"
+  }
+}
+
+# In outputs.tf
+output "my_service_id" {
+  description = "My Service ID"
+  value       = module.my_service.id
+}
+```
+
+See the Cognito module section above for an example.
 
 ## Architecture
 
@@ -389,7 +492,7 @@ This policy is sufficient for regular Terraform deployments after the initial se
 
 ### For Initial Setup (First Time Only)
 
-If you need to run the setup script (`setup-backend.sh`) via GitHub Actions, you need additional permissions:
+If you need to run the setup script (`scripts/setup-terraform-backend.sh`) via GitHub Actions, you need additional permissions:
 
 ```json
 {

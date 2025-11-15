@@ -36,14 +36,14 @@ Enter the following information:
 
    ```bash
    cd infrastructure
-   terraform init -backend-config=backend-dev.hcl
+   terraform init -backend-config=config/backend-dev.hcl
    ```
 
    **For Production**:
 
    ```bash
    cd infrastructure
-   terraform init -backend-config=backend-prod.hcl
+   terraform init -backend-config=config/backend-prod.hcl
    ```
 
 4. Deploy Infrastructure:
@@ -104,7 +104,7 @@ Copy the values from Terraform outputs (for development environment):
 
 ```bash
 cd infrastructure
-terraform init -backend-config=backend-dev.hcl
+terraform init -backend-config=config/backend-dev.hcl
 terraform output
 ```
 
@@ -118,7 +118,7 @@ Since Next.js requires environment variables at **build time** (not runtime), yo
 
    ```bash
    cd infrastructure
-   terraform init -backend-config=backend-prod.hcl
+   terraform init -backend-config=config/backend-prod.hcl
    terraform output
    ```
 

@@ -2,7 +2,7 @@ terraform {
   required_version = ">= 1.5.0"
 
   # Backend configuration is provided via -backend-config flag
-  # Use: terraform init -backend-config=backend-{env}.hcl
+  # Use: terraform init -backend-config=config/backend-{env}.hcl
   backend "s3" {
     # Values are provided via backend config file
   }
@@ -20,102 +20,14 @@ provider "aws" {
   }
 }
 
-# Cognito User Pool
-resource "aws_cognito_user_pool" "main" {
-  name = var.user_pool_name != "" ? var.user_pool_name : "${var.environment == "prod" ? "mostage-studio-users-prod" : "mostage-studio-users-dev"}"
+# Cognito Module
+module "cognito" {
+  source = "./modules/cognito"
 
-  # Sign-in options
-  # Users can sign in with email or username
-  alias_attributes         = ["email", "preferred_username"]
-  auto_verified_attributes = ["email"]
+  user_pool_name        = var.user_pool_name != "" ? var.user_pool_name : "${var.environment == "prod" ? "mostage-studio-users-prod" : "mostage-studio-users-dev"}"
+  user_pool_client_name = var.user_pool_client_name != "" ? var.user_pool_client_name : "${var.environment == "prod" ? "mostage-studio-web-client-prod" : "mostage-studio-web-client-dev"}"
 
-  # Self-registration
-  admin_create_user_config {
-    allow_admin_create_user_only = false
-  }
-
-  # Email verification
-  verification_message_template {
-    default_email_option = "CONFIRM_WITH_CODE"
-    email_subject        = "Your verification code"
-    email_message        = "Your verification code is {####}"
-  }
-
-  # Password policy
-  password_policy {
-    minimum_length                   = 6
-    require_lowercase                = true
-    require_uppercase                = true
-    require_numbers                  = true
-    require_symbols                  = false
-    temporary_password_validity_days = 7
-  }
-
-  # Account recovery
-  account_recovery_setting {
-    recovery_mechanism {
-      name     = "verified_email"
-      priority = 1
-    }
-  }
-
-  # Schema attributes
-  schema {
-    name                = "email"
-    attribute_data_type = "String"
-    required            = true
-    mutable             = true
-  }
-
-  schema {
-    name                = "given_name"
-    attribute_data_type = "String"
-    required            = false
-    mutable             = true
-  }
-
-  schema {
-    name                = "family_name"
-    attribute_data_type = "String"
-    required            = false
-    mutable             = true
-  }
-
-  # Deletion protection
-  deletion_protection = "INACTIVE"
-
-  lifecycle {
-    prevent_destroy = false
+  tags = {
+    Service = "Authentication"
   }
 }
-
-# Cognito User Pool Client
-resource "aws_cognito_user_pool_client" "main" {
-  name         = var.user_pool_client_name != "" ? var.user_pool_client_name : "${var.environment == "prod" ? "mostage-studio-web-client-prod" : "mostage-studio-web-client-dev"}"
-  user_pool_id = aws_cognito_user_pool.main.id
-
-  # Client configuration
-  generate_secret = false # Required for public clients (web apps)
-
-  # Authentication flows
-  explicit_auth_flows = [
-    "ALLOW_USER_PASSWORD_AUTH",
-    "ALLOW_USER_SRP_AUTH",
-    "ALLOW_REFRESH_TOKEN_AUTH"
-  ]
-
-  # Prevent user existence errors
-  prevent_user_existence_errors = "ENABLED"
-
-  # Token validity
-  access_token_validity  = 60 # 1 hour
-  id_token_validity      = 60 # 1 hour
-  refresh_token_validity = 30 # 30 days
-
-  token_validity_units {
-    access_token  = "minutes"
-    id_token      = "minutes"
-    refresh_token = "days"
-  }
-}
-

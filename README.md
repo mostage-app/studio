@@ -1,8 +1,15 @@
 # Mostage Studio
 
-A presentation editor powered by [Mostage](https://github.com/mostage-app/mostage)
+![CI Frontend](https://github.com/mostage-app/studio/actions/workflows/ci-frontend.yml/badge.svg)
+![CI Infrastructure](https://github.com/mostage-app/studio/actions/workflows/ci-infrastructure.yml/badge.svg)
+![Next.js](https://img.shields.io/badge/Next.js-15.5.5-black?logo=next.js)
+![React](https://img.shields.io/badge/React-19.1.0-blue?logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)
+![Terraform](https://img.shields.io/badge/Terraform-≥1.5.0-purple?logo=terraform)
 
-Mostage Studio is a web-based presentation editor that allows you to create and edit presentations using Markdown.
+Mostage Studio is a simple online tool for making presentations with Markdown and HTML. Some features include AI Creation, Live Polling System, and Audience Q&A.
+
+Powered by [Mostage JS](https://github.com/mostage-app/mostage), an open-source presentation framework.
 
 ## Mostage JS
 
@@ -28,9 +35,17 @@ A presentation framework based on Markdown and HTML. Available as NPM package, C
 
 ### Infrastructure
 
-- **Infrastructure**: Terraform 1.5.0
+- **Infrastructure as Code**: Terraform 1.5.0+
 - **Language**: HCL (HashiCorp Configuration Language)
-- **Services**: AWS Cognito (User Pool & User Pool Client)
+- **Scripting**: Bash scripts
+- **CI/CD**: GitHub Actions
+- **Cloud Provider**: AWS
+- **Services**:
+  - AWS Cognito (User Pool & User Pool Client) - Authentication
+  - AWS S3 - Terraform state storage
+  - AWS DynamoDB - Terraform state locking
+- **State Management**: Remote state (S3 backend with DynamoDB locking)
+- **Environments**: Development & Production (separate resources)
 
 ## Quick Start
 
@@ -46,9 +61,15 @@ npm run dev
 
 ```bash
 cd infrastructure
-terraform init
-terraform plan
-terraform apply
+
+# Initialize for development
+terraform init -backend-config=config/backend-dev.hcl
+
+# Plan changes
+terraform plan -var="environment=dev"
+
+# Apply changes
+terraform apply -var="environment=dev"
 ```
 
 See [Infrastructure Setup](docs/infrastructure.md) for detailed instructions.
@@ -59,7 +80,7 @@ See [Infrastructure Setup](docs/infrastructure.md) for detailed instructions.
 
 - [Project Structure](docs/structure.md) - Architecture and development guide
 - [Authentication Setup](docs/authentication.md) - AWS Cognito authentication setup guide
-- [Infrastructure Setup](docs/infrastructure.md) - AWS CDK infrastructure setup and deployment
+- [Infrastructure Setup](docs/infrastructure.md) - AWS Terraform infrastructure setup and deployment
 
 ### Development
 
@@ -84,12 +105,20 @@ See [Infrastructure Setup](docs/infrastructure.md) for detailed instructions.
 
 ### Infrastructure
 
-- `terraform init` - Initialize Terraform
-- `terraform plan` - Preview changes
-- `terraform apply` - Deploy infrastructure
-- `terraform destroy` - Destroy infrastructure (⚠️ removes all resources)
+- `terraform init -backend-config=config/backend-dev.hcl` - Initialize Terraform for development
+- `terraform init -backend-config=config/backend-prod.hcl` - Initialize Terraform for production
+- `terraform plan -var="environment=dev"` - Preview changes for development
+- `terraform plan -var="environment=prod"` - Preview changes for production
+- `terraform apply -var="environment=dev"` - Deploy infrastructure for development
+- `terraform apply -var="environment=prod"` - Deploy infrastructure for production
+- `terraform destroy -var="environment=dev"` - Destroy infrastructure for development (⚠️ removes all resources)
+- `terraform destroy -var="environment=prod"` - Destroy infrastructure for production (⚠️ removes all resources)
 - `terraform validate` - Validate configuration
-- `terraform fmt` - Format configuration files
+- `terraform fmt -recursive` - Format configuration files
+- `terraform fmt -check -recursive` - Check formatting
+- `terraform output` - Show outputs
+
+See [Infrastructure Setup](docs/infrastructure.md) for detailed instructions.
 
 ## Contributing
 

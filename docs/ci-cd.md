@@ -220,7 +220,7 @@ Infrastructure deployment is **manual only** for security:
 **Format check errors**:
 
 - Check format output in Actions logs
-- Format locally: `cd infrastructure && terraform fmt -recursive`
+- Format locally: `cd infrastructure && terraform fmt -check -recursive`
 
 ### Deploy Frontend Fails
 
@@ -262,7 +262,7 @@ Infrastructure deployment is **manual only** for security:
 3. **Test infrastructure changes** locally before deploying:
 
    ```bash
-   cd infrastructure && terraform plan
+   cd infrastructure && terraform plan -var="environment=dev"
    ```
 
 4. **Use environment protection** for production deployments
