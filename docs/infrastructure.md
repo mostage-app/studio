@@ -99,7 +99,25 @@ The infrastructure code is located in the `infrastructure/` directory.
    terraform apply -var="environment=prod" -backend-config=backend-prod.hcl
    ```
 
-3. **Get outputs** and update production environment variables.
+3. **Get outputs**:
+
+   ```bash
+   terraform output
+   ```
+
+   Or get specific output:
+
+   ```bash
+   terraform output user_pool_id
+   terraform output user_pool_client_id
+   terraform output user_pool_region
+   ```
+
+4. **Update frontend environment variables** (for production):
+
+   **Important**: For production deployment on GitHub Pages, you need to configure environment variables in GitHub Secrets (not `.env.local`), because Next.js requires them at build time.
+
+   See [Authentication Setup](authentication.md) for detailed instructions.
 
 ### Subsequent Deployments
 

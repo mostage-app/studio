@@ -67,6 +67,11 @@ The project uses GitHub Actions for automated testing, building, and deployment.
 **Environment Variables**:
 
 - `NEXT_PUBLIC_GA_MEASUREMENT_ID` (optional) - Google Analytics ID
+- `NEXT_PUBLIC_COGNITO_USER_POOL_ID_PROD` (required) - Production Cognito User Pool ID
+- `NEXT_PUBLIC_COGNITO_CLIENT_ID_PROD` (required) - Production Cognito Client ID
+- `NEXT_PUBLIC_AWS_REGION` (required) - AWS Region (e.g., `eu-central-1`)
+
+**Note**: These environment variables must be set in GitHub Secrets (Settings → Secrets and variables → Actions) because Next.js requires them at build time for static export.
 
 **Location**: `.github/workflows/deploy-frontend.yml`
 
@@ -111,6 +116,9 @@ Go to **Settings → Secrets and variables → Actions** and add:
 #### For Frontend Deploy
 
 - `NEXT_PUBLIC_GA_MEASUREMENT_ID` (optional) - Google Analytics Measurement ID
+- `NEXT_PUBLIC_COGNITO_USER_POOL_ID_PROD` (required) - Production Cognito User Pool ID
+- `NEXT_PUBLIC_COGNITO_CLIENT_ID_PROD` (required) - Production Cognito Client ID
+- `NEXT_PUBLIC_AWS_REGION` (required) - AWS Region (e.g., `eu-central-1`)
 
 #### For Infrastructure Deploy
 

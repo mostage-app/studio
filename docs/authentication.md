@@ -32,29 +32,52 @@ Enter the following information:
 
 3. Initialize Terraform:
 
-```bash
-cd infrastructure
-terraform init
-```
+   **For Development**:
+
+   ```bash
+   cd infrastructure
+   terraform init -backend-config=backend-dev.hcl
+   ```
+
+   **For Production**:
+
+   ```bash
+   cd infrastructure
+   terraform init -backend-config=backend-prod.hcl
+   ```
 
 4. Deploy Infrastructure:
 
-```bash
-terraform plan
-terraform apply
-```
+   **Development**:
 
-After successful deployment, get the outputs:
+   ```bash
+   terraform plan -var="environment=dev"
+   terraform apply -var="environment=dev"
+   ```
 
-```bash
-terraform output
-```
+   **Production**:
 
-The following outputs will be displayed:
+   ```bash
+   terraform plan -var="environment=prod"
+   terraform apply -var="environment=prod"
+   ```
 
-- `user_pool_id`: User Pool identifier
-- `user_pool_client_id`: Client identifier
-- `user_pool_region`: AWS region
+   After successful deployment, get the outputs:
+
+   ```bash
+   terraform output
+   ```
+
+   The following outputs will be displayed:
+
+   - `user_pool_id`: User Pool identifier
+   - `user_pool_client_id`: Client identifier
+   - `user_pool_region`: AWS region
+
+   **Important**: Development and production have separate User Pools:
+
+   - Development: `mostage-studio-users-dev`
+   - Production: `mostage-studio-users-prod`
 
 ## Frontend Setup
 
@@ -67,6 +90,8 @@ npm install
 
 ### 2. Configure Environment Variables
 
+#### For Local Development
+
 Create a `.env.local` file in the `frontend` folder:
 
 ```env
@@ -75,7 +100,41 @@ NEXT_PUBLIC_COGNITO_CLIENT_ID=your-client-id
 NEXT_PUBLIC_AWS_REGION=eu-central-1
 ```
 
-Copy the values from the CDK outputs.
+Copy the values from Terraform outputs (for development environment):
+
+```bash
+cd infrastructure
+terraform init -backend-config=backend-dev.hcl
+terraform output
+```
+
+#### For Production (GitHub Pages)
+
+Since Next.js requires environment variables at **build time** (not runtime), you need to configure them in GitHub Secrets:
+
+1. **Get Production Outputs**:
+
+   From GitHub Actions workflow logs (Deploy Infrastructure → Terraform Output step) or locally:
+
+   ```bash
+   cd infrastructure
+   terraform init -backend-config=backend-prod.hcl
+   terraform output
+   ```
+
+2. **Add GitHub Secrets**:
+
+   Go to **Settings → Secrets and variables → Actions** and add:
+
+   - `NEXT_PUBLIC_COGNITO_USER_POOL_ID_PROD` - Production User Pool ID
+   - `NEXT_PUBLIC_COGNITO_CLIENT_ID_PROD` - Production Client ID
+   - `NEXT_PUBLIC_AWS_REGION` - AWS Region (e.g., `eu-central-1`)
+
+3. **Update Deploy Workflow**:
+
+   The `deploy-frontend.yml` workflow should include these environment variables in the build step (see [CI/CD Documentation](ci-cd.md)).
+
+**Note**: GitHub Pages Environment Variables (in Pages settings) don't work for Next.js static export because Next.js needs variables at build time, not runtime. Use GitHub Secrets instead.
 
 ### 3. Run the Application
 

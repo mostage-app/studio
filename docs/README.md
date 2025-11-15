@@ -5,7 +5,7 @@ This directory contains all documentation for Mostage Studio project.
 ## Getting Started
 
 - [Project Structure](structure.md) - Architecture and development guide
-- [Infrastructure Setup](infrastructure.md) - AWS CDK infrastructure setup and deployment
+- [Infrastructure Setup](infrastructure.md) - AWS Terraform infrastructure setup and deployment
 - [Authentication Setup](authentication.md) - AWS Cognito authentication setup guide
 
 ## Development
