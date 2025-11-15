@@ -4,40 +4,49 @@ This document describes the Continuous Integration and Continuous Deployment (CI
 
 ## Overview
 
-The project uses GitHub Actions for automated testing, building, and deployment. There are three main workflows:
+The project uses GitHub Actions for automated testing, building, and deployment. There are four main workflows:
 
-1. **CI Workflow** - Runs on every push and pull request
-2. **Deploy Pages Workflow** - Deploys frontend to GitHub Pages
-3. **Deploy Infrastructure Workflow** - Deploys AWS infrastructure (manual trigger)
+1. **CI Frontend Workflow** - Runs on frontend changes
+2. **CI Infrastructure Workflow** - Runs on infrastructure changes
+3. **Deploy Frontend Workflow** - Deploys frontend to GitHub Pages
+4. **Deploy Infrastructure Workflow** - Deploys AWS infrastructure (manual trigger)
 
 ## Workflows
 
-### 1. CI Workflow (`ci.yml`)
+### 1. CI Frontend Workflow (`ci-frontend.yml`)
 
-**Purpose**: Automated code quality checks and validation
+**Purpose**: Automated code quality checks and validation for frontend
 
 **Triggers**:
 
-- Push to `main` or `develop` branches
-- Pull requests to `main` or `develop` branches
+- Push to `main` or `develop` branches **only when files in `frontend/` change**
+- Pull requests to `main` or `develop` branches **only when files in `frontend/` change**
 
 **Jobs**:
-
-#### Frontend Checks
 
 - **Lint**: Runs ESLint to check code quality
 - **Type Check**: Validates TypeScript types
 - **Build**: Tests if the project builds successfully
 
-#### Infrastructure Checks
+**Location**: `.github/workflows/ci-frontend.yml`
 
-- **Terraform Init**: Initializes Terraform (downloads providers)
-- **Terraform Validate**: Validates Terraform configuration
-- **Terraform Format Check**: Checks code formatting
+### 2. CI Infrastructure Workflow (`ci-infrastructure.yml`)
 
-**Location**: `.github/workflows/ci.yml`
+**Purpose**: Automated validation for infrastructure code
 
-### 2. Deploy Pages Workflow (`deploy-pages.yml`)
+**Triggers**:
+
+- Push to `main` or `develop` branches **only when files in `infrastructure/` change**
+- Pull requests to `main` or `develop` branches **only when files in `infrastructure/` change**
+
+**Jobs**:
+
+- **Validate**: Initializes Terraform and validates configuration
+- **Format Check**: Checks Terraform code formatting
+
+**Location**: `.github/workflows/ci-infrastructure.yml`
+
+### 3. Deploy Frontend Workflow (`deploy-frontend.yml`)
 
 **Purpose**: Deploys the frontend application to GitHub Pages
 
@@ -49,18 +58,19 @@ The project uses GitHub Actions for automated testing, building, and deployment.
 **Process**:
 
 1. Installs dependencies
-2. Runs lint and type check (non-blocking)
-3. Builds the Next.js application
-4. Uploads build artifacts
-5. Deploys to GitHub Pages
+2. Builds the Next.js application (lint and type-check are handled by CI workflow)
+3. Uploads build artifacts
+4. Deploys to GitHub Pages
+
+**Note**: This workflow only builds and deploys. Lint and type-check are performed by the CI Frontend workflow to avoid duplicate work.
 
 **Environment Variables**:
 
 - `NEXT_PUBLIC_GA_MEASUREMENT_ID` (optional) - Google Analytics ID
 
-**Location**: `.github/workflows/deploy-pages.yml`
+**Location**: `.github/workflows/deploy-frontend.yml`
 
-### 3. Deploy Infrastructure Workflow (`deploy-infrastructure.yml`)
+### 4. Deploy Infrastructure Workflow (`deploy-infrastructure.yml`)
 
 **Purpose**: Deploys AWS infrastructure using Terraform
 
@@ -70,6 +80,7 @@ The project uses GitHub Actions for automated testing, building, and deployment.
 
 **Inputs**:
 
+- `environment` (required) - Environment to deploy (`dev` or `prod`)
 - `region` (default: `eu-central-1`) - AWS region
 - `auto_approve` (default: `false`) - Auto approve Terraform apply
 
@@ -132,8 +143,9 @@ Go to **Settings → Pages**:
 
 ```text
 .github/workflows/
-├── ci.yml                      # CI checks (lint, type-check, build)
-├── deploy-pages.yml            # Frontend deployment to GitHub Pages
+├── ci-frontend.yml            # Frontend CI checks (lint, type-check, build)
+├── ci-infrastructure.yml      # Infrastructure CI checks (validate, format)
+├── deploy-frontend.yml        # Frontend deployment to GitHub Pages
 └── deploy-infrastructure.yml  # Infrastructure deployment to AWS
 ```
 
@@ -143,10 +155,10 @@ Go to **Settings → Pages**:
 
 CI checks run automatically on:
 
-- Every push to `main` or `develop`
-- Every pull request
+- **Frontend CI**: When files in `frontend/` change
+- **Infrastructure CI**: When files in `infrastructure/` change
 
-You can also manually trigger from **Actions → CI → Run workflow**
+You can also manually trigger from **Actions → CI Frontend** or **Actions → CI Infrastructure**
 
 ### Deploying Frontend
 
@@ -154,7 +166,7 @@ Frontend deploys automatically when you push to `main` branch.
 
 To deploy manually:
 
-1. Go to **Actions → Deploy to GitHub Pages**
+1. Go to **Actions → Deploy Frontend**
 2. Click **Run workflow**
 3. Select branch (usually `main`)
 4. Click **Run workflow**
@@ -165,12 +177,15 @@ Infrastructure deployment is **manual only** for security:
 
 1. Go to **Actions → Deploy Infrastructure**
 2. Click **Run workflow**
-3. (Optional) Set `stack_name` and `region`
-4. Click **Run workflow**
+3. Select `environment` (`dev` or `prod`)
+4. (Optional) Set `region` and `auto_approve`
+5. Click **Run workflow**
+
+**Note**: Each environment has separate state files and resources. Users in dev and prod are completely isolated.
 
 ## Troubleshooting
 
-### CI Workflow Fails
+### CI Frontend Workflow Fails
 
 **Lint errors**:
 
@@ -187,7 +202,19 @@ Infrastructure deployment is **manual only** for security:
 - Check build logs in Actions
 - Test build locally: `cd frontend && npm run build`
 
-### Deploy Pages Fails
+### CI Infrastructure Workflow Fails
+
+**Terraform validation errors**:
+
+- Check Terraform output in Actions logs
+- Validate locally: `cd infrastructure && terraform validate`
+
+**Format check errors**:
+
+- Check format output in Actions logs
+- Format locally: `cd infrastructure && terraform fmt -recursive`
+
+### Deploy Frontend Fails
 
 **Build errors**:
 
@@ -243,6 +270,6 @@ Infrastructure deployment is **manual only** for security:
 
 ## Related Documentation
 
-- [Infrastructure Setup](infrastructure.md) - AWS CDK setup and IAM policies
+- [Infrastructure Setup](infrastructure.md) - AWS Terraform setup and IAM policies
 - [Authentication Setup](authentication.md) - Cognito configuration
 - [Project Structure](structure.md) - Project architecture

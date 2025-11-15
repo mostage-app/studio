@@ -3,6 +3,13 @@ name: Deploy Infrastructure
 on:
   workflow_dispatch:
     inputs:
+      environment:
+        description: "Environment (dev or prod)"
+        required: true
+        type: choice
+        options:
+          - dev
+          - prod
       region:
         description: "AWS Region"
         required: false
@@ -22,7 +29,7 @@ jobs:
     name: Deploy Infrastructure
     runs-on: ubuntu-latest
     environment:
-      name: aws-production
+      name: aws-${{ github.event.inputs.environment }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -41,7 +48,7 @@ jobs:
 
       - name: Terraform Init
         working-directory: ./infrastructure
-        run: terraform init
+        run: terraform init -backend-config=backend-${{ github.event.inputs.environment }}.hcl
 
       - name: Terraform Validate
         working-directory: ./infrastructure
@@ -52,6 +59,7 @@ jobs:
         run: terraform plan -out=tfplan
         env:
           TF_VAR_aws_region: ${{ github.event.inputs.region || 'eu-central-1' }}
+          TF_VAR_environment: ${{ github.event.inputs.environment }}
 
       - name: Terraform Apply
         working-directory: ./infrastructure

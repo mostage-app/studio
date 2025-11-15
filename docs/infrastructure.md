@@ -28,29 +28,40 @@ The infrastructure code is located in the `infrastructure/` directory.
 
 3. **Initialize Terraform**:
 
+   For **Development**:
+
    ```bash
    cd infrastructure
-   terraform init
+   terraform init -backend-config=backend-dev.hcl
    ```
 
-   This will download the required providers (AWS provider).
+   For **Production**:
+
+   ```bash
+   cd infrastructure
+   terraform init -backend-config=backend-prod.hcl
+   ```
+
+   This will download the required providers (AWS provider) and configure the appropriate state backend.
 
 ## Deployment
 
 ### First Time Deployment
 
+#### Development Environment
+
 1. **Review the plan**:
 
    ```bash
-   terraform plan
+   terraform plan -var="environment=dev" -backend-config=backend-dev.hcl
    ```
 
-   This shows what resources will be created.
+   This shows what resources will be created for development.
 
 2. **Apply the changes**:
 
    ```bash
-   terraform apply
+   terraform apply -var="environment=dev" -backend-config=backend-dev.hcl
    ```
 
    Type `yes` when prompted to confirm.
@@ -69,23 +80,55 @@ The infrastructure code is located in the `infrastructure/` directory.
    terraform output user_pool_region
    ```
 
-4. **Update frontend environment variables** with the output values:
+4. **Update frontend environment variables** (for development):
    - `user_pool_id` → `NEXT_PUBLIC_COGNITO_USER_POOL_ID`
    - `user_pool_client_id` → `NEXT_PUBLIC_COGNITO_CLIENT_ID`
    - `user_pool_region` → `NEXT_PUBLIC_AWS_REGION`
 
+#### Production Environment
+
+1. **Review the plan**:
+
+   ```bash
+   terraform plan -var="environment=prod" -backend-config=backend-prod.hcl
+   ```
+
+2. **Apply the changes**:
+
+   ```bash
+   terraform apply -var="environment=prod" -backend-config=backend-prod.hcl
+   ```
+
+3. **Get outputs** and update production environment variables.
+
 ### Subsequent Deployments
+
+#### Development
 
 1. **Plan changes**:
 
    ```bash
-   terraform plan
+   terraform plan -var="environment=dev" -backend-config=backend-dev.hcl
    ```
 
 2. **Apply changes**:
 
    ```bash
-   terraform apply
+   terraform apply -var="environment=dev" -backend-config=backend-dev.hcl
+   ```
+
+#### Production
+
+1. **Plan changes**:
+
+   ```bash
+   terraform plan -var="environment=prod" -backend-config=backend-prod.hcl
+   ```
+
+2. **Apply changes**:
+
+   ```bash
+   terraform apply -var="environment=prod" -backend-config=backend-prod.hcl
    ```
 
 ## Available Commands
@@ -100,7 +143,7 @@ The infrastructure code is located in the `infrastructure/` directory.
 
 ## State Management
 
-Terraform stores state in a local file (`terraform.tfstate`) by default. This project is configured to use **remote state** (S3 backend) for better collaboration and CI/CD support.
+Terraform stores state in a local file (`terraform.tfstate`) by default. This project is configured to use **remote state** (S3 backend) with **separate state files for each environment** (dev and prod) for better isolation and CI/CD support.
 
 ### Setup Remote State (First Time Only)
 
@@ -176,24 +219,45 @@ If you prefer to set up manually:
 
 ### Backend Configuration
 
-The backend is already configured in `main.tf`:
+The backend configuration is provided via separate config files for each environment:
+
+**Development** (`backend-dev.hcl`):
 
 ```hcl
-backend "s3" {
-  bucket         = "mostage-studio-terraform-state"
-  key            = "infrastructure/terraform.tfstate"
-  region         = "eu-central-1"
-  dynamodb_table = "terraform-state-lock"
-  encrypt        = true
-}
+bucket         = "mostage-studio-terraform-state"
+key            = "infrastructure/dev/terraform.tfstate"
+region         = "eu-central-1"
+dynamodb_table = "terraform-state-lock"
+encrypt        = true
 ```
 
-**Note**: The backend configuration is already set up. You just need to run the setup script to create the required AWS resources.
+**Production** (`backend-prod.hcl`):
+
+```hcl
+bucket         = "mostage-studio-terraform-state"
+key            = "infrastructure/prod/terraform.tfstate"
+region         = "eu-central-1"
+dynamodb_table = "terraform-state-lock"
+encrypt        = true
+```
+
+**Note**: Use the appropriate backend config file when initializing Terraform:
+
+- Development: `terraform init -backend-config=backend-dev.hcl`
+- Production: `terraform init -backend-config=backend-prod.hcl`
 
 ## Stack Resources
 
-- **Cognito User Pool**: Manages user authentication
-- **Cognito User Pool Client**: Web application client for frontend
+Each environment (dev/prod) has its own separate resources:
+
+- **Cognito User Pool**:
+  - Development: `mostage-studio-users-dev`
+  - Production: `mostage-studio-users-prod`
+- **Cognito User Pool Client**:
+  - Development: `mostage-studio-web-client-dev`
+  - Production: `mostage-studio-web-client-prod`
+
+**Important**: Users in development and production are completely isolated. Changes in one environment do not affect the other.
 
 ## Architecture
 
@@ -257,6 +321,9 @@ This policy is sufficient for regular Terraform deployments after the initial se
         "cognito-idp:DeleteUserPool",
         "cognito-idp:DescribeUserPool",
         "cognito-idp:ListUserPools",
+        "cognito-idp:GetUserPoolMfaConfig",
+        "cognito-idp:SetUserPoolMfaConfig",
+        "cognito-idp:AddCustomAttributes",
         "cognito-idp:CreateUserPoolClient",
         "cognito-idp:UpdateUserPoolClient",
         "cognito-idp:DeleteUserPoolClient",
@@ -319,6 +386,9 @@ If you need to run the setup script (`setup-backend.sh`) via GitHub Actions, you
         "cognito-idp:DeleteUserPool",
         "cognito-idp:DescribeUserPool",
         "cognito-idp:ListUserPools",
+        "cognito-idp:GetUserPoolMfaConfig",
+        "cognito-idp:SetUserPoolMfaConfig",
+        "cognito-idp:AddCustomAttributes",
         "cognito-idp:CreateUserPoolClient",
         "cognito-idp:UpdateUserPoolClient",
         "cognito-idp:DeleteUserPoolClient",

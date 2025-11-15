@@ -1,12 +1,10 @@
 terraform {
   required_version = ">= 1.5.0"
 
+  # Backend configuration is provided via -backend-config flag
+  # Use: terraform init -backend-config=backend-{env}.hcl
   backend "s3" {
-    bucket         = "mostage-studio-terraform-state"
-    key            = "infrastructure/terraform.tfstate"
-    region         = "eu-central-1"
-    dynamodb_table = "terraform-state-lock"
-    encrypt        = true
+    # Values are provided via backend config file
   }
 }
 
@@ -24,7 +22,7 @@ provider "aws" {
 
 # Cognito User Pool
 resource "aws_cognito_user_pool" "main" {
-  name = var.user_pool_name
+  name = var.user_pool_name != "" ? var.user_pool_name : "${var.environment == "prod" ? "mostage-studio-users-prod" : "mostage-studio-users-dev"}"
 
   # Sign-in options
   # Users can sign in with email or username
@@ -39,8 +37,8 @@ resource "aws_cognito_user_pool" "main" {
   # Email verification
   verification_message_template {
     default_email_option = "CONFIRM_WITH_CODE"
-    email_subject         = "Your verification code"
-    email_message         = "Your verification code is {####}"
+    email_subject        = "Your verification code"
+    email_message        = "Your verification code is {####}"
   }
 
   # Password policy
@@ -93,7 +91,7 @@ resource "aws_cognito_user_pool" "main" {
 
 # Cognito User Pool Client
 resource "aws_cognito_user_pool_client" "main" {
-  name         = var.user_pool_client_name
+  name         = var.user_pool_client_name != "" ? var.user_pool_client_name : "${var.environment == "prod" ? "mostage-studio-web-client-prod" : "mostage-studio-web-client-dev"}"
   user_pool_id = aws_cognito_user_pool.main.id
 
   # Client configuration
@@ -110,9 +108,9 @@ resource "aws_cognito_user_pool_client" "main" {
   prevent_user_existence_errors = "ENABLED"
 
   # Token validity
-  access_token_validity  = 60  # 1 hour
-  id_token_validity      = 60  # 1 hour
-  refresh_token_validity = 30  # 30 days
+  access_token_validity  = 60 # 1 hour
+  id_token_validity      = 60 # 1 hour
+  refresh_token_validity = 30 # 30 days
 
   token_validity_units {
     access_token  = "minutes"

@@ -1,0 +1,53 @@
+name: CI Infrastructure
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - "infrastructure/**"
+      - ".github/workflows/ci-infrastructure.yml"
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "infrastructure/**"
+      - ".github/workflows/ci-infrastructure.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Terraform Validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.5.0"
+
+      - name: Terraform Init
+        working-directory: ./infrastructure
+        run: terraform init -backend=false
+
+      - name: Terraform Validate
+        working-directory: ./infrastructure
+        run: terraform validate
+
+  format:
+    name: Terraform Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.5.0"
+
+      - name: Terraform Format Check
+        working-directory: ./infrastructure
+        run: terraform fmt -check -recursive

@@ -26,7 +26,6 @@ infrastructure/*.tfstate
 infrastructure/*.tfstate.*
 infrastructure/.terraform.lock.hcl
 infrastructure/terraform.tfvars
-infrastructure/backend.hcl
 
 
 # Shared build

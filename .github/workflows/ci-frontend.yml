@@ -1,10 +1,16 @@
-name: CI
+name: CI Frontend
 
 on:
   push:
     branches: [main, develop]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/ci-frontend.yml"
   pull_request:
     branches: [main, develop]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/ci-frontend.yml"
 
 permissions:
   contents: read
@@ -77,27 +83,3 @@ jobs:
         run: npm run build
         env:
           NEXT_PUBLIC_GA_MEASUREMENT_ID: ${{ secrets.NEXT_PUBLIC_GA_MEASUREMENT_ID || '' }}
-
-  infrastructure:
-    name: Infrastructure Checks
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: "1.5.0"
-
-      - name: Terraform Init
-        working-directory: ./infrastructure
-        run: terraform init -backend=false
-
-      - name: Terraform Validate
-        working-directory: ./infrastructure
-        run: terraform validate
-
-      - name: Terraform Format Check
-        working-directory: ./infrastructure
-        run: terraform fmt -check -recursive

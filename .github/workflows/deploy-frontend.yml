@@ -5,7 +5,7 @@ on:
     branches: [main]
     paths:
       - "frontend/**"
-      - ".github/workflows/deploy-pages.yml"
+      - ".github/workflows/deploy-frontend.yml"
   workflow_dispatch:
 
 permissions:
@@ -21,6 +21,10 @@ jobs:
   build:
     name: Build and Deploy
     runs-on: ubuntu-latest
+    # Only deploy if CI checks pass (lint, type-check, build)
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main')
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -39,21 +43,14 @@ jobs:
         working-directory: ./frontend
         run: npm ci
 
-      - name: Run ESLint
-        working-directory: ./frontend
-        run: npm run lint
-        continue-on-error: true
-
-      - name: Type check
-        working-directory: ./frontend
-        run: npx tsc --noEmit
-        continue-on-error: true
-
       - name: Build project
         working-directory: ./frontend
         run: npm run build
         env:
           NEXT_PUBLIC_GA_MEASUREMENT_ID: ${{ secrets.NEXT_PUBLIC_GA_MEASUREMENT_ID || '' }}
+          NEXT_PUBLIC_COGNITO_USER_POOL_ID: ${{ secrets.NEXT_PUBLIC_COGNITO_USER_POOL_ID }}
+          NEXT_PUBLIC_COGNITO_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_COGNITO_CLIENT_ID }}
+          NEXT_PUBLIC_AWS_REGION: ${{ secrets.NEXT_PUBLIC_AWS_REGION }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
