@@ -43,7 +43,7 @@ The project uses GitHub Actions for automated testing, building, and deployment.
 
 **Triggers**:
 
-- Push to `main` branch
+- Push to `main` branch **only when files in `frontend/` change**
 - Manual trigger via `workflow_dispatch`
 
 **Process**:
