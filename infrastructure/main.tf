@@ -1,13 +1,6 @@
 terraform {
   required_version = ">= 1.5.0"
 
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-  }
-
   backend "s3" {
     bucket         = "mostage-studio-terraform-state"
     key            = "infrastructure/terraform.tfstate"
@@ -34,8 +27,8 @@ resource "aws_cognito_user_pool" "main" {
   name = var.user_pool_name
 
   # Sign-in options
+  # Users can sign in with email or username
   alias_attributes         = ["email", "preferred_username"]
-  username_attributes      = ["email"]
   auto_verified_attributes = ["email"]
 
   # Self-registration

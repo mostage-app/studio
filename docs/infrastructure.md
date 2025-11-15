@@ -238,7 +238,11 @@ terraform apply -var-file="terraform.tfvars"
 
 ## IAM Policy for GitHub Actions
 
-If you're deploying infrastructure via GitHub Actions, the IAM user needs specific permissions. Create a custom IAM policy with the following permissions:
+If you're deploying infrastructure via GitHub Actions, the IAM user needs specific permissions.
+
+### For Regular Deployments (After Setup)
+
+This policy is sufficient for regular Terraform deployments after the initial setup:
 
 ```json
 {
@@ -275,11 +279,7 @@ If you're deploying infrastructure via GitHub Actions, the IAM user needs specif
         "s3:GetBucketVersioning",
         "s3:PutBucketVersioning",
         "s3:GetEncryptionConfiguration",
-        "s3:PutEncryptionConfiguration",
-        "s3:PutBucketEncryption",
-        "s3:GetBucketEncryption",
-        "s3:PutPublicAccessBlock",
-        "s3:GetPublicAccessBlock"
+        "s3:PutEncryptionConfiguration"
       ],
       "Resource": [
         "arn:aws:s3:::mostage-studio-terraform-state",
@@ -301,6 +301,93 @@ If you're deploying infrastructure via GitHub Actions, the IAM user needs specif
   ]
 }
 ```
+
+### For Initial Setup (First Time Only)
+
+If you need to run the setup script (`setup-backend.sh`) via GitHub Actions, you need additional permissions:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "CognitoUserPoolManagement",
+      "Effect": "Allow",
+      "Action": [
+        "cognito-idp:CreateUserPool",
+        "cognito-idp:UpdateUserPool",
+        "cognito-idp:DeleteUserPool",
+        "cognito-idp:DescribeUserPool",
+        "cognito-idp:ListUserPools",
+        "cognito-idp:CreateUserPoolClient",
+        "cognito-idp:UpdateUserPoolClient",
+        "cognito-idp:DeleteUserPoolClient",
+        "cognito-idp:DescribeUserPoolClient",
+        "cognito-idp:ListUserPoolClients",
+        "cognito-idp:TagResource",
+        "cognito-idp:UntagResource",
+        "cognito-idp:ListTagsForResource"
+      ],
+      "Resource": ["arn:aws:cognito-idp:*:*:userpool/*"]
+    },
+    {
+      "Sid": "S3ForTerraformState",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject",
+        "s3:ListBucket",
+        "s3:GetBucketVersioning",
+        "s3:PutBucketVersioning",
+        "s3:GetEncryptionConfiguration",
+        "s3:PutEncryptionConfiguration"
+      ],
+      "Resource": [
+        "arn:aws:s3:::mostage-studio-terraform-state",
+        "arn:aws:s3:::mostage-studio-terraform-state/*"
+      ]
+    },
+    {
+      "Sid": "S3ForSetup",
+      "Effect": "Allow",
+      "Action": [
+        "s3:CreateBucket",
+        "s3:HeadBucket",
+        "s3:PutBucketPublicAccessBlock"
+      ],
+      "Resource": [
+        "arn:aws:s3:::mostage-studio-terraform-state",
+        "arn:aws:s3:::mostage-studio-terraform-state/*"
+      ]
+    },
+    {
+      "Sid": "DynamoDBForTerraformLock",
+      "Effect": "Allow",
+      "Action": ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:DeleteItem"],
+      "Resource": ["arn:aws:dynamodb:*:*:table/terraform-state-lock"]
+    },
+    {
+      "Sid": "DynamoDBForSetup",
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:CreateTable",
+        "dynamodb:DescribeTable",
+        "dynamodb:TagResource"
+      ],
+      "Resource": ["arn:aws:dynamodb:*:*:table/terraform-state-lock"]
+    },
+    {
+      "Sid": "STSGetCallerIdentity",
+      "Effect": "Allow",
+      "Action": ["sts:GetCallerIdentity"],
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+**Note**: After the initial setup (S3 bucket and DynamoDB table are created), you can remove the "S3ForSetup" and "DynamoDBForSetup" statements and use the regular deployment policy.
 
 ### Steps to Apply IAM Policy
 
