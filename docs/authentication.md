@@ -114,7 +114,7 @@ Since Next.js requires environment variables at **build time** (not runtime), yo
 
 1. **Get Production Outputs**:
 
-   From GitHub Actions workflow logs (Deploy Infrastructure → Terraform Output step) or locally:
+   After deploying infrastructure manually, get the outputs:
 
    ```bash
    cd infrastructure
@@ -122,17 +122,15 @@ Since Next.js requires environment variables at **build time** (not runtime), yo
    terraform output
    ```
 
-2. **Add GitHub Secrets**:
+2. **Add/Update GitHub Secrets**:
 
-   Go to **Settings → Secrets and variables → Actions** and add:
+   Go to **Settings → Secrets and variables → Actions** and add or update:
 
-   - `NEXT_PUBLIC_COGNITO_USER_POOL_ID_PROD` - Production User Pool ID
-   - `NEXT_PUBLIC_COGNITO_CLIENT_ID_PROD` - Production Client ID
+   - `NEXT_PUBLIC_COGNITO_USER_POOL_ID` - Production User Pool ID (from `terraform output user_pool_id`)
+   - `NEXT_PUBLIC_COGNITO_CLIENT_ID` - Production Client ID (from `terraform output user_pool_client_id`)
    - `NEXT_PUBLIC_AWS_REGION` - AWS Region (e.g., `eu-central-1`)
 
-3. **Update Deploy Workflow**:
-
-   The `deploy-frontend.yml` workflow should include these environment variables in the build step (see [CI/CD Documentation](ci-cd.md)).
+   **Important**: After each infrastructure deployment, check if Cognito IDs changed and update these secrets accordingly.
 
 **Note**: GitHub Pages Environment Variables (in Pages settings) don't work for Next.js static export because Next.js needs variables at build time, not runtime. Use GitHub Secrets instead.
 

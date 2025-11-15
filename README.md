@@ -1,7 +1,7 @@
 # Mostage Studio
 
 ![CI Frontend](https://github.com/mostage-app/studio/actions/workflows/ci-frontend.yml/badge.svg)
-![CI Infrastructure](https://github.com/mostage-app/studio/actions/workflows/ci-infrastructure.yml/badge.svg)
+![CI Frontend](https://github.com/mostage-app/studio/actions/workflows/ci-frontend.yml/badge.svg)
 ![Next.js](https://img.shields.io/badge/Next.js-15.5.5-black?logo=next.js)
 ![React](https://img.shields.io/badge/React-19.1.0-blue?logo=react)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)

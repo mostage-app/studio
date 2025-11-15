@@ -4,12 +4,13 @@ This document describes the Continuous Integration and Continuous Deployment (CI
 
 ## Overview
 
-The project uses GitHub Actions for automated testing, building, and deployment. There are four main workflows:
+The project uses GitHub Actions for automated testing, building, and deployment. There are three main workflows:
 
 1. **CI Frontend Workflow** - Runs on frontend changes
 2. **CI Infrastructure Workflow** - Runs on infrastructure changes
 3. **Deploy Frontend Workflow** - Deploys frontend to GitHub Pages
-4. **Deploy Infrastructure Workflow** - Deploys AWS infrastructure (manual trigger)
+
+**Note**: Infrastructure deployment is performed **manually** using Terraform commands locally. See [Infrastructure Setup](infrastructure.md) for deployment instructions.
 
 ## Workflows
 
@@ -75,38 +76,6 @@ The project uses GitHub Actions for automated testing, building, and deployment.
 
 **Location**: `.github/workflows/deploy-frontend.yml`
 
-### 4. Deploy Infrastructure Workflow (`deploy-infrastructure.yml`)
-
-**Purpose**: Deploys AWS infrastructure using Terraform
-
-**Triggers**:
-
-- Manual trigger only (`workflow_dispatch`)
-
-**Inputs**:
-
-- `environment` (required) - Environment to deploy (`dev` or `prod`)
-- `region` (default: `eu-central-1`) - AWS region
-- `auto_approve` (default: `false`) - Auto approve Terraform apply
-
-**Process**:
-
-1. Configures AWS credentials
-2. Sets up Terraform
-3. Initializes Terraform
-4. Validates configuration
-5. Runs `terraform plan` to show changes
-6. Applies changes using `terraform apply`
-
-**Required Secrets**:
-
-- `AWS_ACCESS_KEY_ID` - AWS access key
-- `AWS_SECRET_ACCESS_KEY` - AWS secret key
-
-**Environment**: `aws-production` (with optional approval protection)
-
-**Location**: `.github/workflows/deploy-infrastructure.yml`
-
 ## GitHub Setup
 
 ### Required Secrets
@@ -120,20 +89,9 @@ Go to **Settings → Secrets and variables → Actions** and add:
 - `NEXT_PUBLIC_COGNITO_CLIENT_ID_PROD` (required) - Production Cognito Client ID
 - `NEXT_PUBLIC_AWS_REGION` (required) - AWS Region (e.g., `eu-central-1`)
 
-#### For Infrastructure Deploy
-
-- `AWS_ACCESS_KEY_ID` - AWS IAM user access key
-- `AWS_SECRET_ACCESS_KEY` - AWS IAM user secret key
-
 ### Required Environments
 
 Go to **Settings → Environments** and create:
-
-#### `aws-production`
-
-- Used for infrastructure deployment
-- Optional: Add required reviewers for approval
-- Optional: Restrict deployment branches
 
 #### `github-pages`
 
@@ -153,8 +111,7 @@ Go to **Settings → Pages**:
 .github/workflows/
 ├── ci-frontend.yml            # Frontend CI checks (lint, type-check, build)
 ├── ci-infrastructure.yml      # Infrastructure CI checks (validate, format)
-├── deploy-frontend.yml        # Frontend deployment to GitHub Pages
-└── deploy-infrastructure.yml  # Infrastructure deployment to AWS
+└── deploy-frontend.yml        # Frontend deployment to GitHub Pages
 ```
 
 ## Usage
@@ -181,15 +138,34 @@ To deploy manually:
 
 ### Deploying Infrastructure
 
-Infrastructure deployment is **manual only** for security:
+Infrastructure deployment is performed **manually** using Terraform commands locally. This ensures better control and security.
 
-1. Go to **Actions → Deploy Infrastructure**
-2. Click **Run workflow**
-3. Select `environment` (`dev` or `prod`)
-4. (Optional) Set `region` and `auto_approve`
-5. Click **Run workflow**
+**For Development**:
 
-**Note**: Each environment has separate state files and resources. Users in dev and prod are completely isolated.
+```bash
+cd infrastructure
+terraform init -backend-config=config/backend-dev.hcl
+terraform plan -var="environment=dev"
+terraform apply -var="environment=dev"
+```
+
+**For Production**:
+
+```bash
+cd infrastructure
+terraform init -backend-config=config/backend-prod.hcl
+terraform plan -var="environment=prod"
+terraform apply -var="environment=prod"
+```
+
+**Important**:
+
+- Always review the plan before applying
+- Each environment has separate state files and resources
+- Users in dev and prod are completely isolated
+- After deployment, update GitHub Secrets with new Cognito IDs if they changed
+
+See [Infrastructure Setup](infrastructure.md) for detailed instructions.
 
 ## Troubleshooting
 
@@ -234,21 +210,6 @@ Infrastructure deployment is **manual only** for security:
 - Check GitHub Pages settings
 - Verify Pages source is set to "GitHub Actions"
 
-### Deploy Infrastructure Fails
-
-**AWS credentials errors**:
-
-- Verify `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` are set
-- Check if IAM user has required permissions
-- See [Infrastructure Setup](infrastructure.md) for IAM policy details
-
-**Terraform errors**:
-
-- Check Terraform version: `terraform version` (should be >= 1.5.0)
-- Validate configuration: `cd infrastructure && terraform validate`
-- Check AWS credentials: `aws sts get-caller-identity`
-- Review Terraform plan output for detailed errors
-
 ## Best Practices
 
 1. **Always run CI locally** before pushing:
@@ -265,15 +226,15 @@ Infrastructure deployment is **manual only** for security:
    cd infrastructure && terraform plan -var="environment=dev"
    ```
 
-4. **Use environment protection** for production deployments
+4. **Always review Terraform plan** before applying changes
 
-5. **Rotate AWS credentials** periodically
+5. **Update GitHub Secrets** after infrastructure deployment if Cognito IDs changed
 
 ## Security Considerations
 
-- Infrastructure deployment is **manual only** to prevent accidental changes
-- AWS credentials are stored as GitHub Secrets (encrypted)
-- Environment protection can require approvals for production deployments
+- Infrastructure deployment is performed **manually** locally to prevent accidental changes
+- AWS credentials are configured locally using `aws configure`
+- Always review Terraform plan before applying changes
 - IAM user should have **minimal required permissions** (see [Infrastructure Setup](infrastructure.md))
 
 ## Related Documentation

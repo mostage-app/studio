@@ -142,9 +142,17 @@ infrastructure/
    terraform output user_pool_region
    ```
 
-4. **Update frontend environment variables** (for production):
+4. **Update GitHub Secrets** (for production):
 
-   **Important**: For production deployment on GitHub Pages, you need to configure environment variables in GitHub Secrets (not `.env.local`), because Next.js requires them at build time.
+   **Important**: After deploying infrastructure, you must update GitHub Secrets with the new Cognito IDs if they changed.
+
+   Go to **Settings → Secrets and variables → Actions** and update:
+
+   - `NEXT_PUBLIC_COGNITO_USER_POOL_ID` → New `user_pool_id` from Terraform output
+   - `NEXT_PUBLIC_COGNITO_CLIENT_ID` → New `user_pool_client_id` from Terraform output
+   - `NEXT_PUBLIC_AWS_REGION` → AWS region (e.g., `eu-central-1`)
+
+   **Note**: These secrets are used by the frontend deployment workflow. After updating, redeploy the frontend.
 
    See [Authentication Setup](authentication.md) for detailed instructions.
 
@@ -172,11 +180,26 @@ infrastructure/
    terraform plan -var="environment=prod"
    ```
 
+   **Important**: Always review the plan carefully. Check if any resources will be destroyed or recreated, as this may result in data loss (e.g., user accounts).
+
 2. **Apply changes**:
 
    ```bash
    terraform apply -var="environment=prod"
    ```
+
+3. **Get outputs and update GitHub Secrets**:
+
+   ```bash
+   terraform output
+   ```
+
+   If `user_pool_id` or `user_pool_client_id` changed:
+
+   - Go to **Settings → Secrets and variables → Actions**
+   - Update `NEXT_PUBLIC_COGNITO_USER_POOL_ID` with new `user_pool_id`
+   - Update `NEXT_PUBLIC_COGNITO_CLIENT_ID` with new `user_pool_client_id`
+   - Redeploy frontend after updating secrets
 
 ## Available Commands
 
