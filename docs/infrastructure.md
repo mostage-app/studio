@@ -328,6 +328,33 @@ terraform plan -var="environment=dev"
 
 ## Available Commands
 
+### Using Makefile (Recommended)
+
+For convenience, you can use the provided Makefile:
+
+```bash
+# Development
+make init-dev       # Initialize for development (first time)
+make switch-dev     # Switch to development environment
+make plan-dev       # Preview changes
+make apply-dev      # Apply changes
+make output         # Show outputs
+
+# Production
+make init-prod      # Initialize for production (first time)
+make switch-prod    # Switch to production environment
+make plan-prod      # Preview changes
+make apply-prod     # Apply changes
+
+# Utilities
+make validate       # Validate configuration
+make fmt            # Format files
+make fmt-check      # Check formatting
+make help           # Show all available commands
+```
+
+### Using Terraform Directly
+
 Standard Terraform commands:
 
 - `terraform init -backend-config=config/backend-dev.hcl` - Initialize Terraform for development (first time)

@@ -60,6 +60,23 @@ npm run dev
 
 ### Infrastructure (Terraform)
 
+#### Using Makefile (Recommended)
+
+```bash
+cd infrastructure
+
+# Initialize for development (first time)
+make init-dev
+
+# Plan changes
+make plan-dev
+
+# Apply changes
+make apply-dev
+```
+
+#### Using Terraform Directly
+
 ```bash
 cd infrastructure
 
@@ -106,8 +123,37 @@ See [Infrastructure Setup](docs/infrastructure.md) for detailed instructions.
 
 ### Infrastructure
 
+#### Using Makefile (Recommended)
+
+```bash
+cd infrastructure
+
+# Development
+make init-dev       # Initialize for development (first time)
+make switch-dev    # Switch to development environment
+make plan-dev       # Preview changes
+make apply-dev      # Apply changes
+
+# Production
+make init-prod      # Initialize for production (first time)
+make switch-prod    # Switch to production environment
+make plan-prod      # Preview changes
+make apply-prod     # Apply changes
+
+# Utilities
+make output         # Show outputs
+make validate       # Validate configuration
+make fmt            # Format files
+make fmt-check      # Check formatting
+make help           # Show all commands
+```
+
+#### Using Terraform Directly
+
 - `terraform init -backend-config=config/backend-dev.hcl` - Initialize Terraform for development
+- `terraform init -reconfigure -backend-config=config/backend-dev.hcl` - Switch to development
 - `terraform init -backend-config=config/backend-prod.hcl` - Initialize Terraform for production
+- `terraform init -reconfigure -backend-config=config/backend-prod.hcl` - Switch to production
 - `terraform plan -var="environment=dev"` - Preview changes for development
 - `terraform plan -var="environment=prod"` - Preview changes for production
 - `terraform apply -var="environment=dev"` - Deploy infrastructure for development
