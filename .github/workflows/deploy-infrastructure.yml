@@ -11,14 +11,6 @@ on:
         description: "AWS Region"
         required: false
         default: "eu-central-1"
-      user_pool_name:
-        description: "Cognito User Pool name"
-        required: false
-        default: "mostage-studio-users"
-      user_pool_client_name:
-        description: "Cognito User Pool Client name"
-        required: false
-        default: "mostage-studio-web-client"
 
 permissions:
   contents: read
@@ -63,13 +55,7 @@ jobs:
         working-directory: ./infrastructure
         run: npm run cdk:diff -- --stack ${{ github.event.inputs.stack_name || 'MostageStudioAuthStack' }}
         continue-on-error: true
-        env:
-          USER_POOL_NAME: ${{ github.event.inputs.user_pool_name || 'mostage-studio-users' }}
-          USER_POOL_CLIENT_NAME: ${{ github.event.inputs.user_pool_client_name || 'mostage-studio-web-client' }}
 
       - name: CDK Deploy
         working-directory: ./infrastructure
         run: npm run cdk:deploy -- --stack ${{ github.event.inputs.stack_name || 'MostageStudioAuthStack' }} --require-approval never
-        env:
-          USER_POOL_NAME: ${{ github.event.inputs.user_pool_name || 'mostage-studio-users' }}
-          USER_POOL_CLIENT_NAME: ${{ github.event.inputs.user_pool_client_name || 'mostage-studio-web-client' }}

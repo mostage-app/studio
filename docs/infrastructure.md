@@ -35,13 +35,9 @@ The infrastructure code is located in the `infrastructure/` directory.
    ```bash
    export CDK_DEFAULT_ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
    export CDK_DEFAULT_REGION=eu-central-1
-   export USER_POOL_NAME=mostage-studio-users  # Optional: Custom User Pool name
-   export USER_POOL_CLIENT_NAME=mostage-studio-web-client  # Optional: Custom Client name
    ```
 
 ## Deployment
-
-### Local Deployment
 
 1. **Synthesize CloudFormation template** (preview changes):
 
@@ -55,41 +51,19 @@ The infrastructure code is located in the `infrastructure/` directory.
    npm run cdk:deploy
    ```
 
-   **Optional**: Set custom User Pool names:
+3. **Get stack outputs** (User Pool ID and Client ID):
 
    ```bash
-   export USER_POOL_NAME=mostage-studio-users-prod
-   export USER_POOL_CLIENT_NAME=mostage-studio-web-client-prod
-   npm run cdk:deploy
+   aws cloudformation describe-stacks \
+     --stack-name MostageStudioAuthStack \
+     --query 'Stacks[0].Outputs' \
+     --output table
    ```
 
-### GitHub Actions Deployment
-
-When deploying via GitHub Actions, you can customize the User Pool names in the workflow inputs:
-
-1. Go to **Actions → Deploy Infrastructure**
-2. Click **Run workflow**
-3. Set custom values:
-   - `user_pool_name`: e.g., `mostage-studio-users-prod`
-   - `user_pool_client_name`: e.g., `mostage-studio-web-client-prod`
-4. Click **Run workflow**
-
-## Getting Stack Outputs
-
-After deployment, get the stack outputs (User Pool ID and Client ID):
-
-```bash
-aws cloudformation describe-stacks \
-  --stack-name MostageStudioAuthStack \
-  --query 'Stacks[0].Outputs' \
-  --output table
-```
-
-**Update frontend environment variables** with the output values:
-
-- `UserPoolId` → `NEXT_PUBLIC_COGNITO_USER_POOL_ID`
-- `UserPoolClientId` → `NEXT_PUBLIC_COGNITO_CLIENT_ID`
-- `UserPoolRegion` → `NEXT_PUBLIC_AWS_REGION`
+4. **Update frontend environment variables** with the output values:
+   - `UserPoolId` → `NEXT_PUBLIC_COGNITO_USER_POOL_ID`
+   - `UserPoolClientId` → `NEXT_PUBLIC_COGNITO_CLIENT_ID`
+   - `UserPoolRegion` → `NEXT_PUBLIC_AWS_REGION`
 
 ## Available Commands
 
