@@ -482,6 +482,9 @@ export class CognitoService {
     if (error.includes("UsernameExistsException")) {
       return "Username already exists. Please choose a different username.";
     }
+    if (error.includes("AliasExistsException")) {
+      return "An account with this email already exists. Please use a different email or sign in.";
+    }
 
     // Password-related errors
     if (error.includes("InvalidPasswordException")) {
