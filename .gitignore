@@ -19,6 +19,14 @@ frontend/next-env.d.ts
 
 # Infrastructure
 infrastructure/cdk.out/
+infrastructure/dist/
+infrastructure/.terraform/
+infrastructure/.terraform.lock.hcl
+infrastructure/*.tfstate
+infrastructure/*.tfstate.*
+infrastructure/.terraform.lock.hcl
+infrastructure/terraform.tfvars
+infrastructure/backend.hcl
 
 
 # Shared build

@@ -28,8 +28,8 @@ A presentation framework based on Markdown and HTML. Available as NPM package, C
 
 ### Infrastructure
 
-- **Infrastructure**: AWS CDK 2.150.0
-- **Language**: TypeScript 5
+- **Infrastructure**: Terraform 1.5.0
+- **Language**: HCL (HashiCorp Configuration Language)
 - **Services**: AWS Cognito (User Pool & User Pool Client)
 
 ## Quick Start
@@ -42,12 +42,13 @@ npm install
 npm run dev
 ```
 
-### Infrastructure (AWS CDK)
+### Infrastructure (Terraform)
 
 ```bash
 cd infrastructure
-npm install
-npm run cdk:deploy
+terraform init
+terraform plan
+terraform apply
 ```
 
 See [Infrastructure Setup](docs/infrastructure.md) for detailed instructions.
@@ -83,11 +84,12 @@ See [Infrastructure Setup](docs/infrastructure.md) for detailed instructions.
 
 ### Infrastructure
 
-- `npm run build` - Compile TypeScript
-- `npm run cdk:synth` - Synthesize CloudFormation template
-- `npm run cdk:deploy` - Deploy stack to AWS
-- `npm run cdk:diff` - Compare deployed stack with current state
-- `npm run cdk:destroy` - Destroy the stack (⚠️ removes all resources)
+- `terraform init` - Initialize Terraform
+- `terraform plan` - Preview changes
+- `terraform apply` - Deploy infrastructure
+- `terraform destroy` - Destroy infrastructure (⚠️ removes all resources)
+- `terraform validate` - Validate configuration
+- `terraform fmt` - Format configuration files
 
 ## Contributing
 

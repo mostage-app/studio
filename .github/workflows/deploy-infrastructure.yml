@@ -3,14 +3,15 @@ name: Deploy Infrastructure
 on:
   workflow_dispatch:
     inputs:
-      stack_name:
-        description: "Stack name to deploy"
-        required: false
-        default: "MostageStudioAuthStack"
       region:
         description: "AWS Region"
         required: false
         default: "eu-central-1"
+      auto_approve:
+        description: "Auto approve Terraform apply"
+        required: false
+        default: "false"
+        type: boolean
 
 permissions:
   contents: read
@@ -33,29 +34,35 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ github.event.inputs.region || 'eu-central-1' }}
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v5
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
         with:
-          node-version: "22"
-          cache: "npm"
-          cache-dependency-path: infrastructure/package-lock.json
+          terraform_version: "1.5.0"
 
-      - name: Install dependencies
+      - name: Terraform Init
         working-directory: ./infrastructure
-        run: npm ci
+        run: terraform init
 
-      - name: Install CDK CLI
-        run: npm install -g aws-cdk
-
-      - name: Build infrastructure
+      - name: Terraform Validate
         working-directory: ./infrastructure
-        run: npm run build
+        run: terraform validate
 
-      - name: CDK Diff
+      - name: Terraform Plan
         working-directory: ./infrastructure
-        run: npm run cdk:diff -- --stack ${{ github.event.inputs.stack_name || 'MostageStudioAuthStack' }}
+        run: terraform plan -out=tfplan
+        env:
+          TF_VAR_aws_region: ${{ github.event.inputs.region || 'eu-central-1' }}
+
+      - name: Terraform Apply
+        working-directory: ./infrastructure
+        run: |
+          if [ "${{ github.event.inputs.auto_approve }}" == "true" ] || [ "${{ github.event.inputs.auto_approve }}" == true ]; then
+            terraform apply -auto-approve tfplan
+          else
+            terraform apply tfplan
+          fi
+
+      - name: Terraform Output
+        working-directory: ./infrastructure
+        run: terraform output -json
         continue-on-error: true
-
-      - name: CDK Deploy
-        working-directory: ./infrastructure
-        run: npm run cdk:deploy -- --stack ${{ github.event.inputs.stack_name || 'MostageStudioAuthStack' }} --require-approval never

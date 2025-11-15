@@ -85,31 +85,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v5
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
         with:
-          node-version: "22"
-          cache: "npm"
-          cache-dependency-path: infrastructure/package-lock.json
+          terraform_version: "1.5.0"
 
-      - name: Install dependencies
+      - name: Terraform Init
         working-directory: ./infrastructure
-        run: npm ci
+        run: terraform init -backend=false
 
-      - name: Type check
+      - name: Terraform Validate
         working-directory: ./infrastructure
-        run: npx tsc --noEmit
+        run: terraform validate
 
-      - name: Build infrastructure
+      - name: Terraform Format Check
         working-directory: ./infrastructure
-        run: npm run build
-
-      - name: Install CDK CLI
-        run: npm install -g aws-cdk
-
-      - name: CDK Synth (dry-run)
-        working-directory: ./infrastructure
-        run: npm run cdk:synth
-        env:
-          CDK_DEFAULT_ACCOUNT: "123456789012" # Dummy account for synth validation
-          CDK_DEFAULT_REGION: "eu-central-1"
+        run: terraform fmt -check -recursive

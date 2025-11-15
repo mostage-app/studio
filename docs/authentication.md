@@ -6,9 +6,9 @@ This guide explains how to set up the authentication system using AWS Cognito.
 
 ## Prerequisites
 
-1. **Node.js**
+1. **Terraform** (>= 1.5.0)
 2. **AWS CLI**
-3. **AWS CDK CLI** (`npm install -g aws-cdk`)
+3. **AWS Account** with appropriate permissions
 
 ## Infrastructure Setup
 
@@ -16,13 +16,7 @@ For detailed infrastructure setup instructions, see [Infrastructure Setup](infra
 
 ### Quick Setup
 
-1. Install dependencies:
-
-```bash
-cd infrastructure
-npm install
-```
-
+1. Install Terraform:
 2. Configure AWS:
 
 ```bash
@@ -36,23 +30,31 @@ Enter the following information:
 - Default region (e.g., `eu-central-1`)
 - Default output format: `json`
 
-### 3. Bootstrap CDK (First Time Only)
+3. Initialize Terraform:
 
 ```bash
-cdk bootstrap
+cd infrastructure
+terraform init
 ```
 
-### 4. Deploy Stack
+4. Deploy Infrastructure:
 
 ```bash
-npm run cdk:deploy
+terraform plan
+terraform apply
 ```
 
-After successful deployment, the following outputs will be displayed:
+After successful deployment, get the outputs:
 
-- `UserPoolId`: User Pool identifier
-- `UserPoolClientId`: Client identifier
-- `UserPoolRegion`: AWS region
+```bash
+terraform output
+```
+
+The following outputs will be displayed:
+
+- `user_pool_id`: User Pool identifier
+- `user_pool_client_id`: Client identifier
+- `user_pool_region`: AWS region
 
 ## Frontend Setup
 
@@ -137,5 +139,5 @@ frontend/src/features/auth/
 ## Resources
 
 - [AWS Cognito Documentation](https://docs.aws.amazon.com/cognito/)
-- [AWS CDK Documentation](https://docs.aws.amazon.com/cdk/)
+- [Terraform AWS Provider Documentation](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
 - [AWS SDK for JavaScript](https://docs.aws.amazon.com/sdk-for-javascript/)

@@ -31,9 +31,9 @@ The project uses GitHub Actions for automated testing, building, and deployment.
 
 #### Infrastructure Checks
 
-- **Type Check**: Validates TypeScript types in infrastructure code
-- **Build**: Compiles TypeScript infrastructure code
-- **CDK Synth**: Validates CDK syntax and generates CloudFormation template (dry-run)
+- **Terraform Init**: Initializes Terraform (downloads providers)
+- **Terraform Validate**: Validates Terraform configuration
+- **Terraform Format Check**: Checks code formatting
 
 **Location**: `.github/workflows/ci.yml`
 
@@ -62,7 +62,7 @@ The project uses GitHub Actions for automated testing, building, and deployment.
 
 ### 3. Deploy Infrastructure Workflow (`deploy-infrastructure.yml`)
 
-**Purpose**: Deploys AWS infrastructure using CDK
+**Purpose**: Deploys AWS infrastructure using Terraform
 
 **Triggers**:
 
@@ -70,16 +70,17 @@ The project uses GitHub Actions for automated testing, building, and deployment.
 
 **Inputs**:
 
-- `stack_name` (default: `MostageStudioAuthStack`) - CloudFormation stack name
 - `region` (default: `eu-central-1`) - AWS region
+- `auto_approve` (default: `false`) - Auto approve Terraform apply
 
 **Process**:
 
 1. Configures AWS credentials
-2. Installs dependencies
-3. Builds infrastructure code
-4. Runs `cdk diff` to show changes
-5. Deploys stack using `cdk deploy`
+2. Sets up Terraform
+3. Initializes Terraform
+4. Validates configuration
+5. Runs `terraform plan` to show changes
+6. Applies changes using `terraform apply`
 
 **Required Secrets**:
 
@@ -206,11 +207,12 @@ Infrastructure deployment is **manual only** for security:
 - Check if IAM user has required permissions
 - See [Infrastructure Setup](infrastructure.md) for IAM policy details
 
-**CDK errors**:
+**Terraform errors**:
 
-- Check if CDK is bootstrapped: `cd infrastructure && cdk bootstrap`
-- Verify stack name matches: `MostageStudioAuthStack`
-- Check CloudFormation console for detailed errors
+- Check Terraform version: `terraform version` (should be >= 1.5.0)
+- Validate configuration: `cd infrastructure && terraform validate`
+- Check AWS credentials: `aws sts get-caller-identity`
+- Review Terraform plan output for detailed errors
 
 ## Best Practices
 
@@ -225,7 +227,7 @@ Infrastructure deployment is **manual only** for security:
 3. **Test infrastructure changes** locally before deploying:
 
    ```bash
-   cd infrastructure && npm run cdk:diff
+   cd infrastructure && terraform plan
    ```
 
 4. **Use environment protection** for production deployments

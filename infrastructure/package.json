@@ -2,23 +2,14 @@
   "name": "@mostage/studio-infrastructure",
   "version": "1.0.0",
   "private": true,
-  "description": "Infrastructure as Code for Mostage Studio using AWS CDK",
+  "description": "Infrastructure as Code for Mostage Studio using Terraform",
   "scripts": {
-    "build": "tsc",
-    "watch": "tsc --watch",
-    "cdk": "cdk",
-    "cdk:synth": "cdk synth",
-    "cdk:deploy": "cdk deploy",
-    "cdk:destroy": "cdk destroy",
-    "cdk:diff": "cdk diff"
-  },
-  "dependencies": {
-    "aws-cdk-lib": "^2.150.0",
-    "constructs": "^10.3.0",
-    "source-map-support": "^0.5.21"
-  },
-  "devDependencies": {
-    "@types/node": "^20.14.0",
-    "typescript": "^5.5.0"
+    "init": "terraform init",
+    "plan": "terraform plan",
+    "apply": "terraform apply",
+    "destroy": "terraform destroy",
+    "validate": "terraform validate",
+    "fmt": "terraform fmt -recursive",
+    "output": "terraform output"
   }
 }

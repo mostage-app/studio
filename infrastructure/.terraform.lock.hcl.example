@@ -1,0 +1,4 @@
+# This file is maintained automatically by "terraform init".
+# To update this file, run "terraform init" again.
+# This file is ignored by git. Copy this to .terraform.lock.hcl after first init.
+
