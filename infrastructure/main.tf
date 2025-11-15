@@ -39,8 +39,8 @@ module "ses" {
 module "cognito" {
   source = "./modules/cognito"
 
-  user_pool_name        = var.user_pool_name != "" ? var.user_pool_name : "${var.environment == "prod" ? "mostage-studio-users-prod" : "mostage-studio-users-dev"}"
-  user_pool_client_name = var.user_pool_client_name != "" ? var.user_pool_client_name : "${var.environment == "prod" ? "mostage-studio-web-client-prod" : "mostage-studio-web-client-dev"}"
+  user_pool_name        = var.user_pool_name != "" ? var.user_pool_name : (var.environment == "prod" ? "mostage-studio-users-prod" : "mostage-studio-users-dev")
+  user_pool_client_name = var.user_pool_client_name != "" ? var.user_pool_client_name : (var.environment == "prod" ? "mostage-studio-web-client-prod" : "mostage-studio-web-client-dev")
 
   # SES configuration (optional)
   ses_from_email        = var.ses_from_email

@@ -30,7 +30,7 @@ Enter the following information:
 - Default region (e.g., `eu-central-1`)
 - Default output format: `json`
 
-3. Initialize Terraform:
+3. **Initialize Terraform**:
 
    **For Development**:
 
@@ -46,7 +46,19 @@ Enter the following information:
    terraform init -backend-config=config/backend-prod.hcl
    ```
 
-4. Deploy Infrastructure:
+   **Switching between environments**:
+
+   If you've already initialized for one environment and want to switch to another, use `-reconfigure`:
+
+   ```bash
+   # Switch to dev
+   terraform init -reconfigure -backend-config=config/backend-dev.hcl
+
+   # Switch to prod
+   terraform init -reconfigure -backend-config=config/backend-prod.hcl
+   ```
+
+4. **Deploy Infrastructure**:
 
    **Development**:
 
@@ -104,7 +116,7 @@ Copy the values from Terraform outputs (for development environment):
 
 ```bash
 cd infrastructure
-terraform init -backend-config=config/backend-dev.hcl
+terraform init -reconfigure -backend-config=config/backend-dev.hcl
 terraform output
 ```
 
@@ -118,7 +130,7 @@ Since Next.js requires environment variables at **build time** (not runtime), yo
 
    ```bash
    cd infrastructure
-   terraform init -backend-config=config/backend-prod.hcl
+   terraform init -reconfigure -backend-config=config/backend-prod.hcl
    terraform output
    ```
 
@@ -170,7 +182,7 @@ npm run dev
 
 ### Authentication Module
 
-```
+```text
 frontend/src/features/auth/
 ├── components/
 │   ├── AuthModal.tsx          # Main authentication modal

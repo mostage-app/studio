@@ -8,7 +8,7 @@ The infrastructure code is located in the `infrastructure/` directory and is org
 
 The infrastructure follows a modular architecture:
 
-```
+```text
 infrastructure/
 ├── modules/                    # Reusable service modules
 │   └── cognito/               # Cognito authentication module
@@ -55,7 +55,23 @@ infrastructure/
    - Default region (e.g., `eu-central-1`)
    - Default output format: `json`
 
-3. **Initialize Terraform**:
+3. **Setup Terraform Backend** (First time only):
+
+   Run the setup script to create S3 bucket and DynamoDB table for remote state:
+
+   ```bash
+   cd infrastructure
+   ./scripts/setup-terraform-backend.sh
+   ```
+
+   This script creates:
+
+   - S3 bucket: `mostage-studio-terraform-state`
+   - DynamoDB table: `terraform-state-lock`
+
+   **Note**: This only needs to be run once. If the bucket and table already exist, the script will skip creation.
+
+4. **Initialize Terraform**:
 
    **Development**:
 
@@ -71,6 +87,18 @@ infrastructure/
    terraform init -backend-config=config/backend-prod.hcl
    ```
 
+   **Switching between environments**:
+
+   If you've already initialized for one environment and want to switch to another, use `-reconfigure`:
+
+   ```bash
+   # Switch to dev
+   terraform init -reconfigure -backend-config=config/backend-dev.hcl
+
+   # Switch to prod
+   terraform init -reconfigure -backend-config=config/backend-prod.hcl
+   ```
+
    This will download the required providers (AWS provider) and configure the appropriate state backend.
 
 ## Deployment
@@ -79,15 +107,29 @@ infrastructure/
 
 #### Development Environment
 
-1. **Review the plan**:
+**⚠️ Important**: Always use the correct backend config file. Using the wrong backend config will deploy to the wrong environment.
+
+1. **Initialize with correct backend config**:
+
+   ```bash
+   terraform init -backend-config=config/backend-dev.hcl
+   ```
+
+   **Note**: If you've already initialized for another environment (e.g., prod), use `-reconfigure`:
+
+   ```bash
+   terraform init -reconfigure -backend-config=config/backend-dev.hcl
+   ```
+
+2. **Review the plan**:
 
    ```bash
    terraform plan -var="environment=dev"
    ```
 
-   This shows what resources will be created for development.
+   **Verify**: Check that the plan shows `mostage-studio-users-dev` (not `prod`). This shows what resources will be created for development.
 
-2. **Apply the changes**:
+3. **Apply the changes**:
 
    ```bash
    terraform apply -var="environment=dev"
@@ -95,7 +137,7 @@ infrastructure/
 
    Type `yes` when prompted to confirm.
 
-3. **Get outputs** (User Pool ID and Client ID):
+4. **Get outputs** (User Pool ID and Client ID):
 
    ```bash
    terraform output
@@ -109,26 +151,42 @@ infrastructure/
    terraform output user_pool_region
    ```
 
-4. **Update frontend environment variables** (for development):
+5. **Update frontend environment variables** (for development):
    - `user_pool_id` → `NEXT_PUBLIC_COGNITO_USER_POOL_ID`
    - `user_pool_client_id` → `NEXT_PUBLIC_COGNITO_CLIENT_ID`
    - `user_pool_region` → `NEXT_PUBLIC_AWS_REGION`
 
 #### Production Environment
 
-1. **Review the plan**:
+**⚠️ Important**: Always use the correct backend config file. Using the wrong backend config will deploy to the wrong environment.
+
+1. **Initialize with correct backend config**:
+
+   ```bash
+   terraform init -backend-config=config/backend-prod.hcl
+   ```
+
+   **Note**: If you've already initialized for another environment (e.g., dev), use `-reconfigure`:
+
+   ```bash
+   terraform init -reconfigure -backend-config=config/backend-prod.hcl
+   ```
+
+2. **Review the plan**:
 
    ```bash
    terraform plan -var="environment=prod"
    ```
 
-2. **Apply the changes**:
+   **Verify**: Check that the plan shows `mostage-studio-users-prod` (not `dev`).
+
+3. **Apply the changes**:
 
    ```bash
    terraform apply -var="environment=prod"
    ```
 
-3. **Get outputs**:
+4. **Get outputs**:
 
    ```bash
    terraform output
@@ -142,7 +200,7 @@ infrastructure/
    terraform output user_pool_region
    ```
 
-4. **Update GitHub Secrets** (for production):
+5. **Update GitHub Secrets** (for production):
 
    **Important**: After deploying infrastructure, you must update GitHub Secrets with the new Cognito IDs if they changed.
 
@@ -160,13 +218,19 @@ infrastructure/
 
 #### Development
 
-1. **Plan changes**:
+1. **Initialize (if switching from prod)**:
+
+   ```bash
+   terraform init -reconfigure -backend-config=config/backend-dev.hcl
+   ```
+
+2. **Plan changes**:
 
    ```bash
    terraform plan -var="environment=dev"
    ```
 
-2. **Apply changes**:
+3. **Apply changes**:
 
    ```bash
    terraform apply -var="environment=dev"
@@ -174,7 +238,13 @@ infrastructure/
 
 #### Production
 
-1. **Plan changes**:
+1. **Initialize (if switching from dev)**:
+
+   ```bash
+   terraform init -reconfigure -backend-config=config/backend-prod.hcl
+   ```
+
+2. **Plan changes**:
 
    ```bash
    terraform plan -var="environment=prod"
@@ -182,13 +252,13 @@ infrastructure/
 
    **Important**: Always review the plan carefully. Check if any resources will be destroyed or recreated, as this may result in data loss (e.g., user accounts).
 
-2. **Apply changes**:
+3. **Apply changes**:
 
    ```bash
    terraform apply -var="environment=prod"
    ```
 
-3. **Get outputs and update GitHub Secrets**:
+4. **Get outputs and update GitHub Secrets**:
 
    ```bash
    terraform output
@@ -201,12 +271,69 @@ infrastructure/
    - Update `NEXT_PUBLIC_COGNITO_CLIENT_ID` with new `user_pool_client_id`
    - Redeploy frontend after updating secrets
 
+## Complete Workflow Example
+
+Here's a complete workflow for deploying both dev and prod environments in the same directory:
+
+### Deploy Dev Environment
+
+```bash
+cd infrastructure
+
+# Initialize for dev (first time)
+terraform init -backend-config=config/backend-dev.hcl
+
+# Plan changes
+terraform plan -var="environment=dev"
+
+# Apply changes
+terraform apply -var="environment=dev"
+
+# Get outputs
+terraform output
+```
+
+### Deploy Prod Environment (in the same directory)
+
+```bash
+# Switch to prod backend (use -reconfigure when switching)
+terraform init -reconfigure -backend-config=config/backend-prod.hcl
+
+# Plan changes
+terraform plan -var="environment=prod"
+
+# Apply changes
+terraform apply -var="environment=prod"
+
+# Get outputs
+terraform output
+```
+
+### Switch Back to Dev
+
+```bash
+# Switch back to dev backend
+terraform init -reconfigure -backend-config=config/backend-dev.hcl
+
+# Continue with dev operations
+terraform plan -var="environment=dev"
+```
+
+**Key Points**:
+
+- Use `terraform init -backend-config=...` for **first time** initialization
+- Use `terraform init -reconfigure -backend-config=...` when **switching** between environments
+- Always verify the plan shows the correct environment name (dev/prod) before applying
+- Dev and prod have completely separate state files and resources
+
 ## Available Commands
 
 Standard Terraform commands:
 
-- `terraform init -backend-config=config/backend-dev.hcl` - Initialize Terraform for development (download providers)
-- `terraform init -backend-config=config/backend-prod.hcl` - Initialize Terraform for production
+- `terraform init -backend-config=config/backend-dev.hcl` - Initialize Terraform for development (first time)
+- `terraform init -reconfigure -backend-config=config/backend-dev.hcl` - Switch to development environment
+- `terraform init -backend-config=config/backend-prod.hcl` - Initialize Terraform for production (first time)
+- `terraform init -reconfigure -backend-config=config/backend-prod.hcl` - Switch to production environment
 - `terraform plan -var="environment=dev"` - Preview changes for development
 - `terraform plan -var="environment=prod"` - Preview changes for production
 - `terraform apply -var="environment=dev"` - Apply changes for development
@@ -320,8 +447,16 @@ encrypt        = true
 
 **Note**: Use the appropriate backend config file when initializing Terraform:
 
-- Development: `terraform init -backend-config=config/backend-dev.hcl`
-- Production: `terraform init -backend-config=config/backend-prod.hcl`
+- **First time**:
+
+  - Development: `terraform init -backend-config=config/backend-dev.hcl`
+  - Production: `terraform init -backend-config=config/backend-prod.hcl`
+
+- **Switching between environments** (after first initialization):
+  - Development: `terraform init -reconfigure -backend-config=config/backend-dev.hcl`
+  - Production: `terraform init -reconfigure -backend-config=config/backend-prod.hcl`
+
+The `-reconfigure` flag tells Terraform to reconfigure the backend without migrating state, which is safe when switching between dev and prod since they use separate state files.
 
 ## Modules
 
@@ -446,6 +581,7 @@ To use SES with Cognito:
    - Use verified domain email addresses (e.g., `noreply@yourdomain.com`)
 
 3. **Configure Cognito to use SES**:
+
    ```bash
    terraform apply \
      -var="create_ses_resources=true" \
