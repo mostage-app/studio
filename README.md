@@ -42,6 +42,7 @@ A presentation framework based on Markdown and HTML. Available as NPM package, C
 - **Cloud Provider**: AWS
 - **Services**:
   - AWS Cognito (User Pool & User Pool Client) - Authentication
+  - AWS SES - Email delivery (optional)
   - AWS S3 - Terraform state storage
   - AWS DynamoDB - Terraform state locking
 - **State Management**: Remote state (S3 backend with DynamoDB locking)

@@ -12,11 +12,11 @@ resource "aws_cognito_user_pool" "main" {
     allow_admin_create_user_only = false
   }
 
-  # Email verification
+  # Email verification with HTML template
   verification_message_template {
     default_email_option = "CONFIRM_WITH_CODE"
-    email_subject        = "Your verification code"
-    email_message        = "Your verification code is {####}"
+    email_subject        = "Verify your Mostage Studio account"
+    email_message        = file("${path.module}/templates/verification.html")
   }
 
   # Password policy
@@ -34,6 +34,26 @@ resource "aws_cognito_user_pool" "main" {
     recovery_mechanism {
       name     = "verified_email"
       priority = 1
+    }
+  }
+
+  # Email configuration
+  # Use SES if from_email is provided, otherwise use Cognito default
+  dynamic "email_configuration" {
+    for_each = var.ses_from_email != "" ? [1] : []
+    content {
+      email_sending_account  = "DEVELOPER"
+      from_email_address     = var.ses_from_email
+      reply_to_email_address = var.ses_reply_to_email != "" ? var.ses_reply_to_email : null
+      configuration_set      = var.ses_configuration_set != "" ? var.ses_configuration_set : null
+      source_arn             = null
+    }
+  }
+
+  dynamic "email_configuration" {
+    for_each = var.ses_from_email == "" ? [1] : []
+    content {
+      email_sending_account = "COGNITO_DEFAULT"
     }
   }
 
@@ -64,6 +84,8 @@ resource "aws_cognito_user_pool" "main" {
 
   lifecycle {
     prevent_destroy = false
+    # Ignore schema changes as they cannot be modified after creation
+    ignore_changes = [schema]
   }
 
   tags = var.tags

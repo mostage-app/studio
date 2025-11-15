@@ -308,6 +308,7 @@ The Cognito module provides authentication services:
 
 - **Cognito User Pool**: Manages user authentication
 - **Cognito User Pool Client**: Web application client for frontend
+- **HTML Email Templates**: Professional email templates for verification and password reset
 
 #### Module Usage
 
@@ -317,6 +318,12 @@ module "cognito" {
 
   user_pool_name         = "my-user-pool"
   user_pool_client_name  = "my-web-client"
+
+  # Optional: SES configuration for custom email templates
+  ses_from_email        = "noreply@example.com"
+  ses_reply_to_email    = "support@example.com"
+  ses_configuration_set = "my-config-set"
+
   tags = {
     Environment = "production"
   }
@@ -334,6 +341,22 @@ module "cognito" {
 - `user_pool_arn` - User Pool ARN
 - `user_pool_client_id` - Client ID
 
+#### Email Templates
+
+The module includes professional HTML email templates:
+
+- **Verification Email** (`templates/verification.html`): Sent during user registration
+- **Password Reset Email** (`templates/password-reset.html`): Sent when users request password reset
+
+Templates are automatically loaded and used by Cognito. The templates include:
+
+- Professional HTML design
+- Responsive layout
+- Branding consistent with Mostage Studio
+- Clear call-to-action with verification codes
+
+**Note**: For production use, configure AWS SES to send emails from a verified domain. See [SES Module](#ses-module-modulesses) below.
+
 #### Environment Resources
 
 Each environment (dev/prod) has its own separate resources:
@@ -346,6 +369,72 @@ Each environment (dev/prod) has its own separate resources:
   - Production: `mostage-studio-web-client-prod`
 
 **Important**: Users in development and production are completely isolated. Changes in one environment do not affect the other.
+
+### SES Module (`modules/ses/`)
+
+The SES module provides email infrastructure for Cognito:
+
+- **SES Email Identity**: Verified email address for sending emails
+- **SES Configuration Set**: Optional configuration set for email tracking and analytics
+
+#### Module Usage
+
+```hcl
+module "ses" {
+  source = "./modules/ses"
+
+  from_email_address       = "noreply@example.com"
+  create_configuration_set = true
+  configuration_set_name   = "cognito-email-config"
+  create_event_destination = false
+
+  tags = {
+    Service = "Email"
+  }
+}
+```
+
+#### Module Resources
+
+- `aws_ses_email_identity.main` - SES Email Identity
+- `aws_ses_configuration_set.main` - SES Configuration Set (optional)
+- `aws_ses_event_destination.main` - Event Destination for CloudWatch (optional)
+
+#### Module Outputs
+
+- `email_identity_arn` - ARN of the SES email identity
+- `email_identity_email` - Email address of the SES email identity
+- `configuration_set_name` - Name of the configuration set (if created)
+
+#### SES Setup
+
+To use SES with Cognito:
+
+1. **Verify Email Address** (for development):
+
+   ```bash
+   # Email will be sent to verify the address
+   terraform apply -var="create_ses_resources=true" -var="ses_from_email=noreply@example.com"
+   ```
+
+2. **Verify Domain** (for production - recommended):
+
+   - Verify your domain in AWS SES Console
+   - Use verified domain email addresses (e.g., `noreply@yourdomain.com`)
+
+3. **Configure Cognito to use SES**:
+   ```bash
+   terraform apply \
+     -var="create_ses_resources=true" \
+     -var="ses_from_email=noreply@yourdomain.com" \
+     -var="ses_reply_to_email=support@yourdomain.com"
+   ```
+
+**Important**:
+
+- In AWS SES sandbox mode, you can only send emails to verified addresses
+- To send to any email address, request production access in SES Console
+- SES email identity verification is required before Cognito can send emails
 
 ### Adding New Services
 
