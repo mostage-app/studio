@@ -5,8 +5,9 @@ import {
   PresentationConfig,
 } from "../types/presentation.types";
 import { useState, useRef, useEffect } from "react";
-import { Check } from "lucide-react";
+import { Check, ImagePlus } from "lucide-react";
 import { analytics } from "@/lib/utils/analytics";
+import { UnsplashImageModal } from "@/features/editor/components/UnsplashImageModal";
 
 // Indicator component for showing changed tabs
 const ChangedIndicator: React.FC = () => {
@@ -99,6 +100,10 @@ export const PresentationSettings: React.FC<PresentationToolbarProps> = ({
     analytics.trackPresentationTab(tabName);
   };
   const [inputValues, setInputValues] = useState<{ [key: string]: string }>({});
+  const [showUnsplashModal, setShowUnsplashModal] = useState(false);
+  const [unsplashTargetIndex, setUnsplashTargetIndex] = useState<number | null>(
+    null
+  );
 
   const handleThemeChange = (theme: typeof config.theme) => {
     onConfigChange({
@@ -1028,6 +1033,18 @@ export const PresentationSettings: React.FC<PresentationToolbarProps> = ({
                           className="w-full flex-1 text-xs border border-gray-300 dark:border-gray-600 rounded px-2 py-1 bg-white dark:bg-slate-700 text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           placeholder="https://example.com/image.jpg"
                         />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setUnsplashTargetIndex(index);
+                            setShowUnsplashModal(true);
+                          }}
+                          className="flex items-center gap-1 px-2 py-1 text-xs bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors touch-manipulation whitespace-nowrap"
+                          title="Search Images from Unsplash"
+                        >
+                          <ImagePlus className="w-3 h-3" />
+                          <span className="hidden sm:inline">Unsplash</span>
+                        </button>
                       </div>
 
                       <div className="flex items-center gap-2">
@@ -1339,7 +1356,7 @@ export const PresentationSettings: React.FC<PresentationToolbarProps> = ({
                       position: "center" as const,
                       repeat: "no-repeat" as const,
                       bgColor: "#000000",
-                      global: false,
+                      global: true,
                       allSlides: undefined,
                     };
                     onConfigChange({
@@ -1360,6 +1377,34 @@ export const PresentationSettings: React.FC<PresentationToolbarProps> = ({
         {/* Configuration Actions */}
         <div className="mt-3"></div>
       </div>
+
+      {/* Unsplash Image Modal */}
+      <UnsplashImageModal
+        isOpen={showUnsplashModal}
+        onClose={() => {
+          setShowUnsplashModal(false);
+          setUnsplashTargetIndex(null);
+        }}
+        mode="url-only"
+        onSelectUrl={(url) => {
+          if (unsplashTargetIndex !== null) {
+            const newBackgrounds = [...(config.background || [])];
+            if (newBackgrounds[unsplashTargetIndex]) {
+              newBackgrounds[unsplashTargetIndex] = {
+                ...newBackgrounds[unsplashTargetIndex],
+                imagePath: url,
+              };
+              onConfigChange({
+                ...config,
+                background: newBackgrounds,
+              });
+            }
+          }
+          setShowUnsplashModal(false);
+          setUnsplashTargetIndex(null);
+        }}
+        onInsertContent={() => {}} // Not used in url-only mode
+      />
     </div>
   );
 };

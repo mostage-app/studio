@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * TODO: Refactor - Split into UnsplashImageSelector (selection only) and ImageMarkdownConfigurator (settings).
+ * Modal should return photo object via onSelectImage callback, not handle markdown generation directly.
+ */
+
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import Image from "next/image";
 import { Modal } from "@/lib/components/ui/Modal";
@@ -15,12 +20,16 @@ interface UnsplashImageModalProps {
   isOpen: boolean;
   onClose: () => void;
   onInsertContent: (content: string) => void;
+  mode?: "markdown" | "url-only"; // markdown: inserts markdown with attribution, url-only: returns just the URL
+  onSelectUrl?: (url: string) => void; // For url-only mode
 }
 
 export function UnsplashImageModal({
   isOpen,
   onClose,
   onInsertContent,
+  mode = "markdown",
+  onSelectUrl,
 }: UnsplashImageModalProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [images, setImages] = useState<UnsplashPhoto[]>([]);
@@ -184,23 +193,38 @@ export function UnsplashImageModal({
       // Track download as required by Unsplash
       await trackUnsplashDownload(selectedImage.links.download_location);
 
-      // Generate markdown with attribution
-      const markdown = generateMarkdownImage(
-        selectedImage,
-        altText.trim(),
-        imageSize
-      );
+      if (mode === "url-only" && onSelectUrl) {
+        // Return just the URL for url-only mode
+        const imageUrl = selectedImage.urls[imageSize];
+        onSelectUrl(imageUrl);
+        onClose();
+      } else {
+        // Generate markdown with attribution for markdown mode
+        const markdown = generateMarkdownImage(
+          selectedImage,
+          altText.trim(),
+          imageSize
+        );
 
-      // Insert into editor
-      onInsertContent(markdown);
+        // Insert into editor
+        onInsertContent(markdown);
 
-      // Close modal
-      onClose();
+        // Close modal
+        onClose();
+      }
     } catch (err) {
       console.error("Failed to insert image:", err);
       setError("Failed to insert image. Please try again.");
     }
-  }, [selectedImage, altText, imageSize, onInsertContent, onClose]);
+  }, [
+    selectedImage,
+    altText,
+    imageSize,
+    mode,
+    onSelectUrl,
+    onInsertContent,
+    onClose,
+  ]);
 
   const headerContent = (
     <div className="flex items-center gap-2 sm:gap-3">
@@ -369,18 +393,20 @@ export function UnsplashImageModal({
                         <option value="full">Full (Original)</option>
                       </select>
                     </div>
-                    <div className="flex-1">
-                      <label className="block text-xs sm:text-xs font-medium text-foreground mb-1.5">
-                        Alt Text
-                      </label>
-                      <input
-                        type="text"
-                        value={altText}
-                        onChange={(e) => setAltText(e.target.value)}
-                        placeholder="Image description"
-                        className="w-full px-3 py-2.5 sm:px-2 sm:py-1.5 text-base sm:text-sm border border-input rounded bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                      />
-                    </div>
+                    {mode === "markdown" && (
+                      <div className="flex-1">
+                        <label className="block text-xs sm:text-xs font-medium text-foreground mb-1.5">
+                          Alt Text
+                        </label>
+                        <input
+                          type="text"
+                          value={altText}
+                          onChange={(e) => setAltText(e.target.value)}
+                          placeholder="Image description"
+                          className="w-full px-3 py-2.5 sm:px-2 sm:py-1.5 text-base sm:text-sm border border-input rounded bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                        />
+                      </div>
+                    )}
                     <div className="flex items-end">
                       <button
                         onClick={handleInsert}
