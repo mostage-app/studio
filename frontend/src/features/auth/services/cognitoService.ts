@@ -50,6 +50,54 @@ const createClient = (region: string): CognitoIdentityProviderClient => {
 
 export class CognitoService {
   private static client: CognitoIdentityProviderClient | null = null;
+
+  /**
+   * Split full name into given_name and family_name
+   * First part before first space → given_name
+   * Rest after first space → family_name
+   */
+  private static splitFullName(fullName: string): {
+    givenName: string;
+    familyName: string;
+  } {
+    const trimmed = fullName.trim();
+    const firstSpaceIndex = trimmed.indexOf(" ");
+
+    if (firstSpaceIndex === -1) {
+      // No space found, use full name as given_name
+      return {
+        givenName: trimmed,
+        familyName: "",
+      };
+    }
+
+    return {
+      givenName: trimmed.substring(0, firstSpaceIndex),
+      familyName: trimmed.substring(firstSpaceIndex + 1).trim(),
+    };
+  }
+
+  /**
+   * Combine given_name and family_name into full name
+   */
+  private static combineFullName(
+    givenName?: string,
+    familyName?: string
+  ): string {
+    const given = givenName?.trim() || "";
+    const family = familyName?.trim() || "";
+
+    if (!given && !family) {
+      return "";
+    }
+
+    if (!family) {
+      return given;
+    }
+
+    return `${given} ${family}`.trim();
+  }
+
   private static clientRegion: string | null = null;
 
   private static getClient(): CognitoIdentityProviderClient {
@@ -76,20 +124,33 @@ export class CognitoService {
       const { clientId } = getCognitoConfig();
       const client = this.getClient();
 
+      // Split full name into given_name and family_name
+      const { givenName, familyName } = this.splitFullName(credentials.name);
+
+      const userAttributes: Array<{ Name: string; Value: string }> = [
+        {
+          Name: "email",
+          Value: credentials.email,
+        },
+        {
+          Name: "given_name",
+          Value: givenName,
+        },
+      ];
+
+      // Add family_name only if it exists
+      if (familyName) {
+        userAttributes.push({
+          Name: "family_name",
+          Value: familyName,
+        });
+      }
+
       const command = new SignUpCommand({
         ClientId: clientId,
         Username: credentials.username,
         Password: credentials.password,
-        UserAttributes: [
-          {
-            Name: "email",
-            Value: credentials.email,
-          },
-          {
-            Name: "given_name",
-            Value: credentials.name,
-          },
-        ],
+        UserAttributes: userAttributes,
       });
 
       const response = await client.send(command);
@@ -262,14 +323,25 @@ export class CognitoService {
 
       const attributes = response.UserAttributes || [];
       const emailAttr = attributes.find((attr) => attr.Name === "email");
-      const nameAttr = attributes.find((attr) => attr.Name === "given_name");
+      const givenNameAttr = attributes.find(
+        (attr) => attr.Name === "given_name"
+      );
+      const familyNameAttr = attributes.find(
+        (attr) => attr.Name === "family_name"
+      );
       const subAttr = attributes.find((attr) => attr.Name === "sub");
+
+      // Combine given_name and family_name into full name
+      const fullName = this.combineFullName(
+        givenNameAttr?.Value,
+        familyNameAttr?.Value
+      );
 
       const user: User = {
         id: subAttr?.Value || response.Username,
         username: response.Username,
         email: emailAttr?.Value || "",
-        name: nameAttr?.Value,
+        name: fullName || undefined,
       };
 
       // Try to get createdAt from localStorage (stored during signup)
@@ -420,9 +492,18 @@ export class CognitoService {
       const userAttributes: Array<{ Name: string; Value: string }> = [];
 
       if (attributes.name !== undefined) {
+        // Split full name into given_name and family_name
+        const { givenName, familyName } = this.splitFullName(attributes.name);
+
         userAttributes.push({
           Name: "given_name",
-          Value: attributes.name,
+          Value: givenName,
+        });
+
+        // Add family_name (even if empty, to clear it if user removes last name)
+        userAttributes.push({
+          Name: "family_name",
+          Value: familyName,
         });
       }
 
@@ -458,7 +539,28 @@ export class CognitoService {
    */
   private static extractErrorMessage(error: unknown, fallback: string): string {
     if (error instanceof Error) {
+      // Check if it's an AWS SDK error with name property
+      const awsError = error as Error & { name?: string; $metadata?: unknown };
+      if (awsError.name) {
+        return `${awsError.name}: ${error.message}`;
+      }
       return error.message;
+    }
+    // Handle AWS SDK error objects
+    if (typeof error === "object" && error !== null) {
+      const errorObj = error as {
+        name?: string;
+        message?: string;
+        $fault?: string;
+      };
+      if (errorObj.name) {
+        return errorObj.message
+          ? `${errorObj.name}: ${errorObj.message}`
+          : errorObj.name;
+      }
+      if (errorObj.message) {
+        return errorObj.message;
+      }
     }
     return fallback;
   }

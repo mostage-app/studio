@@ -107,7 +107,9 @@ resource "aws_cognito_user_pool_client" "main" {
   ]
 
   # Prevent user existence errors
-  prevent_user_existence_errors = "ENABLED"
+  # LEGACY: Shows detailed error messages (including AliasExistsException)
+  # ENABLED: Hides user existence errors for security (but also hides email duplicate errors)
+  prevent_user_existence_errors = "LEGACY"
 
   # Token validity
   access_token_validity  = 60 # 1 hour
