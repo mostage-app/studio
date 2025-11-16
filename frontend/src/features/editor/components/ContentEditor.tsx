@@ -5,6 +5,7 @@ import { useState, useRef, useEffect } from "react";
 import { AIModal } from "./AIModal";
 import { SaveModal } from "./SaveModal";
 import { NewFileConfirmationModal } from "./NewFileConfirmationModal";
+import { UnsplashImageModal } from "./UnsplashImageModal";
 import { MarkdownToolbar } from "./MarkdownToolbar";
 import {
   findWordBoundaries,
@@ -30,6 +31,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
   const [showAIModal, setShowAIModal] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showNewFileConfirmation, setShowNewFileConfirmation] = useState(false);
+  const [showUnsplashModal, setShowUnsplashModal] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // ==================== Undo/Redo Management ====================
@@ -918,6 +920,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
           onOpenFile={handleFileOpen}
           onOpenSaveModal={() => setShowSaveModal(true)}
           onOpenAIModal={() => setShowAIModal(true)}
+          onOpenUnsplashModal={() => setShowUnsplashModal(true)}
           onOpenAuthModal={onOpenAuthModal || (() => {})}
           getSelectedText={getSelectedText}
           onUndo={undo}
@@ -1039,6 +1042,30 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
         isOpen={showNewFileConfirmation}
         onClose={() => setShowNewFileConfirmation(false)}
         onConfirm={handleNewFile}
+      />
+
+      {/* Unsplash Image Modal */}
+      <UnsplashImageModal
+        isOpen={showUnsplashModal}
+        onClose={() => setShowUnsplashModal(false)}
+        onInsertContent={(content) => {
+          // Insert content at cursor position
+          const textarea = textareaRef.current;
+          if (textarea) {
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const newValue =
+              value.substring(0, start) + content + value.substring(end);
+            executeCommand(newValue);
+
+            // Set cursor position after inserted content
+            setTimeout(() => {
+              const newCursorPos = start + content.length;
+              textarea.setSelectionRange(newCursorPos, newCursorPos);
+              textarea.focus();
+            }, 0);
+          }
+        }}
       />
     </div>
   );

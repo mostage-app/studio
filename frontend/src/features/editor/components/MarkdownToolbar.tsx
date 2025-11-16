@@ -11,6 +11,7 @@ import {
   Code as CodeIcon,
   ListOrdered as ListOrderedIcon,
   Image as ImageIcon,
+  ImagePlus as ImagePlusIcon,
   Table as TableIcon,
   Strikethrough as StrikethroughIcon,
   Minus as MinusIcon,
@@ -41,6 +42,7 @@ interface MarkdownToolbarProps {
   onOpenFile: () => void;
   onOpenSaveModal: () => void;
   onOpenAIModal: () => void;
+  onOpenUnsplashModal?: () => void;
   onOpenAuthModal: () => void;
   getSelectedText?: () => string;
   onUndo?: () => void;
@@ -74,6 +76,7 @@ export function MarkdownToolbar({
   onApplyParagraph,
   onApplyCodeBlock,
   onOpenAIModal,
+  onOpenUnsplashModal,
   onOpenAuthModal,
   getSelectedText,
   onUndo,
@@ -475,6 +478,12 @@ export function MarkdownToolbar({
         <ToolbarDivider />
 
         <ToolbarButton
+          onClick={onOpenUnsplashModal}
+          title="Search Images from Unsplash"
+          icon={<ImagePlusIcon className="w-4 h-4" />}
+        />
+
+        <ToolbarButton
           onClick={insertConfetti}
           title="Confetti"
           icon={<PartyPopperIcon className="w-4 h-4" />}
@@ -721,6 +730,22 @@ export function MarkdownToolbar({
                         onChange: (e) => setImageUrl(e.target.value),
                         placeholder: "https://example.com/image.jpg",
                       },
+                      ...(onOpenUnsplashModal
+                        ? [
+                            {
+                              label: "",
+                              value: "",
+                              onChange: () => {},
+                              placeholder: "",
+                              type: "action" as const,
+                              actionLabel: "Search Images from Unsplash",
+                              onActionClick: () => {
+                                closeImagePopup();
+                                onOpenUnsplashModal();
+                              },
+                            },
+                          ]
+                        : []),
                     ]}
                     isSubmitDisabled={!imageUrl.trim()}
                   />
