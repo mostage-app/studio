@@ -9,9 +9,7 @@
 
 Mostage Studio is a simple online tool for making presentations with Markdown and HTML. Some features include AI Creation, Live Polling System, and Audience Q&A.
 
-Powered by [Mostage JS](https://github.com/mostage-app/mostage), an open-source presentation framework.
-
-### Mostage JS
+### Powered by [Mostage JS](https://github.com/mostage-app/mostage)
 
 A presentation framework based on Markdown and HTML. Available as NPM package, CLI and Web Editor.
 
@@ -51,6 +49,7 @@ A presentation framework based on Markdown and HTML. Available as NPM package, C
   - [AWS Lambda](https://aws.amazon.com/lambda/) - Serverless functions
   - [AWS SES](https://aws.amazon.com/ses/) - Email delivery (optional)
   - [AWS Resource Groups](https://aws.amazon.com/resource-groups/) - Resource organization and management
+  - [AWS CloudWatch Alarms](https://aws.amazon.com/cloudwatch/) - Monitoring and alerting (coming soon)
 - **Environments**: Development & Production (separate stacks)
 - **Naming Convention**: `mostage-studio-<service>-<resource>-<environment>`
 
