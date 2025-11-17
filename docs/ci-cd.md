@@ -10,7 +10,7 @@ The project uses GitHub Actions for automated testing, building, and deployment.
 2. **CI Infrastructure Workflow** - Runs on infrastructure changes
 3. **Deploy Frontend Workflow** - Deploys frontend to GitHub Pages
 
-**Note**: Infrastructure deployment is performed **manually** using Terraform commands locally. See [Infrastructure Setup](infrastructure.md) for deployment instructions.
+**Note**: Infrastructure deployment is performed **manually** using AWS CDK commands locally. See [Infrastructure Setup](infrastructure.md) for deployment instructions.
 
 ## Workflows
 
@@ -42,8 +42,8 @@ The project uses GitHub Actions for automated testing, building, and deployment.
 
 **Jobs**:
 
-- **Validate**: Initializes Terraform and validates configuration
-- **Format Check**: Checks Terraform code formatting
+- **Build**: Compiles TypeScript to JavaScript
+- **Type Check**: Validates TypeScript types
 
 **Location**: `.github/workflows/ci-infrastructure.yml`
 
@@ -138,30 +138,32 @@ To deploy manually:
 
 ### Deploying Infrastructure
 
-Infrastructure deployment is performed **manually** using Terraform commands locally. This ensures better control and security.
+Infrastructure deployment is performed **manually** using AWS CDK commands locally. This ensures better control and security.
 
 **For Development**:
 
 ```bash
 cd infrastructure
-terraform init -backend-config=config/backend-dev.hcl
-terraform plan -var="environment=dev"
-terraform apply -var="environment=dev"
+npm install
+npm run build
+npm run diff:dev
+npm run deploy:dev
 ```
 
 **For Production**:
 
 ```bash
 cd infrastructure
-terraform init -backend-config=config/backend-prod.hcl
-terraform plan -var="environment=prod"
-terraform apply -var="environment=prod"
+npm install
+npm run build
+npm run diff:prod
+npm run deploy:prod
 ```
 
 **Important**:
 
-- Always review the plan before applying
-- Each environment has separate state files and resources
+- Always review the diff before deploying
+- Each environment has separate stacks and resources
 - Users in dev and prod are completely isolated
 - After deployment, update GitHub Secrets with new Cognito IDs if they changed
 
@@ -188,15 +190,15 @@ See [Infrastructure Setup](infrastructure.md) for detailed instructions.
 
 ### CI Infrastructure Workflow Fails
 
-**Terraform validation errors**:
+**CDK build errors**:
 
-- Check Terraform output in Actions logs
-- Validate locally: `cd infrastructure && terraform validate`
+- Check build output in Actions logs
+- Build locally: `cd infrastructure && npm run build`
 
-**Format check errors**:
+**TypeScript type errors**:
 
-- Check format output in Actions logs
-- Format locally: `cd infrastructure && terraform fmt -check -recursive`
+- Check type check output in Actions logs
+- Type check locally: `cd infrastructure && npx tsc --noEmit`
 
 ### Deploy Frontend Fails
 
@@ -223,10 +225,10 @@ See [Infrastructure Setup](infrastructure.md) for detailed instructions.
 3. **Test infrastructure changes** locally before deploying:
 
    ```bash
-   cd infrastructure && terraform plan -var="environment=dev"
+   cd infrastructure && npm run build && npm run diff:dev
    ```
 
-4. **Always review Terraform plan** before applying changes
+4. **Always review CDK diff** before deploying changes
 
 5. **Update GitHub Secrets** after infrastructure deployment if Cognito IDs changed
 
@@ -234,11 +236,11 @@ See [Infrastructure Setup](infrastructure.md) for detailed instructions.
 
 - Infrastructure deployment is performed **manually** locally to prevent accidental changes
 - AWS credentials are configured locally using `aws configure`
-- Always review Terraform plan before applying changes
+- Always review CDK diff before deploying changes
 - IAM user should have **minimal required permissions** (see [Infrastructure Setup](infrastructure.md))
 
 ## Related Documentation
 
-- [Infrastructure Setup](infrastructure.md) - AWS Terraform setup and IAM policies
+- [Infrastructure Setup](infrastructure.md) - AWS CDK setup and IAM policies
 - [Authentication Setup](authentication.md) - Cognito configuration
 - [Project Structure](structure.md) - Project architecture

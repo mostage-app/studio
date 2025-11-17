@@ -17,14 +17,12 @@ frontend/out/
 frontend/.vercel
 frontend/next-env.d.ts
 
-# Infrastructure
+# Infrastructure (AWS CDK)
 infrastructure/cdk.out/
 infrastructure/dist/
-infrastructure/.terraform/
-# Note: .terraform.lock.hcl should be committed (Terraform 0.14+)
-infrastructure/*.tfstate
-infrastructure/*.tfstate.*
-infrastructure/terraform.tfvars
+infrastructure/*.js
+infrastructure/*.d.ts
+infrastructure/node_modules/
 
 
 # Shared build

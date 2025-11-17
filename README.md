@@ -5,7 +5,7 @@
 ![Next.js](https://img.shields.io/badge/Next.js-15.5.5-black?logo=next.js)
 ![React](https://img.shields.io/badge/React-19.1.0-blue?logo=react)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)
-![Terraform](https://img.shields.io/badge/Terraform-≥1.5.0-purple?logo=terraform)
+![AWS CDK](https://img.shields.io/badge/AWS%20CDK-2.100.0-orange?logo=aws)
 
 Mostage Studio is a simple online tool for making presentations with Markdown and HTML. Some features include AI Creation, Live Polling System, and Audience Q&A.
 
@@ -35,18 +35,14 @@ A presentation framework based on Markdown and HTML. Available as NPM package, C
 
 ### Infrastructure
 
-- **Infrastructure as Code**: Terraform 1.5.0+
-- **Language**: HCL (HashiCorp Configuration Language)
-- **Scripting**: Bash scripts
+- **Infrastructure as Code**: AWS CDK 2
+- **Language**: TypeScript 5
 - **CI/CD**: GitHub Actions
 - **Cloud Provider**: AWS
 - **Services**:
   - AWS Cognito (User Pool & User Pool Client) - Authentication
   - AWS SES - Email delivery (optional)
-  - AWS S3 - Terraform state storage
-  - AWS DynamoDB - Terraform state locking
-- **State Management**: Remote state (S3 backend with DynamoDB locking)
-- **Environments**: Development & Production (separate resources)
+- **Environments**: Development & Production (separate stacks)
 
 ## Quick Start
 
@@ -58,36 +54,25 @@ npm install
 npm run dev
 ```
 
-### Infrastructure (Terraform)
-
-#### Using Makefile (Recommended)
+### Infrastructure (AWS CDK)
 
 ```bash
 cd infrastructure
+npm install
 
-# Initialize for development (first time)
-make init-dev
+# Bootstrap CDK (first time only)
+aws configure
+aws sts get-caller-identity --query Account --output text
+cdk bootstrap aws://ACCOUNT-ID/REGION
 
-# Plan changes
-make plan-dev
+# Preview changes for development
+npm run diff:dev
 
-# Apply changes
-make apply-dev
-```
+# Deploy development stack
+npm run deploy:dev
 
-#### Using Terraform Directly
-
-```bash
-cd infrastructure
-
-# Initialize for development
-terraform init -backend-config=config/backend-dev.hcl
-
-# Plan changes
-terraform plan -var="environment=dev"
-
-# Apply changes
-terraform apply -var="environment=dev"
+# After first deployment, configure .env in frontend with stack outputs
+# See docs/infrastructure.md#first-time-deployment for details
 ```
 
 See [Infrastructure Setup](docs/infrastructure.md) for detailed instructions.
@@ -98,7 +83,7 @@ See [Infrastructure Setup](docs/infrastructure.md) for detailed instructions.
 
 - [Project Structure](docs/structure.md) - Architecture and development guide
 - [Authentication Setup](docs/authentication.md) - AWS Cognito authentication setup guide
-- [Infrastructure Setup](docs/infrastructure.md) - AWS Terraform infrastructure setup and deployment
+- [Infrastructure Setup](docs/infrastructure.md) - AWS CDK infrastructure setup and deployment
 
 ### Development
 
@@ -111,61 +96,6 @@ See [Infrastructure Setup](docs/infrastructure.md) for detailed instructions.
 ### Reference
 
 - [FAQ](docs/faq.md) - Frequently asked questions and explanations
-
-## Available Scripts
-
-### Frontend
-
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run lint` - Run ESLint
-
-### Infrastructure
-
-#### Using Makefile (Recommended)
-
-```bash
-cd infrastructure
-
-# Development
-make init-dev       # Initialize for development (first time)
-make switch-dev    # Switch to development environment
-make plan-dev       # Preview changes
-make apply-dev      # Apply changes
-
-# Production
-make init-prod      # Initialize for production (first time)
-make switch-prod    # Switch to production environment
-make plan-prod      # Preview changes
-make apply-prod     # Apply changes
-
-# Utilities
-make output         # Show outputs
-make validate       # Validate configuration
-make fmt            # Format files
-make fmt-check      # Check formatting
-make help           # Show all commands
-```
-
-#### Using Terraform Directly
-
-- `terraform init -backend-config=config/backend-dev.hcl` - Initialize Terraform for development
-- `terraform init -reconfigure -backend-config=config/backend-dev.hcl` - Switch to development
-- `terraform init -backend-config=config/backend-prod.hcl` - Initialize Terraform for production
-- `terraform init -reconfigure -backend-config=config/backend-prod.hcl` - Switch to production
-- `terraform plan -var="environment=dev"` - Preview changes for development
-- `terraform plan -var="environment=prod"` - Preview changes for production
-- `terraform apply -var="environment=dev"` - Deploy infrastructure for development
-- `terraform apply -var="environment=prod"` - Deploy infrastructure for production
-- `terraform destroy -var="environment=dev"` - Destroy infrastructure for development (⚠️ removes all resources)
-- `terraform destroy -var="environment=prod"` - Destroy infrastructure for production (⚠️ removes all resources)
-- `terraform validate` - Validate configuration
-- `terraform fmt -recursive` - Format configuration files
-- `terraform fmt -check -recursive` - Check formatting
-- `terraform output` - Show outputs
-
-See [Infrastructure Setup](docs/infrastructure.md) for detailed instructions.
 
 ## Contributing
 

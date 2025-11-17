@@ -1,0 +1,28 @@
+{
+  "name": "@mostage/studio-infrastructure",
+  "version": "1.0.0",
+  "description": "AWS CDK infrastructure for Mostage Studio",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "cdk": "cdk",
+    "deploy:dev": "cdk deploy StudioStack-dev",
+    "deploy:prod": "cdk deploy StudioStack-prod",
+    "diff:dev": "cdk diff StudioStack-dev",
+    "diff:prod": "cdk diff StudioStack-prod",
+    "synth:dev": "cdk synth StudioStack-dev",
+    "synth:prod": "cdk synth StudioStack-prod",
+    "destroy:dev": "cdk destroy StudioStack-dev",
+    "destroy:prod": "cdk destroy StudioStack-prod"
+  },
+  "license": "GPL-3.0-or-later",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "source-map-support": "^0.5.21"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.100.0",
+    "constructs": "^10.0.0"
+  }
+}

@@ -6,9 +6,10 @@ This guide explains how to set up the authentication system using AWS Cognito.
 
 ## Prerequisites
 
-1. **Terraform** (>= 1.5.0)
-2. **AWS CLI**
-3. **AWS Account** with appropriate permissions
+1. **Node.js** (>= 18.x)
+2. **AWS CDK CLI** - Install via npm: `npm install -g aws-cdk`
+3. **AWS CLI**
+4. **AWS Account** with appropriate permissions
 
 ## Infrastructure Setup
 
@@ -16,75 +17,66 @@ For detailed infrastructure setup instructions, see [Infrastructure Setup](infra
 
 ### Quick Setup
 
-1. Install Terraform:
-2. Configure AWS:
-
-```bash
-aws configure
-```
-
-Enter the following information:
-
-- AWS Access Key ID
-- AWS Secret Access Key
-- Default region (e.g., `eu-central-1`)
-- Default output format: `json`
-
-3. **Initialize Terraform**:
-
-   **For Development**:
+1. **Install dependencies**:
 
    ```bash
    cd infrastructure
-   terraform init -backend-config=config/backend-dev.hcl
+   npm install
    ```
 
-   **For Production**:
+2. **Configure AWS**:
 
    ```bash
-   cd infrastructure
-   terraform init -backend-config=config/backend-prod.hcl
+   aws configure
    ```
 
-   **Switching between environments**:
+   Enter the following information:
 
-   If you've already initialized for one environment and want to switch to another, use `-reconfigure`:
+   - AWS Access Key ID
+   - AWS Secret Access Key
+   - Default region (e.g., `eu-central-1`)
+   - Default output format: `json`
+
+3. **Bootstrap CDK** (First time only):
 
    ```bash
-   # Switch to dev
-   terraform init -reconfigure -backend-config=config/backend-dev.hcl
-
-   # Switch to prod
-   terraform init -reconfigure -backend-config=config/backend-prod.hcl
+   cdk bootstrap aws://ACCOUNT-ID/REGION
    ```
+
+   Replace `ACCOUNT-ID` with your AWS account ID and `REGION` with your region (e.g., `eu-central-1`).
 
 4. **Deploy Infrastructure**:
 
    **Development**:
 
    ```bash
-   terraform plan -var="environment=dev"
-   terraform apply -var="environment=dev"
+   npm run build
+   npm run diff:dev
+   npm run deploy:dev
    ```
 
    **Production**:
 
    ```bash
-   terraform plan -var="environment=prod"
-   terraform apply -var="environment=prod"
+   npm run build
+   npm run diff:prod
+   npm run deploy:prod
    ```
 
    After successful deployment, get the outputs:
 
    ```bash
-   terraform output
+   aws cloudformation describe-stacks \
+     --stack-name StudioStack-dev \
+     --query 'Stacks[0].Outputs' \
+     --output table
    ```
 
    The following outputs will be displayed:
 
-   - `user_pool_id`: User Pool identifier
-   - `user_pool_client_id`: Client identifier
-   - `user_pool_region`: AWS region
+   - `UserPoolId`: User Pool identifier
+   - `UserPoolClientId`: Client identifier
+   - `UserPoolRegion`: AWS region
 
    **Important**: Development and production have separate User Pools:
 
@@ -102,47 +94,59 @@ npm install
 
 ### 2. Configure Environment Variables
 
+After deploying the infrastructure, you need to configure the frontend with the stack outputs.
+
 #### For Local Development
 
-Create a `.env.local` file in the `frontend` folder:
+1. **Get stack outputs** (if you haven't already):
+
+   ```bash
+   aws cloudformation describe-stacks \
+     --stack-name StudioStack-dev \
+     --query 'Stacks[0].Outputs' \
+     --output table
+   ```
+
+2. **Create `.env.local` file** in the `frontend/` directory:
+
+   ```env
+   NEXT_PUBLIC_COGNITO_USER_POOL_ID=eu-central-1_xxxxxxxxx
+   NEXT_PUBLIC_COGNITO_CLIENT_ID=xxxxxxxxxxxxxxxxxxxxxx
+   NEXT_PUBLIC_AWS_REGION=eu-central-1
+   ```
+
+3. **Copy values from stack outputs**:
+   - `UserPoolId` → `NEXT_PUBLIC_COGNITO_USER_POOL_ID`
+   - `UserPoolClientId` → `NEXT_PUBLIC_COGNITO_CLIENT_ID`
+   - `UserPoolRegion` → `NEXT_PUBLIC_AWS_REGION`
+
+**Example:**
+
+If the stack outputs show:
+
+```text
+UserPoolId: eu-central-1_AbCdEf123
+UserPoolClientId: 1a2b3c4d5e6f7g8h9i0j
+UserPoolRegion: eu-central-1
+```
+
+Then your `.env.local` should be:
 
 ```env
-NEXT_PUBLIC_COGNITO_USER_POOL_ID=your-user-pool-id
-NEXT_PUBLIC_COGNITO_CLIENT_ID=your-client-id
+NEXT_PUBLIC_COGNITO_USER_POOL_ID=eu-central-1_AbCdEf123
+NEXT_PUBLIC_COGNITO_CLIENT_ID=1a2b3c4d5e6f7g8h9i0j
 NEXT_PUBLIC_AWS_REGION=eu-central-1
 ```
 
-Copy the values from Terraform outputs (for development environment):
+#### For Production
 
-```bash
-cd infrastructure
-terraform init -reconfigure -backend-config=config/backend-dev.hcl
-terraform output
-```
+Go to your GitHub repository → **Settings → Secrets and variables → Actions** and add:
 
-#### For Production (GitHub Pages)
+- `NEXT_PUBLIC_COGNITO_USER_POOL_ID` → Value from `UserPoolId` output
+- `NEXT_PUBLIC_COGNITO_CLIENT_ID` → Value from `UserPoolClientId` output
+- `NEXT_PUBLIC_AWS_REGION` → Value from `UserPoolRegion` output
 
-Since Next.js requires environment variables at **build time** (not runtime), you need to configure them in GitHub Secrets:
-
-1. **Get Production Outputs**:
-
-   After deploying infrastructure manually, get the outputs:
-
-   ```bash
-   cd infrastructure
-   terraform init -reconfigure -backend-config=config/backend-prod.hcl
-   terraform output
-   ```
-
-2. **Add/Update GitHub Secrets**:
-
-   Go to **Settings → Secrets and variables → Actions** and add or update:
-
-   - `NEXT_PUBLIC_COGNITO_USER_POOL_ID` - Production User Pool ID (from `terraform output user_pool_id`)
-   - `NEXT_PUBLIC_COGNITO_CLIENT_ID` - Production Client ID (from `terraform output user_pool_client_id`)
-   - `NEXT_PUBLIC_AWS_REGION` - AWS Region (e.g., `eu-central-1`)
-
-   **Important**: After each infrastructure deployment, check if Cognito IDs changed and update these secrets accordingly.
+**Note**: For first-time setup, see [Infrastructure Setup - First Time Deployment](infrastructure.md#first-time-deployment).
 
 **Note**: GitHub Pages Environment Variables (in Pages settings) don't work for Next.js static export because Next.js needs variables at build time, not runtime. Use GitHub Secrets instead.
 
@@ -208,5 +212,6 @@ frontend/src/features/auth/
 ## Resources
 
 - [AWS Cognito Documentation](https://docs.aws.amazon.com/cognito/)
-- [Terraform AWS Provider Documentation](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
+- [AWS CDK Documentation](https://docs.aws.amazon.com/cdk/)
+- [AWS CDK API Reference](https://docs.aws.amazon.com/cdk/api/v2/)
 - [AWS SDK for JavaScript](https://docs.aws.amazon.com/sdk-for-javascript/)

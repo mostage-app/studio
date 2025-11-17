@@ -16,38 +16,46 @@ permissions:
   contents: read
 
 jobs:
-  validate:
-    name: Terraform Validate
+  build:
+    name: Build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
         with:
-          terraform_version: "1.5.0"
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: infrastructure/package-lock.json
 
-      - name: Terraform Init
+      - name: Install dependencies
         working-directory: ./infrastructure
-        run: terraform init -backend=false
+        run: npm ci
 
-      - name: Terraform Validate
+      - name: Build project
         working-directory: ./infrastructure
-        run: terraform validate
+        run: npm run build
 
-  format:
-    name: Terraform Format Check
+  lint:
+    name: Type Check
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
         with:
-          terraform_version: "1.5.0"
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: infrastructure/package-lock.json
 
-      - name: Terraform Format Check
+      - name: Install dependencies
         working-directory: ./infrastructure
-        run: terraform fmt -check -recursive
+        run: npm ci
+
+      - name: Type check
+        working-directory: ./infrastructure
+        run: npx tsc --noEmit
