@@ -11,7 +11,7 @@ Mostage Studio is a simple online tool for making presentations with Markdown an
 
 ### Powered by [Mostage JS](https://github.com/mostage-app/mostage)
 
-A presentation framework based on Markdown and HTML. Available as NPM package, CLI and Web Editor.
+Mostage JS is a presentation framework based on Markdown and HTML. Available as NPM package, CLI and Web Editor.
 
 - [mostage.app/develop](https://mostage.app/develop.html)
 - [github.com/mostage-app/mostage](https://github.com/mostage-app/mostage)
