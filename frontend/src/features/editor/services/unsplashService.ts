@@ -1,7 +1,18 @@
 /**
  * Unsplash API Service
- * Handles image search and download tracking through secure API routes
+ * Handles image search and download tracking through AWS API Gateway
  */
+
+// API Gateway URL from environment variable
+// Validated at module load time for early error detection
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+if (!API_URL) {
+  throw new Error(
+    "NEXT_PUBLIC_API_URL environment variable is not configured. " +
+      "Please set it in your .env.local file."
+  );
+}
 
 export interface UnsplashPhoto {
   id: string;
@@ -61,7 +72,7 @@ export async function searchUnsplashPhotos(
 ): Promise<UnsplashSearchResponse> {
   const { query, page = 1, perPage = 20 } = params;
 
-  const url = new URL("/api/unsplash/search", window.location.origin);
+  const url = new URL(`${API_URL}/unsplash/search`);
   url.searchParams.append("query", query);
   url.searchParams.append("page", page.toString());
   url.searchParams.append("per_page", perPage.toString());
@@ -86,7 +97,7 @@ export async function trackUnsplashDownload(
   downloadLocation: string
 ): Promise<void> {
   try {
-    const response = await fetch("/api/unsplash/download", {
+    const response = await fetch(`${API_URL}/unsplash/download`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

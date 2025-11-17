@@ -35,14 +35,17 @@ A presentation framework based on Markdown and HTML. Available as NPM package, C
 
 ### Infrastructure
 
-- **Infrastructure as Code**: AWS CDK 2
-- **Language**: TypeScript 5
 - **CI/CD**: GitHub Actions
 - **Cloud Provider**: AWS
+- **Infrastructure as Code**: AWS CDK 2
 - **Services**:
   - AWS Cognito (User Pool & User Pool Client) - Authentication
+  - AWS API Gateway - REST API for backend services
+  - AWS Lambda - Serverless functions
   - AWS SES - Email delivery (optional)
+  - AWS Resource Groups - Resource organization and management
 - **Environments**: Development & Production (separate stacks)
+- **Naming Convention**: `mostage-studio-<service>-<resource>-<environment>`
 
 ## Quick Start
 
@@ -64,6 +67,10 @@ npm install
 aws configure
 aws sts get-caller-identity --query Account --output text
 cdk bootstrap aws://ACCOUNT-ID/REGION
+
+# Configure environment variables (first time only)
+cp .env.local.example .env.dev.local
+# Edit .env.dev.local and add your Unsplash Access Key
 
 # Preview changes for development
 npm run diff:dev

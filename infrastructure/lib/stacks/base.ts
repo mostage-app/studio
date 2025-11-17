@@ -2,6 +2,9 @@ import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { CognitoConstruct } from "../services/cognito";
 import { SesConstruct } from "../services/ses";
+import { ApiGatewayConstruct } from "../services/api";
+import { UnsplashLambdaConstruct } from "../services/api/unsplash";
+import { ResourceGroupConstruct } from "../services/resource-group";
 
 /**
  * Configuration interface for Stack
@@ -16,6 +19,14 @@ export interface StackConfig {
     replyToEmail?: string;
     configurationSetName?: string;
   };
+  apiConfig?: {
+    unsplashAccessKey?: string; // Unsplash API Access Key
+    allowedOrigins?: string[]; // CORS allowed origins (e.g., ["https://studio.mostage.app"])
+    rateLimit?: {
+      requestsPerSecond?: number;
+      burstLimit?: number;
+    };
+  };
 }
 
 /**
@@ -27,6 +38,8 @@ export abstract class BaseStudioStack extends cdk.Stack {
   public readonly cognitoUserPoolArn: string;
   public readonly cognitoClientId: string;
   public readonly cognitoRegion: string;
+  public readonly apiUrl: string;
+  public readonly resourceGroupName: string;
 
   /**
    * Abstract method that must be implemented by subclasses
@@ -38,12 +51,27 @@ export abstract class BaseStudioStack extends cdk.Stack {
     super(scope, id, props);
 
     const config = this.getConfig();
-    const { environment, userPoolName, userPoolClientName, sesConfig } = config;
+    const {
+      environment,
+      userPoolName,
+      userPoolClientName,
+      sesConfig,
+      apiConfig,
+    } = config;
 
-    // Default tags
+    // Default tags for all resources
+    // Application tag is used for Resource Group organization
+    cdk.Tags.of(this).add("Application", "mostage-studio");
     cdk.Tags.of(this).add("Project", "Mostage Studio");
     cdk.Tags.of(this).add("ManagedBy", "AWS CDK");
     cdk.Tags.of(this).add("Environment", environment);
+
+    // Resource Group - organizes all resources for easy management
+    const resourceGroup = new ResourceGroupConstruct(this, "ResourceGroup", {
+      environment,
+      applicationName: "mostage-studio",
+    });
+    this.resourceGroupName = resourceGroup.resourceGroup.name || "";
 
     // SES Construct (optional)
     const sesConstruct = new SesConstruct(this, "Ses", {
@@ -64,34 +92,81 @@ export abstract class BaseStudioStack extends cdk.Stack {
       sesConfigurationSet: sesConstruct.configurationSetName,
     });
 
+    // API Gateway Construct
+    // For production: restrict CORS to specific domains
+    // For dev: allow all origins for local development
+    const allowedOrigins =
+      apiConfig?.allowedOrigins ||
+      (environment === "prod"
+        ? [] // Production must specify allowed origins
+        : ["*"]); // Dev allows all for local development
+
+    const apiGateway = new ApiGatewayConstruct(this, "ApiGateway", {
+      environment,
+      description: "API Gateway for Mostage Studio backend services",
+      corsOptions: {
+        allowOrigins: allowedOrigins,
+        allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allowHeaders: [
+          "Content-Type",
+          "X-Amz-Date",
+          "Authorization",
+          "X-Api-Key",
+        ],
+      },
+      rateLimit: apiConfig?.rateLimit,
+    });
+
+    // Unsplash Lambda Construct (if API key is provided)
+    if (apiConfig?.unsplashAccessKey) {
+      new UnsplashLambdaConstruct(this, "UnsplashLambda", {
+        environment,
+        apiGateway,
+        unsplashAccessKey: apiConfig.unsplashAccessKey,
+      });
+    }
+
     // Stack outputs
     this.cognitoUserPoolId = cognitoConstruct.userPool.ref;
     this.cognitoUserPoolArn = cognitoConstruct.userPool.attrArn;
     this.cognitoClientId = cognitoConstruct.userPoolClient.ref;
     this.cognitoRegion = props.env?.region || "eu-central-1";
+    this.apiUrl = apiGateway.apiUrl;
 
     new cdk.CfnOutput(this, "UserPoolId", {
       value: this.cognitoUserPoolId,
       description: "Cognito User Pool ID",
-      exportName: `${environment}-user-pool-id`,
+      exportName: `mostage-studio-${environment}-cognito-user-pool-id`,
     });
 
     new cdk.CfnOutput(this, "UserPoolArn", {
       value: this.cognitoUserPoolArn,
       description: "Cognito User Pool ARN",
-      exportName: `${environment}-user-pool-arn`,
+      exportName: `mostage-studio-${environment}-cognito-user-pool-arn`,
     });
 
     new cdk.CfnOutput(this, "UserPoolClientId", {
       value: this.cognitoClientId,
       description: "Cognito User Pool Client ID",
-      exportName: `${environment}-user-pool-client-id`,
+      exportName: `mostage-studio-${environment}-cognito-client-id`,
     });
 
     new cdk.CfnOutput(this, "UserPoolRegion", {
       value: this.cognitoRegion,
       description: "AWS Region for Cognito User Pool",
-      exportName: `${environment}-user-pool-region`,
+      exportName: `mostage-studio-${environment}-cognito-region`,
+    });
+
+    new cdk.CfnOutput(this, "ApiUrl", {
+      value: this.apiUrl,
+      description: "API Gateway URL",
+      exportName: `mostage-studio-${environment}-api-url`,
+    });
+
+    new cdk.CfnOutput(this, "ResourceGroupName", {
+      value: this.resourceGroupName,
+      description: "Resource Group name for organizing all resources",
+      exportName: `mostage-studio-${environment}-resource-group-name`,
     });
   }
 }

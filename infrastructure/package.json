@@ -5,19 +5,20 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
-    "cdk": "cdk",
-    "deploy:dev": "cdk deploy StudioStack-dev",
-    "deploy:prod": "cdk deploy StudioStack-prod",
-    "diff:dev": "cdk diff StudioStack-dev",
-    "diff:prod": "cdk diff StudioStack-prod",
-    "synth:dev": "cdk synth StudioStack-dev",
-    "synth:prod": "cdk synth StudioStack-prod",
-    "destroy:dev": "cdk destroy StudioStack-dev",
-    "destroy:prod": "cdk destroy StudioStack-prod"
+    "deploy:dev": "cdk deploy mostage-studio-stack-dev",
+    "deploy:prod": "cdk deploy mostage-studio-stack-prod",
+    "diff:dev": "cdk diff mostage-studio-stack-dev",
+    "diff:prod": "cdk diff mostage-studio-stack-prod",
+    "synth:dev": "cdk synth mostage-studio-stack-dev",
+    "synth:prod": "cdk synth mostage-studio-stack-prod",
+    "destroy:dev": "cdk destroy mostage-studio-stack-dev",
+    "destroy:prod": "cdk destroy mostage-studio-stack-prod"
   },
   "license": "GPL-3.0-or-later",
   "devDependencies": {
     "@types/node": "^20.0.0",
+    "@types/aws-lambda": "^8.10.130",
+    "dotenv": "^16.3.1",
     "typescript": "^5.0.0",
     "source-map-support": "^0.5.21"
   },

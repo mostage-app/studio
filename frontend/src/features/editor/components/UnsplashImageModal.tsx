@@ -258,7 +258,7 @@ export function UnsplashImageModal({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search for images (e.g., nature, technology, business)..."
+              placeholder="Search for images (e.g., nature, technology, business)"
               className="w-full pl-10 pr-3 py-2.5 sm:pl-10 sm:pr-2 sm:py-1.5 text-base sm:text-sm border border-input rounded bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               autoFocus
             />

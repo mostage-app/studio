@@ -20,6 +20,7 @@ export class SesConstruct extends Construct {
     super(scope, id);
 
     const {
+      environment,
       createResources,
       fromEmail = "",
       replyToEmail = "",
@@ -42,7 +43,9 @@ export class SesConstruct extends Construct {
           this,
           "ConfigurationSet",
           {
-            configurationSetName,
+            configurationSetName:
+              configurationSetName ||
+              `mostage-studio-ses-config-${environment}`,
           }
         );
       }

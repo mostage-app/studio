@@ -100,6 +100,7 @@ Create a `.env.local` file in the `frontend/` directory:
 NEXT_PUBLIC_COGNITO_USER_POOL_ID=eu-central-1_xxxxxxxxx
 NEXT_PUBLIC_COGNITO_CLIENT_ID=xxxxxxxxxxxxxxxxxxxxxx
 NEXT_PUBLIC_AWS_REGION=eu-central-1
+NEXT_PUBLIC_API_URL=https://xxxxxxxxxx.execute-api.eu-central-1.amazonaws.com/dev
 ```
 
 Copy the values from the stack outputs:
@@ -107,6 +108,7 @@ Copy the values from the stack outputs:
 - `UserPoolId` → `NEXT_PUBLIC_COGNITO_USER_POOL_ID`
 - `UserPoolClientId` → `NEXT_PUBLIC_COGNITO_CLIENT_ID`
 - `UserPoolRegion` → `NEXT_PUBLIC_AWS_REGION`
+- `ApiUrl` → `NEXT_PUBLIC_API_URL`
 
 **For Production:**
 
@@ -115,6 +117,7 @@ Go to your GitHub repository → **Settings → Secrets and variables → Action
 - `NEXT_PUBLIC_COGNITO_USER_POOL_ID` → Value from `UserPoolId` output
 - `NEXT_PUBLIC_COGNITO_CLIENT_ID` → Value from `UserPoolClientId` output
 - `NEXT_PUBLIC_AWS_REGION` → Value from `UserPoolRegion` output (e.g., `eu-central-1`)
+- `NEXT_PUBLIC_API_URL` → Value from `ApiUrl` output
 
 ### Development Environment
 
@@ -230,6 +233,141 @@ Each environment (dev/prod) has its own separate resources:
 
 **Important**: Users in development and production are completely isolated. Changes in one environment do not affect the other.
 
+### API Gateway Service (`lib/services/api/`)
+
+The API Gateway service provides a REST API for backend Lambda functions:
+
+- **API Gateway**: REST API endpoint for Lambda functions
+- **CORS Configuration**: Environment-specific CORS configuration
+- **Rate Limiting**: Automatic rate limiting for production
+- **Lambda Integration**: Automatic integration with Lambda functions
+
+#### API Endpoints
+
+- **`GET /unsplash/search`**: Search for Unsplash images
+- **`POST /unsplash/download`**: Track Unsplash image downloads
+
+#### Security Configuration
+
+**Development:**
+
+- CORS: Allows all origins (`*`) for local development
+- Rate Limit: 1000 requests/second, 2000 burst limit
+
+**Production:**
+
+- CORS: Restricted to specified domains only (configured via `ALLOWED_ORIGINS`)
+- Rate Limit: 100 requests/second, 200 burst limit
+- **⚠️ Important**: You must set `ALLOWED_ORIGINS` in `.env.prod.local` or the API will reject all CORS requests
+
+#### Configuration
+
+The API Gateway is automatically created when deploying the stack. To add new endpoints:
+
+1. Create a new Lambda construct in `lib/services/api/your-service/`
+2. Add the Lambda function to the API Gateway in your construct
+3. Deploy the stack
+
+#### API Gateway Outputs
+
+After deployment, the API Gateway URL is available as a stack output:
+
+- `ApiUrl`: API Gateway base URL (e.g., `https://xxxxxxxxxx.execute-api.eu-central-1.amazonaws.com/dev`)
+
+Add this URL to your frontend `.env.local` as `NEXT_PUBLIC_API_URL`.
+
+### Unsplash Lambda Service (`lib/services/api/unsplash/`)
+
+The Unsplash Lambda service provides image search functionality. The Lambda handlers are located in `backend/src/lambda/unsplash/`:
+
+- **Search Function**: Lambda function for searching Unsplash images (`backend/src/lambda/unsplash/search.ts`)
+- **Download Function**: Lambda function for tracking image downloads (`backend/src/lambda/unsplash/download.ts`)
+
+#### Backend Structure
+
+Lambda functions are organized in the `backend/` directory:
+
+```text
+backend/
+  src/
+    lambda/
+      unsplash/
+        search.ts      # Search handler
+        download.ts    # Download tracking handler
+```
+
+This structure allows for:
+
+- Clear separation between infrastructure (CDK) and business logic (Lambda handlers)
+- Easy addition of new Lambda functions for other services
+- Standard monorepo structure
+
+#### Unsplash Configuration
+
+The Unsplash Access Key is configured separately for development and production environments using `.env` files.
+
+**Security Note**: For production, you **must** configure `ALLOWED_ORIGINS` to restrict CORS to your frontend domain(s). The API Gateway will reject requests from unauthorized origins.
+
+**For Development:**
+
+1. Copy the example file:
+
+   ```bash
+   cd infrastructure
+   cp .env.local.example .env.dev.local
+   ```
+
+2. Edit `.env.dev.local` and add your development Unsplash Access Key:
+
+   ```env
+   UNSPLASH_ACCESS_KEY=your_dev_access_key_here
+   ```
+
+3. Deploy:
+
+   ```bash
+   npm run deploy:dev
+   ```
+
+**For Production:**
+
+1. Copy the example file:
+
+   ```bash
+   cd infrastructure
+   cp .env.prod.local.example .env.prod.local
+   ```
+
+2. Edit `.env.prod.local` and configure:
+
+   ```env
+   # Unsplash API Access Key
+   UNSPLASH_ACCESS_KEY=your_prod_access_key_here
+
+   # IMPORTANT: Restrict CORS to your frontend domain(s)
+   # Only requests from these domains will be allowed
+   # Example: https://studio.mostage.app,https://www.mostage.app
+   ALLOWED_ORIGINS=https://studio.mostage.app
+   ```
+
+   **⚠️ Security Warning**: If `ALLOWED_ORIGINS` is not set or empty, the API Gateway will reject all CORS requests in production. This is intentional for security.
+
+3. Deploy:
+
+   ```bash
+   npm run deploy:prod
+   ```
+
+**Important:**
+
+- `.env.dev.local` and `.env.prod.local` files are ignored by git (for security)
+- Each environment can have a different Unsplash Access Key
+- The API key is stored securely in Lambda environment variables after deployment
+- **Production Security**:
+  - CORS is restricted to specified domains only
+  - Rate limiting: 100 requests/second, 200 burst limit
+  - You can also use environment variables directly: `export UNSPLASH_ACCESS_KEY=your_key && npm run deploy:dev`
+
 ### SES Service (`lib/services/ses/`)
 
 The SES service provides email infrastructure for Cognito (optional):
@@ -335,6 +473,7 @@ Stack outputs are automatically exported and can be used in other stacks or appl
 - `UserPoolArn` - Cognito User Pool ARN
 - `UserPoolClientId` - Cognito User Pool Client ID
 - `UserPoolRegion` - AWS Region for Cognito User Pool
+- `ApiUrl` - API Gateway base URL
 
 ## Security Considerations
 

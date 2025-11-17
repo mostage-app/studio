@@ -71,6 +71,7 @@ The project uses GitHub Actions for automated testing, building, and deployment.
 - `NEXT_PUBLIC_COGNITO_USER_POOL_ID_PROD` (required) - Production Cognito User Pool ID
 - `NEXT_PUBLIC_COGNITO_CLIENT_ID_PROD` (required) - Production Cognito Client ID
 - `NEXT_PUBLIC_AWS_REGION` (required) - AWS Region (e.g., `eu-central-1`)
+- `NEXT_PUBLIC_API_URL` (required) - API Gateway URL for backend services
 
 **Note**: These environment variables must be set in GitHub Secrets (Settings → Secrets and variables → Actions) because Next.js requires them at build time for static export.
 
@@ -88,6 +89,7 @@ Go to **Settings → Secrets and variables → Actions** and add:
 - `NEXT_PUBLIC_COGNITO_USER_POOL_ID_PROD` (required) - Production Cognito User Pool ID
 - `NEXT_PUBLIC_COGNITO_CLIENT_ID_PROD` (required) - Production Cognito Client ID
 - `NEXT_PUBLIC_AWS_REGION` (required) - AWS Region (e.g., `eu-central-1`)
+- `NEXT_PUBLIC_API_URL` (required) - API Gateway URL for backend services
 
 ### Required Environments
 

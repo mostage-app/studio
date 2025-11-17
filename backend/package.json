@@ -1,0 +1,15 @@
+{
+  "name": "@mostage/studio-backend",
+  "version": "1.0.0",
+  "description": "Backend Lambda functions for Mostage Studio",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w"
+  },
+  "license": "GPL-3.0-or-later",
+  "dependencies": {},
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.130",
+    "typescript": "^5.0.0"
+  }
+}

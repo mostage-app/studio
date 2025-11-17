@@ -8,7 +8,7 @@ The Unsplash integration allows users to search and insert high-quality images d
 
 ## Features
 
-- **Secure API Integration**: API calls are made through Next.js API routes to keep the API key secure
+- **Secure API Integration**: API calls are made through AWS API Gateway and Lambda functions to keep the API key secure
 - **Image Search**: Real-time search with debouncing for optimal performance
 - **Image Selection**: Visual grid interface for browsing and selecting images
 - **Download Tracking**: Automatically tracks image usage as required by Unsplash
@@ -23,35 +23,47 @@ The Unsplash integration allows users to search and insert high-quality images d
 2. Create a new application
 3. Copy your Access Key
 
-### 2. Configure Environment Variable
+### 2. Configure Infrastructure
 
-1. Copy the example environment file:
+The Unsplash API key is configured in the CDK infrastructure:
 
-   ```bash
-   cp .env.example .env.local
-   ```
-
-2. Edit `.env.local` and add your Unsplash Access Key:
+1. Set the environment variable before deploying:
 
    ```bash
-   UNSPLASH_ACCESS_KEY=your_access_key_here
+   export UNSPLASH_ACCESS_KEY=your_access_key_here
    ```
 
-   Or add it directly to your `.env.local` file (or your deployment environment).
+2. Deploy the infrastructure (see [Infrastructure Setup](infrastructure.md)):
+
+   ```bash
+   cd infrastructure
+   npm run deploy:dev  # or deploy:prod
+   ```
+
+The API key will be stored securely in Lambda environment variables.
+
+### 3. Configure Frontend
+
+After deploying the infrastructure, get the API Gateway URL from stack outputs:
+
+```bash
+aws cloudformation describe-stacks \
+  --stack-name StudioStack-dev \
+  --query 'Stacks[0].Outputs' \
+  --output table
+```
+
+Add the API URL to your frontend `.env.local`:
+
+```env
+NEXT_PUBLIC_API_URL=https://xxxxxxxxxx.execute-api.eu-central-1.amazonaws.com/dev
+```
 
 **Important**:
 
 - Never commit the `.env.local` file to version control
-- The API key is stored server-side only (in API routes)
+- The API key is stored server-side only (in Lambda functions)
 - Frontend never has direct access to the API key
-
-### 3. Restart Development Server
-
-After adding the environment variable, restart your Next.js development server:
-
-```bash
-npm run dev
-```
 
 ## Usage
 
@@ -64,15 +76,17 @@ npm run dev
 
 ## Implementation Details
 
-### API Routes
+### Backend (AWS Lambda + API Gateway)
 
-- **`/api/unsplash/search`**: Handles image search requests
-- **`/api/unsplash/download`**: Tracks image downloads (required by Unsplash)
+- **`GET /unsplash/search`**: Lambda function handles image search requests
+- **`POST /unsplash/download`**: Lambda function tracks image downloads (required by Unsplash)
 
-### Components
+The Lambda functions are deployed via AWS CDK and integrated with API Gateway.
+
+### Frontend Components
 
 - **`UnsplashImageModal`**: Main modal component for image search and selection
-- **`unsplashService`**: Frontend service for API communication
+- **`unsplashService`**: Frontend service for API Gateway communication
 
 ### Attribution Format
 
@@ -131,16 +145,16 @@ The implementation includes:
 1. **API Key Security**:
 
    - API key is never exposed to the frontend
-   - All requests go through secure API routes
-   - Environment variables are not included in client bundle
+   - All requests go through AWS API Gateway and Lambda functions
+   - API key is stored in Lambda environment variables (server-side only)
 
 2. **CORS**:
 
-   - API routes handle CORS properly
+   - API Gateway handles CORS properly
    - No direct client-to-Unsplash requests
 
 3. **Error Handling**:
-   - Errors are handled gracefully
+   - Errors are handled gracefully in Lambda functions
    - User-friendly error messages
    - No sensitive information leaked in errors
 

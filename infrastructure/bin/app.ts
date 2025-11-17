@@ -7,7 +7,7 @@ import { StudioStackProd } from "../lib/stacks/prod";
 const app = new cdk.App();
 
 // Development Stack
-new StudioStackDev(app, "StudioStack-dev", {
+new StudioStackDev(app, "mostage-studio-stack-dev", {
   env: {
     account: process.env.CDK_DEFAULT_ACCOUNT,
     region: process.env.CDK_DEFAULT_REGION || "eu-central-1",
@@ -15,7 +15,7 @@ new StudioStackDev(app, "StudioStack-dev", {
 });
 
 // Production Stack
-new StudioStackProd(app, "StudioStack-prod", {
+new StudioStackProd(app, "mostage-studio-stack-prod", {
   env: {
     account: process.env.CDK_DEFAULT_ACCOUNT,
     region: process.env.CDK_DEFAULT_REGION || "eu-central-1",

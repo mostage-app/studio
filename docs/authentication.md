@@ -109,16 +109,21 @@ After deploying the infrastructure, you need to configure the frontend with the 
 
 2. **Create `.env.local` file** in the `frontend/` directory:
 
-   ```env
-   NEXT_PUBLIC_COGNITO_USER_POOL_ID=eu-central-1_xxxxxxxxx
-   NEXT_PUBLIC_COGNITO_CLIENT_ID=xxxxxxxxxxxxxxxxxxxxxx
-   NEXT_PUBLIC_AWS_REGION=eu-central-1
-   ```
+```env
+NEXT_PUBLIC_COGNITO_USER_POOL_ID=eu-central-1_xxxxxxxxx
+NEXT_PUBLIC_COGNITO_CLIENT_ID=xxxxxxxxxxxxxxxxxxxxxx
+NEXT_PUBLIC_AWS_REGION=eu-central-1
+NEXT_PUBLIC_API_URL=https://xxxxxxxxxx.execute-api.eu-central-1.amazonaws.com/dev
+```
 
 3. **Copy values from stack outputs**:
+
+   Copy the following values:
+
    - `UserPoolId` → `NEXT_PUBLIC_COGNITO_USER_POOL_ID`
    - `UserPoolClientId` → `NEXT_PUBLIC_COGNITO_CLIENT_ID`
    - `UserPoolRegion` → `NEXT_PUBLIC_AWS_REGION`
+   - `ApiUrl` → `NEXT_PUBLIC_API_URL`
 
 **Example:**
 
@@ -136,6 +141,7 @@ Then your `.env.local` should be:
 NEXT_PUBLIC_COGNITO_USER_POOL_ID=eu-central-1_AbCdEf123
 NEXT_PUBLIC_COGNITO_CLIENT_ID=1a2b3c4d5e6f7g8h9i0j
 NEXT_PUBLIC_AWS_REGION=eu-central-1
+NEXT_PUBLIC_API_URL=https://xxxxxxxxxx.execute-api.eu-central-1.amazonaws.com/dev
 ```
 
 #### For Production
