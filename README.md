@@ -11,7 +11,7 @@ Mostage Studio is a simple online tool for making presentations with Markdown an
 
 Powered by [Mostage JS](https://github.com/mostage-app/mostage), an open-source presentation framework.
 
-## Mostage JS
+### Mostage JS
 
 A presentation framework based on Markdown and HTML. Available as NPM package, CLI and Web Editor.
 
@@ -33,23 +33,30 @@ A presentation framework based on Markdown and HTML. Available as NPM package, C
 - **Markdown Editor**: Mostage-editor
 - **Onboarding Tour**: Mostage-intro
 
+### Backend
+
+- **Language**: TypeScript 5
+- **Runtime**: Node.js 20 (AWS Lambda)
+- **Architecture**: Serverless functions
+- **Deployment**: AWS Lambda via AWS CDK
+
 ### Infrastructure
 
 - **CI/CD**: GitHub Actions
-- **Cloud Provider**: AWS
-- **Infrastructure as Code**: AWS CDK 2
+- **Cloud Provider**: [AWS](https://aws.amazon.com/)
+- **Infrastructure as Code**: [AWS CDK 2](https://aws.amazon.com/cdk/)
 - **Services**:
-  - AWS Cognito (User Pool & User Pool Client) - Authentication
-  - AWS API Gateway - REST API for backend services
-  - AWS Lambda - Serverless functions
-  - AWS SES - Email delivery (optional)
-  - AWS Resource Groups - Resource organization and management
+  - [AWS Cognito](https://aws.amazon.com/cognito/) (User Pool & User Pool Client) - Authentication
+  - [AWS API Gateway](https://aws.amazon.com/api-gateway/) - REST API for backend services
+  - [AWS Lambda](https://aws.amazon.com/lambda/) - Serverless functions
+  - [AWS SES](https://aws.amazon.com/ses/) - Email delivery (optional)
+  - [AWS Resource Groups](https://aws.amazon.com/resource-groups/) - Resource organization and management
 - **Environments**: Development & Production (separate stacks)
 - **Naming Convention**: `mostage-studio-<service>-<resource>-<environment>`
 
 ## Quick Start
 
-### Frontend
+### Frontend Setup
 
 ```bash
 cd frontend
@@ -57,7 +64,7 @@ npm install
 npm run dev
 ```
 
-### Infrastructure (AWS CDK)
+### Infrastructure Setup (AWS CDK)
 
 ```bash
 cd infrastructure

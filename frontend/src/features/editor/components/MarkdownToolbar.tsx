@@ -477,11 +477,13 @@ export function MarkdownToolbar({
 
         <ToolbarDivider />
 
-        <ToolbarButton
-          onClick={onOpenUnsplashModal}
-          title="Search Images from Unsplash"
-          icon={<ImagePlusIcon className="w-4 h-4" />}
-        />
+        {onOpenUnsplashModal && (
+          <ToolbarButton
+            onClick={onOpenUnsplashModal}
+            title="Search Images from Unsplash"
+            icon={<ImagePlusIcon className="w-4 h-4" />}
+          />
+        )}
 
         <ToolbarButton
           onClick={insertConfetti}
