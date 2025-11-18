@@ -40,36 +40,18 @@ import {
   DEFAULT_PRESENTATION_CONFIG,
 } from "@/features/presentation/hooks/usePresentation";
 import { ResizableSplitPane } from "@/lib/components/layout/ResizableSplitPane";
-import { UIThemeToggle } from "@/lib/common/UIThemeToggle";
+import { AppHeader } from "@/lib/components/layout/AppHeader";
 import {
-  LayoutModeToggle,
   type LayoutMode,
   type LayoutModeConfig,
   LAYOUT_MODES,
 } from "@/lib/common/LayoutModeToggle";
-import { AuthModal } from "@/features/auth/components/AuthModal";
-import { AccountModal } from "@/features/auth/components/AccountModal";
-import { useAuthContext } from "@/features/auth/components/AuthProvider";
-import { AboutModal } from "@/features/app-info/components/AboutModal";
 import { ExportModal } from "@/features/export/components/ExportModal";
 import { ImportModal } from "@/features/import/components/ImportModal";
 import { NewSampleModal } from "@/features/editor/components/NewSampleModal";
-import { MobileWarning, OnboardingTour } from "@/lib/components/ui";
-import { tourSteps } from "@/lib/config/tour.config";
+import { MobileWarning } from "@/lib/components/ui";
 import React, { useState, useCallback, useEffect } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import logo from "@/assets/images/logo.svg";
-import {
-  FileText,
-  Download,
-  Upload,
-  User,
-  Info,
-  Plus,
-  LogOut,
-  UserCircle,
-} from "lucide-react";
+import { FileText } from "lucide-react";
 import {
   exportToHTML,
   exportToPDF,
@@ -105,13 +87,7 @@ export const MainLayout: React.FC<EditorProps> = ({
   editingSlide,
   updateEditingSlide,
 }) => {
-  // Auth
-  const { isAuthenticated, logout } = useAuthContext();
-
   // Modal states
-  const [showAboutModal, setShowAboutModal] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showAccountModal, setShowAccountModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showNewSampleModal, setShowNewSampleModal] = useState(false);
@@ -135,9 +111,6 @@ export const MainLayout: React.FC<EditorProps> = ({
   // Presentation configuration
   const { config: presentationConfig, updateConfig: setPresentationConfig } =
     usePresentation();
-
-  // Tour state
-  const [showTour, setShowTour] = useState(false);
 
   // Handle responsive layout
   useEffect(() => {
@@ -163,27 +136,9 @@ export const MainLayout: React.FC<EditorProps> = ({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Check if tour should be shown on first visit
-  useEffect(() => {
-    const hasSeenTour = localStorage.getItem("tour-completed-v1");
-    if (!hasSeenTour) {
-      // Delay tour start slightly to ensure DOM is ready
-      const timer = setTimeout(() => {
-        setShowTour(true);
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, []);
-
-  // Handle tour close
-  const handleTourClose = useCallback(() => {
-    setShowTour(false);
-    localStorage.setItem("tour-completed-v1", "true");
-  }, []);
-
-  // Handle starting tour from About modal
+  // Handle starting tour
   const handleStartTour = useCallback(() => {
-    setShowTour(true);
+    // Tour is handled by AppHeader
   }, []);
 
   // Event handlers for Editor pane (left on desktop, bottom on mobile)
@@ -273,24 +228,20 @@ export const MainLayout: React.FC<EditorProps> = ({
     [isMobile, applyLayoutMode]
   );
 
-  const handleOpenAuthModal = useCallback(() => {
-    setShowAuthModal(true);
+  const handleOpenNewSampleModal = useCallback(() => {
+    setShowNewSampleModal(true);
   }, []);
 
   const handleOpenExportModal = useCallback(() => {
     setShowExportModal(true);
   }, []);
 
-  const handleOpenAboutModal = useCallback(() => {
-    setShowAboutModal(true);
+  const handleOpenAuthModal = useCallback(() => {
+    // Auth modal is handled by AppHeader
   }, []);
 
   const handleOpenImportModal = useCallback(() => {
     setShowImportModal(true);
-  }, []);
-
-  const handleOpenNewSampleModal = useCallback(() => {
-    setShowNewSampleModal(true);
   }, []);
 
   const handleLoadSample = useCallback(async () => {
@@ -412,113 +363,11 @@ export const MainLayout: React.FC<EditorProps> = ({
 
   // Render helpers
   const renderToolbar = () => (
-    <div className="flex items-center justify-between p-3 border-b border-input bg-muted">
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-3">
-          <Image
-            src={logo}
-            alt="Mostage Logo"
-            width={32}
-            height={32}
-            className="w-8 h-8"
-            priority
-          />
-          <Link
-            href="https://mostage.app/"
-            className="text-sm sm:text-lg md:text-3xl font-bold text-foreground hover:text-primary transition-colors cursor-pointer"
-          >
-            Mostage
-          </Link>
-          <span className="px-6  text-xs sm:text-sm text-muted-foreground font-medium hidden sm:block">
-            Presentation Framework
-          </span>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleOpenNewSampleModal}
-            className="inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 text-sm font-medium text-primary-foreground bg-primary hover:bg-secondary border border-input rounded-md transition-colors"
-            title="New presentation"
-          >
-            <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">New</span>
-          </button>
-
-          <div className="hidden sm:block w-px h-6 bg-input mx-2" />
-
-          <button
-            onClick={handleOpenImportModal}
-            className="inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 text-sm font-medium text-foreground bg-background hover:bg-secondary border border-input rounded-md transition-colors"
-            title="Upload presentation"
-          >
-            <Upload className="w-4 h-4" />
-            <span className="hidden sm:inline">Upload</span>
-          </button>
-          <button
-            onClick={handleOpenExportModal}
-            className="inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 text-sm font-medium text-foreground bg-background hover:bg-secondary border border-input rounded-md transition-colors"
-            title="Download presentation"
-          >
-            <Download className="w-4 h-4" />
-            <span className="hidden sm:inline">Download</span>
-          </button>
-
-          <div className="hidden sm:block w-px h-6 bg-input mx-2" />
-
-          <LayoutModeToggle
-            layoutMode={layoutMode}
-            onLayoutModeChange={handleLayoutModeChange}
-            isMobile={isMobile}
-          />
-
-          <UIThemeToggle />
-
-          <div className="hidden sm:block w-px h-6 bg-input mx-2" />
-
-          <button
-            onClick={handleOpenAboutModal}
-            className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 text-sm font-medium text-card-foreground bg-card border border-input rounded-sm hover:bg-secondary cursor-pointer focus:outline-none transition-colors"
-            title="About Mostage App"
-          >
-            <Info className="w-4 h-4" />
-            <span className="hidden sm:inline">About</span>
-          </button>
-          {isAuthenticated ? (
-            <>
-              <button
-                onClick={() => setShowAccountModal(true)}
-                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 text-sm font-medium text-card-foreground bg-card border border-input rounded-sm hover:bg-secondary cursor-pointer focus:outline-none transition-colors"
-                title="Account"
-              >
-                <UserCircle className="w-4 h-4" />
-                <span className="hidden sm:inline">Account</span>
-              </button>
-              <button
-                onClick={async () => {
-                  await logout();
-                }}
-                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 text-sm font-medium text-card-foreground bg-card border border-input rounded-sm hover:bg-secondary cursor-pointer focus:outline-none transition-colors"
-                title="Sign Out"
-              >
-                <LogOut className="w-4 h-4" />
-                <span className="hidden sm:inline">Sign Out</span>
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={handleOpenAuthModal}
-              className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 text-sm font-medium text-card-foreground bg-card border border-input rounded-sm hover:bg-secondary cursor-pointer focus:outline-none transition-colors"
-              title="Sign In / Sign Up"
-            >
-              <User className="w-4 h-4" />
-              <span className="hidden sm:inline">Sign In</span>
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
+    <AppHeader
+      showLayoutToggle={true}
+      onStartTour={handleStartTour}
+      onOpenNewSampleModal={handleOpenNewSampleModal}
+    />
   );
 
   const renderSplitPaneContent = () => {
@@ -545,6 +394,9 @@ export const MainLayout: React.FC<EditorProps> = ({
               markdown={markdown}
               config={presentationConfig}
               editingSlide={editingSlide}
+              onOpenAuthModal={handleOpenAuthModal}
+              onOpenImportModal={handleOpenImportModal}
+              onOpenExportModal={handleOpenExportModal}
             />
           </div>
 
@@ -627,6 +479,9 @@ export const MainLayout: React.FC<EditorProps> = ({
                 markdown={markdown}
                 config={presentationConfig}
                 editingSlide={editingSlide}
+                onOpenAuthModal={handleOpenAuthModal}
+                onOpenImportModal={handleOpenImportModal}
+                onOpenExportModal={handleOpenExportModal}
               />
             </div>
 
@@ -668,6 +523,9 @@ export const MainLayout: React.FC<EditorProps> = ({
           markdown={markdown}
           config={presentationConfig}
           editingSlide={editingSlide}
+          onOpenAuthModal={handleOpenAuthModal}
+          onOpenImportModal={handleOpenImportModal}
+          onOpenExportModal={handleOpenExportModal}
         />
       </div>
     </div>
@@ -705,22 +563,6 @@ export const MainLayout: React.FC<EditorProps> = ({
       <div className="flex-1 overflow-hidden">{renderMainContent()}</div>
 
       {/* Modals */}
-      <AboutModal
-        isOpen={showAboutModal}
-        onClose={() => setShowAboutModal(false)}
-        onStartTour={handleStartTour}
-      />
-
-      <AuthModal
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-      />
-
-      <AccountModal
-        isOpen={showAccountModal}
-        onClose={() => setShowAccountModal(false)}
-      />
-
       <ExportModal
         isOpen={showExportModal}
         onClose={() => setShowExportModal(false)}
@@ -745,13 +587,6 @@ export const MainLayout: React.FC<EditorProps> = ({
 
       {/* Mobile Warning */}
       <MobileWarning />
-
-      {/* Onboarding Tour */}
-      <OnboardingTour
-        steps={tourSteps}
-        isActive={showTour}
-        onClose={handleTourClose}
-      />
     </div>
   );
 };

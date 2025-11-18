@@ -6,13 +6,17 @@ import {
 } from "../types/presentation.types";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Mostage } from "mostage";
-import { Maximize } from "lucide-react";
+import { Maximize, Upload, Download } from "lucide-react";
 import { analytics } from "@/lib/utils/analytics";
+import { PresentationUrlDisplay } from "./PresentationUrlDisplay";
 
 export const ContentPreview: React.FC<ContentPreviewProps> = ({
   markdown,
   config,
   editingSlide,
+  onOpenAuthModal,
+  onOpenImportModal,
+  onOpenExportModal,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const mostageRef = useRef<Mostage | null>(null);
@@ -237,11 +241,20 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
         <h3 className="text-sm font-semibold text-card-foreground">
           Live Preview
         </h3>
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 flex-1 justify-end">
+          {/* Presentation URL Display */}
+          <div className="hidden sm:flex items-center">
+            <PresentationUrlDisplay
+              presentationName="new"
+              isPublic={false}
+              onOpenAuthModal={onOpenAuthModal}
+            />
+          </div>
+
           {/* Slide Navigation Group */}
           {slideCount > 0 && (
             <div
-              className="flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-sm border border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors group cursor-pointer"
+              className="flex items-center gap-1 px-2 py-1.5 bg-background border border-input rounded-md hover:bg-secondary transition-colors cursor-pointer"
               onClick={() => {
                 if (slideInputRef.current) {
                   slideInputRef.current.focus();
@@ -249,7 +262,7 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
                 }
               }}
             >
-              <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">
+              <span className="text-xs text-muted-foreground font-medium">
                 Slide
               </span>
               {/* TODO: Add up and down arrows to increment and decrement the slide number */}
@@ -267,13 +280,13 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
                     goToSlide(slideNumber - 1); // Convert to 0-based index
                   }
                 }}
-                className="w-6 text-center text-xs font-medium bg-transparent border-none outline-none text-gray-900 dark:text-gray-100 focus:ring-0 focus:outline-none hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
+                className="w-6 text-center text-xs font-medium bg-transparent border-none outline-none text-foreground focus:ring-0 focus:outline-none rounded transition-colors"
                 style={{
                   MozAppearance: "textfield",
                   WebkitAppearance: "none",
                 }}
               />
-              <span className="text-xs text-gray-500 dark:text-gray-400">
+              <span className="text-xs text-muted-foreground">
                 of {slideCount}
               </span>
             </div>
@@ -284,6 +297,26 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
             <div className="text-xs text-gray-500 dark:text-gray-400">
               Loading...
             </div>
+          )}
+
+          {/* Upload and Download buttons */}
+          {onOpenImportModal && (
+            <button
+              onClick={onOpenImportModal}
+              className="flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-md transition-colors"
+              title="Upload presentation"
+            >
+              <Upload className="w-3 h-3 sm:w-4 sm:h-4" />
+            </button>
+          )}
+          {onOpenExportModal && (
+            <button
+              onClick={onOpenExportModal}
+              className="flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-md transition-colors"
+              title="Download presentation"
+            >
+              <Download className="w-3 h-3 sm:w-4 sm:h-4" />
+            </button>
           )}
 
           <button
