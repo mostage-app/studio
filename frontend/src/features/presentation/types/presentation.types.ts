@@ -83,6 +83,9 @@ export interface ContentPreviewProps {
   markdown: string;
   config: PresentationConfig;
   editingSlide?: number;
+  onOpenAuthModal?: () => void;
+  onOpenImportModal?: () => void;
+  onOpenExportModal?: () => void;
 }
 
 export interface PresentationToolbarProps {
