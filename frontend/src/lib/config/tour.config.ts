@@ -28,7 +28,7 @@ export const tourSteps: TourStep[] = [
     target: 'h3:contains("Live Preview")',
     title: "Live Preview Panel",
     content:
-      "See your presentation in real-time. Changes in the editor appear instantly. You can navigate between slides.",
+      "See your presentation in real-time. Changes in the editor appear instantly.",
     position: "left",
   },
   {
@@ -46,6 +46,19 @@ export const tourSteps: TourStep[] = [
     position: "bottom",
   },
   {
+    target: '[title="More options"]',
+    title: "More Options",
+    content:
+      "Access additional features including About information, Privacy Settings, Onboarding Tour, and Donate options.",
+    position: "bottom",
+  },
+  {
+    target: '[data-tour-target="presentation-url"]',
+    title: "URL and Privacy",
+    content: "Manage presentation URL and privacy settings.",
+    position: "bottom",
+  },
+  {
     target: '[title="Upload presentation"]',
     title: "Upload Presentation",
     content:
@@ -59,13 +72,7 @@ export const tourSteps: TourStep[] = [
       "Export your presentation as PDF, HTML, PPTX, JPG, or Mostage format.",
     position: "bottom",
   },
-  {
-    target: '[title="About Mostage App"]',
-    title: "About Mostage",
-    content:
-      "Learn more about Mostage. You can also find Tour and Privacy settings here.",
-    position: "bottom",
-  },
+
   // {
   //   target: '[title="Sign In / Sign Up"]',
   //   title: "Account",
