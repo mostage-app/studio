@@ -55,7 +55,7 @@ export const tourSteps: TourStep[] = [
   {
     target: '[data-tour-target="presentation-url"]',
     title: "URL and Privacy",
-    content: "Manage presentation URL and privacy settings.",
+    content: "Manage presentation Name, URL and privacy settings.",
     position: "bottom",
   },
   {

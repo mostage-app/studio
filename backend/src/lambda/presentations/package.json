@@ -1,12 +1,14 @@
 {
-  "name": "@mostage/studio-backend",
+  "name": "presentations-lambda-handlers",
   "version": "1.0.0",
-  "description": "Backend Lambda functions for Mostage Studio",
+  "description": "Lambda handlers for Presentations API",
+  "main": "list.js",
   "scripts": {
-    "build": "tsc",
-    "watch": "tsc -w"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "license": "GPL-3.0-or-later",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
   "dependencies": {
     "aws-sdk": "^2.1500.0",
     "jsonwebtoken": "^9.0.2",

@@ -14,6 +14,7 @@ import {
 import { ExportModalProps, ExportFormat } from "../types/export.types";
 import { Modal } from "@/lib/components/ui/Modal";
 import { analytics } from "@/lib/utils/analytics";
+import { useAuthContext } from "@/features/auth/components/AuthProvider";
 
 const EXPORT_FORMATS = [
   {
@@ -83,6 +84,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   onExport,
   onOpenAuthModal,
 }) => {
+  const { isAuthenticated } = useAuthContext();
   const [isExporting, setIsExporting] = useState(false);
   const [selectedFormat, setSelectedFormat] = useState<ExportFormat | null>(
     null
@@ -214,7 +216,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
         })}
       </div>
 
-      {/* Authentication Error */}
+      {/* Authentication/Plan Error */}
       {showAuthError && (
         <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
           <div className="flex items-start gap-2 sm:gap-3">
@@ -222,19 +224,33 @@ export const ExportModal: React.FC<ExportModalProps> = ({
               <X className="w-4 h-4 text-red-600" />
             </div>
             <div>
-              <h4 className="text-sm sm:text-base font-medium text-red-800 dark:text-red-200 mb-1">
-                Authentication Required
-              </h4>
-              <p className="text-xs sm:text-sm text-red-700 dark:text-red-300">
-                Export requires authentication. Please{" "}
-                <button
-                  onClick={handleSignInClick}
-                  className="underline hover:no-underline font-medium"
-                >
-                  sign in
-                </button>{" "}
-                to continue.
-              </p>
+              {isAuthenticated ? (
+                <>
+                  <h4 className="text-sm sm:text-base font-medium text-red-800 dark:text-red-200 mb-1">
+                    Plan Upgrade Required
+                  </h4>
+                  <p className="text-xs sm:text-sm text-red-700 dark:text-red-300">
+                    Download presentation is not available with Basic Plan.
+                    Please upgrade your plan to access this feature.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h4 className="text-sm sm:text-base font-medium text-red-800 dark:text-red-200 mb-1">
+                    Authentication Required
+                  </h4>
+                  <p className="text-xs sm:text-sm text-red-700 dark:text-red-300">
+                    Export requires authentication. Please{" "}
+                    <button
+                      onClick={handleSignInClick}
+                      className="underline hover:no-underline font-medium"
+                    >
+                      sign in
+                    </button>{" "}
+                    to continue.
+                  </p>
+                </>
+              )}
             </div>
           </div>
         </div>

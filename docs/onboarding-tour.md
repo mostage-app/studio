@@ -78,7 +78,7 @@ const [showTour, setShowTour] = useState(false);
 
 ```typescript
 useEffect(() => {
-  const hasSeenTour = localStorage.getItem("tour-completed-v1");
+  const hasSeenTour = localStorage.getItem("tour-completed-v2");
   if (!hasSeenTour) {
     setTimeout(() => setShowTour(true), 500);
   }
@@ -86,7 +86,7 @@ useEffect(() => {
 
 const handleTourClose = useCallback(() => {
   setShowTour(false);
-  localStorage.setItem("tour-completed-v1", "true");
+  localStorage.setItem("tour-completed-v2", "true");
 }, []);
 ```
 
@@ -234,7 +234,7 @@ export const tourSteps: TourStep[] = [
 
 ### Tour Not Showing
 
-- Check localStorage: `localStorage.getItem("tour-completed-v1")`
+- Check localStorage: `localStorage.getItem("tour-completed-v2")`
 - Verify screen width >= 768px
 - Ensure `isActive` prop is `true`
 

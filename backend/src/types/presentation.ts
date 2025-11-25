@@ -1,3 +1,7 @@
+/**
+ * Presentation Configuration
+ * Matches the frontend PresentationConfig interface
+ */
 export interface PresentationConfig {
   theme: "light" | "dark" | "dracula" | "ocean" | "rainbow";
   scale: number;
@@ -79,26 +83,40 @@ export interface PresentationConfig {
   }>;
 }
 
-export interface ContentPreviewProps {
+/**
+ * Presentation entity stored in DynamoDB
+ */
+export interface Presentation {
+  presentationId: string;
+  userId: string;
+  username: string;
+  name: string;
+  slug: string;
   markdown: string;
   config: PresentationConfig;
-  editingSlide?: number;
-  onOpenAuthModal?: () => void;
-  onOpenImportModal?: () => void;
-  onOpenExportModal?: () => void;
-  presentation?: {
-    name: string;
-    slug: string;
-    isPublic: boolean;
-  };
-  onPresentationUpdate?: (data: {
-    name: string;
-    slug: string;
-    isPublic: boolean;
-  }) => Promise<void>;
+  isPublic: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface PresentationToolbarProps {
+/**
+ * Request body for creating a presentation
+ */
+export interface CreatePresentationRequest {
+  name: string;
+  slug: string;
+  markdown: string;
   config: PresentationConfig;
-  onConfigChange: (config: PresentationConfig) => void;
+  isPublic: boolean;
+}
+
+/**
+ * Request body for updating a presentation
+ */
+export interface UpdatePresentationRequest {
+  name?: string;
+  slug?: string;
+  markdown?: string;
+  config?: PresentationConfig;
+  isPublic?: boolean;
 }

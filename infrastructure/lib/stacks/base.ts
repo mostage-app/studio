@@ -4,7 +4,11 @@ import { CognitoConstruct } from "../services/cognito";
 import { SesConstruct } from "../services/ses";
 import { ApiGatewayConstruct } from "../services/api";
 import { UnsplashLambdaConstruct } from "../services/api/unsplash";
+import { PresentationsLambdaConstruct } from "../services/api/presentations";
+import { UsersLambdaConstruct } from "../services/api/users";
+import { CognitoTriggerConstruct } from "../services/cognito-trigger";
 import { ResourceGroupConstruct } from "../services/resource-group";
+import { DynamoDBConstruct } from "../services/dynamodb";
 
 /**
  * Configuration interface for Stack
@@ -40,6 +44,8 @@ export abstract class BaseStudioStack extends cdk.Stack {
   public readonly cognitoRegion: string;
   public readonly apiUrl: string;
   public readonly resourceGroupName: string;
+  public readonly presentationsTableName: string;
+  public readonly usersTableName: string;
 
   /**
    * Abstract method that must be implemented by subclasses
@@ -73,6 +79,14 @@ export abstract class BaseStudioStack extends cdk.Stack {
     });
     this.resourceGroupName = resourceGroup.resourceGroup.name || "";
 
+    // DynamoDB Construct
+    const dynamoDBConstruct = new DynamoDBConstruct(this, "DynamoDB", {
+      environment,
+    });
+    this.presentationsTableName =
+      dynamoDBConstruct.presentationsTable.tableName;
+    this.usersTableName = dynamoDBConstruct.usersTable.tableName;
+
     // SES Construct (optional)
     const sesConstruct = new SesConstruct(this, "Ses", {
       environment,
@@ -80,16 +94,6 @@ export abstract class BaseStudioStack extends cdk.Stack {
       fromEmail: sesConfig?.fromEmail ?? "",
       replyToEmail: sesConfig?.replyToEmail ?? "",
       configurationSetName: sesConfig?.configurationSetName ?? "",
-    });
-
-    // Cognito Construct
-    const cognitoConstruct = new CognitoConstruct(this, "Cognito", {
-      environment,
-      userPoolName,
-      userPoolClientName,
-      sesFromEmail: sesConstruct.fromEmail,
-      sesReplyToEmail: sesConstruct.replyToEmail,
-      sesConfigurationSet: sesConstruct.configurationSetName,
     });
 
     // API Gateway Construct
@@ -115,6 +119,43 @@ export abstract class BaseStudioStack extends cdk.Stack {
         ],
       },
       rateLimit: apiConfig?.rateLimit,
+    });
+
+    // Cognito Trigger Lambda (create first, no API Gateway dependency)
+    const cognitoTrigger = new CognitoTriggerConstruct(this, "CognitoTrigger", {
+      environment,
+      dynamoDB: dynamoDBConstruct,
+    });
+
+    // Cognito Construct (with Post Confirmation Lambda)
+    const cognitoConstruct = new CognitoConstruct(this, "Cognito", {
+      environment,
+      userPoolName,
+      userPoolClientName,
+      sesFromEmail: sesConstruct.fromEmail,
+      sesReplyToEmail: sesConstruct.replyToEmail,
+      sesConfigurationSet: sesConstruct.configurationSetName,
+      postConfirmationLambda: cognitoTrigger.createDefaultPresentationFunction,
+    });
+
+    const cognitoRegion = props.env?.region || "eu-central-1";
+
+    // Users Lambda Construct (needs Cognito User Pool ID for auth)
+    const usersLambdaConstruct = new UsersLambdaConstruct(this, "UsersLambda", {
+      environment,
+      apiGateway,
+      dynamoDB: dynamoDBConstruct,
+      cognitoUserPoolId: cognitoConstruct.userPool.ref,
+      cognitoRegion,
+    });
+
+    // Presentations Lambda Construct (needs Cognito User Pool ID)
+    new PresentationsLambdaConstruct(this, "PresentationsLambda", {
+      environment,
+      dynamoDB: dynamoDBConstruct,
+      cognitoUserPoolId: cognitoConstruct.userPool.ref,
+      cognitoRegion,
+      usersResource: usersLambdaConstruct.usersResource,
     });
 
     // Unsplash Lambda Construct (if API key is provided)
@@ -167,6 +208,18 @@ export abstract class BaseStudioStack extends cdk.Stack {
       value: this.resourceGroupName,
       description: "Resource Group name for organizing all resources",
       exportName: `mostage-studio-${environment}-resource-group-name`,
+    });
+
+    new cdk.CfnOutput(this, "PresentationsTableName", {
+      value: this.presentationsTableName,
+      description: "DynamoDB Presentations Table Name",
+      exportName: `mostage-studio-${environment}-presentations-table-name`,
+    });
+
+    new cdk.CfnOutput(this, "UsersTableName", {
+      value: this.usersTableName,
+      description: "DynamoDB Users Table Name",
+      exportName: `mostage-studio-${environment}-users-table-name`,
     });
   }
 }

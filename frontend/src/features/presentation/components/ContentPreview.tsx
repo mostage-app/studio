@@ -8,7 +8,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { Mostage } from "mostage";
 import { Maximize, Upload, Download } from "lucide-react";
 import { analytics } from "@/lib/utils/analytics";
-import { PresentationUrlDisplay } from "./PresentationUrlDisplay";
+import { EditablePresentationInfo } from "./EditablePresentationInfo";
 
 export const ContentPreview: React.FC<ContentPreviewProps> = ({
   markdown,
@@ -17,6 +17,8 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
   onOpenAuthModal,
   onOpenImportModal,
   onOpenExportModal,
+  presentation,
+  onPresentationUpdate,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const mostageRef = useRef<Mostage | null>(null);
@@ -34,13 +36,7 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
 
 <br/>
 
-#### Use the **"New"** button to get started
-
-###### The sample presentation is available in the "New"
-
-###### Or
-
-###### Add content "Manually" or generate with "AI"
+#### Add content "Manually" or generate with "AI"
 `
     );
   }, []);
@@ -244,17 +240,19 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
         <div className="flex items-center gap-2 sm:gap-3 flex-1 justify-end">
           {/* Presentation URL Display */}
           <div className="hidden sm:flex items-center">
-            <PresentationUrlDisplay
-              presentationName="new"
-              isPublic={false}
+            <EditablePresentationInfo
+              presentationName={presentation?.name || "Basic Example"}
+              slug={presentation?.slug || "example"}
+              isPublic={presentation?.isPublic || false}
               onOpenAuthModal={onOpenAuthModal}
+              onSave={onPresentationUpdate}
             />
           </div>
 
           {/* Slide Navigation Group */}
           {slideCount > 0 && (
             <div
-              className="flex items-center gap-1 px-2 py-1.5 bg-background border border-input rounded-md hover:bg-secondary transition-colors cursor-pointer"
+              className="flex items-center gap-1 px-2 py-1 bg-background border border-input rounded-md hover:bg-secondary transition-colors cursor-pointer"
               onClick={() => {
                 if (slideInputRef.current) {
                   slideInputRef.current.focus();

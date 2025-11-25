@@ -1,3 +1,8 @@
-export { MainLayout } from "./MainLayout";
+export { EditorLayout } from "./EditorLayout";
 export { ResizableSplitPane } from "./ResizableSplitPane";
-export { AppHeader } from "./AppHeader";
+export {
+  GlobalHeader,
+  subscribeToLayoutMode,
+  subscribeToAuthModal,
+  openAuthModal,
+} from "./GlobalHeader";

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useEffect } from "react";
-import { Pencil, Loader2 } from "lucide-react";
+import { Pencil, Loader2, Edit } from "lucide-react";
 import { useAuthContext } from "@/features/auth/components/AuthProvider";
 import { Modal } from "@/lib/components/ui/Modal";
 import { PresentationFormFields } from "./PresentationFormFields";
@@ -104,6 +104,17 @@ export const EditablePresentationInfo: React.FC<
     }
   }, [isSaving]);
 
+  const headerContent = (
+    <div className="flex items-center gap-3">
+      <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-md">
+        <Edit className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+      </div>
+      <h2 className="text-xl font-semibold text-foreground">
+        Edit Presentation
+      </h2>
+    </div>
+  );
+
   return (
     <>
       {/* Display - Single line */}
@@ -130,7 +141,7 @@ export const EditablePresentationInfo: React.FC<
       <Modal
         isOpen={showEditModal}
         onClose={handleClose}
-        title="Edit Presentation"
+        headerContent={headerContent}
         maxWidth="lg"
       >
         <div className="space-y-4">

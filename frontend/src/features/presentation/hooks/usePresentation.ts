@@ -84,5 +84,6 @@ export const usePresentation = () => {
     config,
     updateConfig,
     resetConfig,
+    setConfig,
   };
 };

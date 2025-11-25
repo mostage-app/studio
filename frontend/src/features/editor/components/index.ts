@@ -5,4 +5,4 @@ export { UnsplashImageModal } from "./UnsplashImageModal";
 export { LoginRequiredModal } from "./LoginRequiredModal";
 export { SaveModal } from "./SaveModal";
 export { NewFileConfirmationModal } from "./NewFileConfirmationModal";
-export { NewSampleModal } from "./NewSampleModal";
+export { NewPresentationModal } from "./NewPresentationModal";

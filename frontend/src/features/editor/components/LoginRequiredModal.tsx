@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
 import {
   Lock,
   QrCode,
@@ -8,8 +9,10 @@ import {
   HelpCircle,
   MessageSquare,
   LogIn,
+  Package,
 } from "lucide-react";
 import { Modal } from "@/lib/components/ui/Modal";
+import { useAuthContext } from "@/features/auth/components/AuthProvider";
 
 interface LoginRequiredModalProps {
   isOpen: boolean;
@@ -49,19 +52,33 @@ export function LoginRequiredModal({
   onClose,
   onOpenAuthModal,
 }: LoginRequiredModalProps) {
+  const router = useRouter();
+  const { isAuthenticated, user } = useAuthContext();
+
   const handleLoginClick = () => {
     onClose();
     onOpenAuthModal();
   };
 
+  const handleUpgradeClick = () => {
+    if (user?.username) {
+      router.push(`/${user.username}`);
+    }
+    onClose();
+  };
+
   const headerContent = (
     <div className="flex items-center gap-2 sm:gap-3">
       <div className="p-1.5 sm:p-2 bg-orange-100 dark:bg-orange-900/30 rounded-md">
-        <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600 dark:text-orange-400" />
+        {isAuthenticated ? (
+          <Package className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600 dark:text-orange-400" />
+        ) : (
+          <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600 dark:text-orange-400" />
+        )}
       </div>
       <div>
         <h2 className="text-lg sm:text-xl font-semibold text-foreground">
-          Login Required
+          {isAuthenticated ? "Plan Upgrade Required" : "Login Required"}
         </h2>
       </div>
     </div>
@@ -72,20 +89,27 @@ export function LoginRequiredModal({
       isOpen={isOpen}
       onClose={onClose}
       headerContent={headerContent}
-      maxWidth="md"
+      maxWidth="lg"
     >
       <div className="space-y-6">
         {/* Main Message */}
         <div className="space-y-2">
-          <p className="text-sm sm:text-base text-gray-700 dark:text-gray-300">
-            You need to log in to use these interactive features.
-          </p>
+          {isAuthenticated ? (
+            <p className="text-sm sm:text-base text-gray-700 dark:text-gray-300">
+              These interactive features are not available with Basic Plan.
+              Please upgrade your plan to access these features.
+            </p>
+          ) : (
+            <p className="text-sm sm:text-base text-gray-700 dark:text-gray-300">
+              You need to log in to use these interactive features.
+            </p>
+          )}
         </div>
 
         {/* Features List */}
         <div className="space-y-2 sm:space-y-3">
           <h3 className="text-sm sm:text-base font-medium text-gray-900 dark:text-gray-100">
-            Features that require login:
+            Features that require plan upgrade:
           </h3>
           <div className="grid gap-3">
             {features.map((feature, index) => {
@@ -158,13 +182,23 @@ export function LoginRequiredModal({
           >
             Cancel
           </button>
-          <button
-            onClick={handleLoginClick}
-            className="flex-1 px-3 sm:px-4 py-2 sm:py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors font-medium flex items-center justify-center gap-2 text-sm sm:text-base"
-          >
-            <LogIn className="w-4 h-4" />
-            Login Now
-          </button>
+          {isAuthenticated ? (
+            <button
+              onClick={handleUpgradeClick}
+              className="flex-1 px-3 sm:px-4 py-2 sm:py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors font-medium flex items-center justify-center gap-2 text-sm sm:text-base"
+            >
+              <Package className="w-4 h-4" />
+              Upgrade Plan
+            </button>
+          ) : (
+            <button
+              onClick={handleLoginClick}
+              className="flex-1 px-3 sm:px-4 py-2 sm:py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors font-medium flex items-center justify-center gap-2 text-sm sm:text-base"
+            >
+              <LogIn className="w-4 h-4" />
+              Login Now
+            </button>
+          )}
         </div>
       </div>
     </Modal>

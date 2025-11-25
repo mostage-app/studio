@@ -12,6 +12,20 @@ export interface EditorProps {
   showPreview: boolean;
   editingSlide: number;
   updateEditingSlide: (slideNumber: number) => void;
+  /** Presentation data from API (for edit mode) */
+  presentation?: {
+    presentationId: string;
+    name: string;
+    slug: string;
+    config: Record<string, unknown>;
+    isPublic: boolean;
+  };
+  /** Callback for updating presentation metadata */
+  onPresentationUpdate?: (data: {
+    name: string;
+    slug: string;
+    isPublic: boolean;
+  }) => Promise<void>;
 }
 
 export interface ContentEditorProps {

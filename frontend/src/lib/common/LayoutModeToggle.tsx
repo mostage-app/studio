@@ -1,7 +1,7 @@
 "use client";
 
 import { PanelLeft, Columns3, PanelRight, Square } from "lucide-react";
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 // Layout mode types
 export type LayoutMode = 0 | 1 | 2 | 3;
@@ -45,14 +45,6 @@ export const LAYOUT_MODES: LayoutModeConfig[] = [
   },
 ];
 
-export interface LayoutModeConfig {
-  mode: LayoutMode;
-  icon: React.ComponentType<{ className?: string }>;
-  title: string;
-  editorOpen: boolean;
-  settingsOpen: boolean;
-}
-
 interface LayoutModeToggleProps {
   layoutMode: LayoutMode;
   onLayoutModeChange: (mode: LayoutMode) => void;
@@ -64,8 +56,15 @@ export function LayoutModeToggle({
   onLayoutModeChange,
   isMobile = false,
 }: LayoutModeToggleProps) {
-  // Don't render on mobile
-  if (isMobile) {
+  const [mounted, setMounted] = useState(false);
+
+  // Fix hydration mismatch by only rendering after mount
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Don't render on mobile or until mounted
+  if (isMobile || !mounted) {
     return null;
   }
 

@@ -1,4 +1,6 @@
 import * as cognito from "aws-cdk-lib/aws-cognito";
+import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as iam from "aws-cdk-lib/aws-iam";
 import { Construct } from "constructs";
 import { readCognitoEmailTemplate, COGNITO_EMAIL_TEMPLATES } from "./utils";
 
@@ -9,6 +11,7 @@ export interface CognitoConstructProps {
   sesFromEmail?: string;
   sesReplyToEmail?: string;
   sesConfigurationSet?: string;
+  postConfirmationLambda?: lambda.Function;
 }
 
 export class CognitoConstruct extends Construct {
@@ -24,6 +27,7 @@ export class CognitoConstruct extends Construct {
       sesFromEmail,
       sesReplyToEmail,
       sesConfigurationSet,
+      postConfirmationLambda,
     } = props;
 
     // Read email templates
@@ -104,7 +108,20 @@ export class CognitoConstruct extends Construct {
         },
       ],
       deletionProtection: "ACTIVE",
+      lambdaConfig: postConfirmationLambda
+        ? {
+            postConfirmation: postConfirmationLambda.functionArn,
+          }
+        : undefined,
     });
+
+    // Grant Cognito permission to invoke Lambda (if provided)
+    if (postConfirmationLambda) {
+      postConfirmationLambda.addPermission("CognitoPostConfirmation", {
+        principal: new iam.ServicePrincipal("cognito-idp.amazonaws.com"),
+        sourceArn: this.userPool.attrArn,
+      });
+    }
 
     // User Pool Client
     this.userPoolClient = new cognito.CfnUserPoolClient(
@@ -136,5 +153,22 @@ export class CognitoConstruct extends Construct {
     // - For link-based password reset: Requires Lambda trigger (CustomMessage_ForgotPassword)
     // - Password reset template is available in templates/password-reset.html
     // - To use custom password reset template, add a Lambda trigger for CustomMessage_ForgotPassword
+  }
+
+  /**
+   * Set Post Confirmation Lambda trigger after User Pool creation
+   * This is needed when Lambda depends on Cognito and vice versa (circular dependency)
+   */
+  public setPostConfirmationLambda(lambdaFunction: lambda.Function): void {
+    // Update User Pool with Lambda trigger
+    this.userPool.lambdaConfig = {
+      postConfirmation: lambdaFunction.functionArn,
+    };
+
+    // Grant Cognito permission to invoke Lambda
+    lambdaFunction.addPermission("CognitoPostConfirmation", {
+      principal: new iam.ServicePrincipal("cognito-idp.amazonaws.com"),
+      sourceArn: this.userPool.attrArn,
+    });
   }
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import {
   Eye,
   EyeOff,
@@ -79,6 +80,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   } = useAuthContext();
   const { hasConsent, acceptAnalytics, declineAnalytics } =
     useCookieConsentContext();
+  const router = useRouter();
 
   const [mode, setMode] = useState<AuthMode>("login");
   const [showPassword, setShowPassword] = useState(false);
@@ -183,8 +185,16 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         if (result.success) {
           setSuccess(SUCCESS_MESSAGES.LOGIN);
           analytics.trackAuthSuccess("login");
+          // Get username from auth service after successful login
+          const savedUser = await import(
+            "@/features/auth/services/authService"
+          ).then((m) => m.AuthService.getUser());
           setTimeout(() => {
             onClose();
+            // Redirect to user's dashboard after login
+            if (savedUser?.username) {
+              router.push(`/${savedUser.username}`);
+            }
           }, 1000);
         } else {
           setError(result.error || "Login failed");
