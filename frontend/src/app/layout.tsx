@@ -4,6 +4,7 @@ import "./globals.css";
 import { UIThemeProvider } from "@/lib/contexts/UIThemeContext";
 import { CookieConsentProvider } from "@/lib/components";
 import { AuthProvider } from "@/features/auth/components/AuthProvider";
+import { GlobalHeader } from "@/lib/components/layout/GlobalHeader";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,7 +33,12 @@ export default function RootLayout({
       >
         <CookieConsentProvider>
           <AuthProvider>
-            <UIThemeProvider>{children}</UIThemeProvider>
+            <UIThemeProvider>
+              <div className="h-screen flex flex-col">
+                <GlobalHeader />
+                <main className="flex-1 overflow-hidden">{children}</main>
+              </div>
+            </UIThemeProvider>
           </AuthProvider>
         </CookieConsentProvider>
       </body>

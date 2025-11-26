@@ -1,0 +1,433 @@
+"use client";
+
+import React, { useState, useCallback, useEffect, useRef } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation";
+import { useAuthContext } from "@/features/auth/components/AuthProvider";
+import { useCookieConsentContext } from "@/lib/components/CookieConsentProvider";
+import { UIThemeToggle } from "@/lib/common/UIThemeToggle";
+import {
+  LayoutModeToggle,
+  type LayoutMode,
+} from "@/lib/common/LayoutModeToggle";
+import { AuthModal } from "@/features/auth/components/AuthModal";
+import { AboutModal } from "@/features/app-info/components/AboutModal";
+import { NewPresentationModal } from "@/features/editor/components/NewPresentationModal";
+import { OnboardingTour } from "@/lib/components/ui";
+import { Modal } from "@/lib/components/ui/Modal";
+import { tourSteps } from "@/lib/config/tour.config";
+import { getPresentations } from "@/features/presentation/services/presentationService";
+import logo from "@/assets/images/logo.svg";
+import {
+  User,
+  Info,
+  Plus,
+  LogOut,
+  LayoutDashboard,
+  ChevronDown,
+  Settings,
+  HelpCircle,
+  Heart,
+  Shield,
+} from "lucide-react";
+
+export interface LayoutModeHandler {
+  onLayoutModeChange?: (mode: LayoutMode) => void;
+}
+
+// Global event for layout mode changes
+const layoutModeListeners = new Set<(mode: LayoutMode) => void>();
+
+export function subscribeToLayoutMode(
+  callback: (mode: LayoutMode) => void
+): () => void {
+  layoutModeListeners.add(callback);
+  return () => layoutModeListeners.delete(callback);
+}
+
+function emitLayoutModeChange(mode: LayoutMode) {
+  layoutModeListeners.forEach((cb) => cb(mode));
+}
+
+// Global event for opening auth modal
+const authModalListeners = new Set<() => void>();
+
+export function subscribeToAuthModal(callback: () => void): () => void {
+  authModalListeners.add(callback);
+  return () => authModalListeners.delete(callback);
+}
+
+export function openAuthModal() {
+  authModalListeners.forEach((cb) => cb());
+}
+
+export const GlobalHeader: React.FC = () => {
+  const { isAuthenticated, logout, user } = useAuthContext();
+  const { resetConsent } = useCookieConsentContext();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // Determine if we're on an editor page (home or /{username}/{slug} without ?mode=view)
+  const isEditorPage =
+    pathname === "/" ||
+    (pathname?.match(/^\/[^/]+\/[^/]+$/) &&
+      typeof window !== "undefined" &&
+      !new URLSearchParams(window.location.search).has("mode"));
+
+  // Dropdown menu state
+  const [showMenuDropdown, setShowMenuDropdown] = useState(false);
+  const menuDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Modal states
+  const [showAboutModal, setShowAboutModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showNewModal, setShowNewModal] = useState(false);
+
+  // Layout mode state
+  const [layoutMode, setLayoutMode] = useState<LayoutMode>(2);
+
+  // Responsive state
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Tour state
+  const [showTour, setShowTour] = useState(false);
+  const [tourError, setTourError] = useState<string | null>(null);
+  const [isLoadingTour, setIsLoadingTour] = useState(false);
+
+  // Handle responsive layout
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        menuDropdownRef.current &&
+        !menuDropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowMenuDropdown(false);
+      }
+    };
+
+    if (showMenuDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showMenuDropdown]);
+
+  // Subscribe to auth modal events from other components
+  useEffect(() => {
+    const unsubscribe = subscribeToAuthModal(() => {
+      setShowAuthModal(true);
+    });
+    return unsubscribe;
+  }, []);
+
+  const handleTourClose = useCallback(() => {
+    setShowTour(false);
+    localStorage.setItem("tour-completed-v2", "true");
+  }, []);
+
+  const handleStartTour = useCallback(async () => {
+    setShowMenuDropdown(false);
+    setTourError(null);
+    setIsLoadingTour(true);
+
+    try {
+      if (!isAuthenticated) {
+        // Not logged in: navigate to home page if not already there
+        if (pathname !== "/") {
+          router.push("/");
+          // Wait a bit for navigation, then start tour
+          setTimeout(() => {
+            setShowTour(true);
+            setIsLoadingTour(false);
+          }, 500);
+        } else {
+          setShowTour(true);
+          setIsLoadingTour(false);
+        }
+      } else {
+        // Logged in: navigate to basic-example or first presentation
+        if (!user?.username) {
+          setTourError("User information not available");
+          setIsLoadingTour(false);
+          return;
+        }
+
+        try {
+          const presentations = await getPresentations(user.username);
+
+          if (presentations.length === 0) {
+            setTourError(
+              "Please create a presentation first to start the tour"
+            );
+            setIsLoadingTour(false);
+            return;
+          }
+
+          // Try to find basic-example first
+          const basicExample = presentations.find(
+            (p) => p.slug === "basic-example"
+          );
+          const targetPresentation = basicExample || presentations[0];
+
+          // Navigate to the presentation
+          router.push(`/${user.username}/${targetPresentation.slug}`);
+
+          // Wait for navigation, then start tour
+          setTimeout(() => {
+            setShowTour(true);
+            setIsLoadingTour(false);
+          }, 500);
+        } catch (error) {
+          console.error("Error fetching presentations:", error);
+          setTourError("Failed to load presentations. Please try again.");
+          setIsLoadingTour(false);
+        }
+      }
+    } catch (error) {
+      console.error("Error starting tour:", error);
+      setTourError("Failed to start tour. Please try again.");
+      setIsLoadingTour(false);
+    }
+  }, [isAuthenticated, user, pathname, router]);
+
+  const handleOpenAuthModal = useCallback(() => {
+    setShowAuthModal(true);
+  }, []);
+
+  const handleOpenAboutModal = useCallback(() => {
+    setShowAboutModal(true);
+  }, []);
+
+  const handleOpenNewModal = useCallback(() => {
+    if (isAuthenticated) {
+      setShowNewModal(true);
+    } else {
+      setShowAuthModal(true);
+    }
+  }, [isAuthenticated]);
+
+  const handleLayoutModeChange = useCallback((mode: LayoutMode) => {
+    setLayoutMode(mode);
+    emitLayoutModeChange(mode);
+  }, []);
+
+  return (
+    <>
+      <header className="flex items-center justify-between p-3 border-b border-input bg-muted">
+        <div className="flex items-center gap-3">
+          <Image
+            src={logo}
+            alt="Mostage Logo"
+            width={32}
+            height={32}
+            className="w-8 h-8"
+            priority
+          />
+          <Link
+            href="/"
+            className="text-sm sm:text-lg md:text-3xl font-bold text-foreground hover:text-primary transition-colors cursor-pointer"
+          >
+            Mostage
+          </Link>
+          <span className="px-6 text-xs sm:text-sm text-muted-foreground font-medium hidden sm:block">
+            Presentation Framework
+          </span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {/* Layout Toggle - only on editor pages */}
+          {isEditorPage && (
+            <LayoutModeToggle
+              layoutMode={layoutMode}
+              onLayoutModeChange={handleLayoutModeChange}
+              isMobile={isMobile}
+            />
+          )}
+
+          {/* Theme Toggle - always visible */}
+          <UIThemeToggle />
+          <div className="hidden sm:block w-px h-6 bg-input mx-1" />
+
+          {/* New Presentation */}
+          <button
+            onClick={handleOpenNewModal}
+            className="inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 text-sm font-medium text-primary-foreground bg-primary hover:bg-secondary border border-input rounded-md transition-colors"
+            title="New presentation"
+          >
+            <Plus className="w-4 h-4" />
+            <span className="hidden sm:inline">New</span>
+          </button>
+
+          {/* Dashboard */}
+          {isAuthenticated && user?.username ? (
+            <Link
+              href={`/${user.username}`}
+              className="inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 text-sm font-medium text-foreground bg-background hover:bg-secondary border border-input rounded-md transition-colors"
+              title="Dashboard"
+            >
+              <LayoutDashboard className="w-4 h-4" />
+              <span className="hidden sm:inline">Dashboard</span>
+            </Link>
+          ) : (
+            <button
+              onClick={handleOpenAuthModal}
+              className="inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 text-sm font-medium text-foreground bg-background hover:bg-secondary border border-input rounded-md transition-colors"
+              title="Dashboard"
+            >
+              <LayoutDashboard className="w-4 h-4" />
+              <span className="hidden sm:inline">Dashboard</span>
+            </button>
+          )}
+
+          <div className="hidden sm:block w-px h-6 bg-input mx-1" />
+
+          {/* More Options Dropdown */}
+          <div className="relative" ref={menuDropdownRef}>
+            <button
+              onClick={() => setShowMenuDropdown(!showMenuDropdown)}
+              className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 text-sm font-medium text-card-foreground bg-card border border-input rounded-sm hover:bg-secondary cursor-pointer focus:outline-none transition-colors"
+              title="More options"
+            >
+              <Info className="w-4 h-4" />
+              <span className="hidden sm:inline">More</span>
+              <ChevronDown className="w-3 h-3" />
+            </button>
+            {showMenuDropdown && (
+              <div className="absolute right-0 top-full mt-1 bg-background border border-input rounded-md shadow-lg z-[100] min-w-[200px]">
+                <button
+                  onClick={handleStartTour}
+                  disabled={isLoadingTour}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-secondary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <HelpCircle className="w-4 h-4" />
+                  <span>
+                    {isLoadingTour ? "Loading..." : "Onboarding Tour"}
+                  </span>
+                </button>
+                {!isAuthenticated && (
+                  <button
+                    onClick={() => {
+                      resetConsent();
+                      setShowMenuDropdown(false);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-secondary transition-colors"
+                  >
+                    <Settings className="w-4 h-4" />
+                    <span>Privacy Settings</span>
+                  </button>
+                )}
+                <Link
+                  href="/privacy"
+                  onClick={() => setShowMenuDropdown(false)}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-secondary transition-colors"
+                >
+                  <Shield className="w-4 h-4" />
+                  <span>Privacy Policy</span>
+                </Link>
+                <a
+                  href="https://github.com/sponsors/mostage-app"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setShowMenuDropdown(false)}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-secondary transition-colors"
+                >
+                  <Heart className="w-4 h-4" />
+                  <span>Donate</span>
+                </a>
+                <button
+                  onClick={() => {
+                    handleOpenAboutModal();
+                    setShowMenuDropdown(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-secondary transition-colors"
+                >
+                  <Info className="w-4 h-4" />
+                  <span>About</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Auth Button */}
+          {isAuthenticated ? (
+            <button
+              onClick={async () => {
+                await logout();
+                router.push("/");
+              }}
+              className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 text-sm font-medium text-card-foreground bg-card border border-input rounded-sm hover:bg-secondary cursor-pointer focus:outline-none transition-colors"
+              title="Sign Out"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline">Sign Out</span>
+            </button>
+          ) : (
+            <button
+              onClick={handleOpenAuthModal}
+              className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 text-sm font-medium text-card-foreground bg-card border border-input rounded-sm hover:bg-secondary cursor-pointer focus:outline-none transition-colors"
+              title="Sign In / Sign Up"
+            >
+              <User className="w-4 h-4" />
+              <span className="hidden sm:inline">Sign In</span>
+            </button>
+          )}
+        </div>
+      </header>
+
+      {/* Modals */}
+      <AboutModal
+        isOpen={showAboutModal}
+        onClose={() => setShowAboutModal(false)}
+        onStartTour={handleStartTour}
+      />
+
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+      />
+
+      <NewPresentationModal
+        isOpen={showNewModal}
+        onClose={() => setShowNewModal(false)}
+      />
+
+      {/* Onboarding Tour */}
+      <OnboardingTour
+        steps={tourSteps}
+        isActive={showTour}
+        onClose={handleTourClose}
+      />
+
+      {/* Tour Error Modal */}
+      <Modal
+        isOpen={!!tourError}
+        onClose={() => setTourError(null)}
+        title="Cannot Start Tour"
+      >
+        <div className="p-6">
+          <p className="text-foreground mb-4">{tourError}</p>
+          <button
+            onClick={() => setTourError(null)}
+            className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+          >
+            OK
+          </button>
+        </div>
+      </Modal>
+    </>
+  );
+};
