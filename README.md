@@ -9,6 +9,8 @@
 
 Mostage Studio is a simple online tool for making presentations with Markdown and HTML. Some features include AI Creation, Live Polling System, and Audience Q&A.
 
+User profiles at `/{username}` with personalized dashboard, presentation management (create, edit, delete), visibility controls (Public/Private), and custom URL slugs.
+
 ### Powered by [Mostage JS](https://github.com/mostage-app/mostage)
 
 Mostage JS is a presentation framework based on Markdown and HTML. Available as NPM package, CLI and Web Editor.
@@ -36,6 +38,7 @@ Mostage JS is a presentation framework based on Markdown and HTML. Available as 
 - **Language**: TypeScript 5
 - **Runtime**: Node.js 20 (AWS Lambda)
 - **Architecture**: Serverless functions
+- **Database**: AWS DynamoDB
 - **Deployment**: AWS Lambda via AWS CDK
 
 ### Infrastructure
@@ -47,6 +50,7 @@ Mostage JS is a presentation framework based on Markdown and HTML. Available as 
   - [AWS Cognito](https://aws.amazon.com/cognito/) (User Pool & User Pool Client) - Authentication
   - [AWS API Gateway](https://aws.amazon.com/api-gateway/) - REST API for backend services
   - [AWS Lambda](https://aws.amazon.com/lambda/) - Serverless functions
+  - [AWS DynamoDB](https://aws.amazon.com/dynamodb/) - Database for presentations and users
   - [AWS SES](https://aws.amazon.com/ses/) - Email delivery (optional)
   - [AWS Resource Groups](https://aws.amazon.com/resource-groups/) - Resource organization and management
   - [AWS CloudWatch Alarms](https://aws.amazon.com/cloudwatch/) - Monitoring and alerting (coming soon)
