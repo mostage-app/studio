@@ -4,29 +4,34 @@
 
 ---
 
-## What is Mostage?
+## Interactive presentations
 
-#### Presentation framework
-
-###### based on
-
-#### Markdown and HTML
+### with `Markdown` and `HTML` support.
 
 ---
 
-## Key Features
+### Powerful Features
 
-- **Markdown Support** - Write in Markdown
-- **HTML Support** - Use HTML when needed
-- **Web-based** - Runs in any modern browser
+- AI-Powered Creation
+- Live Polling System
+- Audience Q&A with Voting
+- Live Quiz System
+- Real-time Reactions
+- Mobile Remote Control
 
 ---
 
-## How can I use Mostage?
+### Cloud Storage
 
-- ##### Use the CLI
-- ##### Use the NPM package
-- ##### Use the Online Editor
+Secure cloud storage with sync and collaborative editing
+
+Share presentations via links with advanced privacy controls
+
+---
+
+### Images in different ways
+
+![Modern Stage](https://images.unsplash.com/photo-1699962699915-6208f35e3523?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4MzEyODZ8MHwxfHNlYXJjaHw2fHx3ZWIlMjBzdW1taXR8ZW58MHx8fHwxNzY0NDU0NTQ2fDA&ixlib=rb-4.1.0&q=80&w=1080)
 
 ---
 
@@ -34,12 +39,6 @@
 
 ### Happy presenting with Mostage!
 
-#### Get started now [mo.js.org](https://mo.js.org)
-
----
-
-<!-- confetti -->
-
-![LOGO](https://mostage.app/images/logo.svg)
+#### Get started now [mostage.app](https://mostage.app/)
 
 ---
