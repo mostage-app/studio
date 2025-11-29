@@ -8,22 +8,25 @@ import {
   Calendar,
   Lock,
   Loader2,
-  Eye,
   Pencil,
   Trash2,
   Link as LinkIcon,
   User,
   Mail,
   Package,
+  Settings,
   Edit2,
   Check,
   X,
+  MonitorPlay,
 } from "lucide-react";
 import {
   deletePresentation,
   getPresentations,
+  updatePresentation,
   type Presentation,
 } from "@/features/presentation/services/presentationService";
+import { EditPresentationModal } from "@/features/presentation/components/EditPresentationModal";
 import Link from "next/link";
 import { useEffect, useState, useCallback } from "react";
 import { Modal } from "@/lib/components/ui/Modal";
@@ -42,6 +45,10 @@ export default function UserProfilePage() {
     name: string;
   }>({ isOpen: false, slug: "", name: "" });
   const [isDeleting, setIsDeleting] = useState(false);
+  const [editModal, setEditModal] = useState<{
+    isOpen: boolean;
+    presentation: Presentation | null;
+  }>({ isOpen: false, presentation: null });
 
   // Profile editing states
   const [isEditingName, setIsEditingName] = useState(false);
@@ -90,6 +97,23 @@ export default function UserProfilePage() {
     setDeleteModal({ isOpen: false, slug: "", name: "" });
   }, []);
 
+  const handleOpenViewPopup = useCallback(
+    (slug: string) => {
+      const url = `/${username}/${slug}/view`;
+      const width = window.screen.width / 1.3;
+      const height = window.screen.height / 1.3;
+      const left = (window.screen.width - width) / 2;
+      const top = (window.screen.height - height) / 2;
+
+      window.open(
+        url,
+        "viewPresentation",
+        `width=${width},height=${height},left=${left},top=${top},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`
+      );
+    },
+    [username]
+  );
+
   const handleDelete = useCallback(async () => {
     if (!deleteModal.slug) return;
 
@@ -106,6 +130,37 @@ export default function UserProfilePage() {
       setIsDeleting(false);
     }
   }, [deleteModal.slug, username]);
+
+  const handleOpenEditModal = useCallback((presentation: Presentation) => {
+    setEditModal({ isOpen: true, presentation });
+  }, []);
+
+  const handleCloseEditModal = useCallback(() => {
+    setEditModal({ isOpen: false, presentation: null });
+  }, []);
+
+  const handleUpdatePresentation = useCallback(
+    async (data: { name: string; slug: string; isPublic: boolean }) => {
+      if (!editModal.presentation) return;
+
+      try {
+        await updatePresentation(username, editModal.presentation.slug, data);
+
+        // Update the presentation in the list
+        setPresentations((prev) =>
+          prev.map((p) =>
+            p.presentationId === editModal.presentation?.presentationId
+              ? { ...p, ...data }
+              : p
+          )
+        );
+      } catch (err) {
+        console.error("Error updating presentation:", err);
+        throw err;
+      }
+    },
+    [editModal.presentation, username]
+  );
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -401,12 +456,12 @@ export default function UserProfilePage() {
 
                     <div className="flex items-center gap-2 mb-3">
                       {pres.isPublic ? (
-                        <div className="flex items-center gap-1 px-2 py-0.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded text-xs font-medium">
+                        <div className="flex items-center gap-1 px-2 py-0.5 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded text-xs font-medium">
                           <Globe className="w-3 h-3" />
                           <span>Public</span>
                         </div>
                       ) : (
-                        <div className="flex items-center gap-1 px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded text-xs font-medium">
+                        <div className="flex items-center gap-1 px-2 py-0.5 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 rounded text-xs font-medium">
                           <Lock className="w-3 h-3" />
                           <span>Private</span>
                         </div>
@@ -427,26 +482,35 @@ export default function UserProfilePage() {
                     {/* Action buttons */}
                     <div className="flex items-center gap-2">
                       {/* View button */}
-                      <Link
-                        href={`/${username}/${pres.slug}?mode=view`}
+                      <button
+                        onClick={() => handleOpenViewPopup(pres.slug)}
                         className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80 transition-colors text-sm"
                         title="View presentation"
                       >
-                        <Eye className="w-4 h-4" />
+                        <MonitorPlay className="w-4 h-4" />
                         <span>View</span>
-                      </Link>
+                      </button>
 
                       {isOwnProfile && (
                         <>
-                          {/* Edit button */}
+                          {/* Edit Content button */}
                           <Link
                             href={`/${username}/${pres.slug}`}
                             className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors text-sm"
-                            title="Edit presentation"
+                            title="Edit presentation content"
                           >
                             <Pencil className="w-4 h-4" />
                             <span>Edit</span>
                           </Link>
+
+                          {/* Settings button */}
+                          <button
+                            onClick={() => handleOpenEditModal(pres)}
+                            className="flex items-center justify-center p-1.5 text-muted-foreground hover:bg-secondary rounded-md transition-colors"
+                            title="Edit presentation info"
+                          >
+                            <Settings className="w-4 h-4" />
+                          </button>
 
                           {/* Delete button */}
                           <button
@@ -482,6 +546,19 @@ export default function UserProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* Edit Presentation Info Modal */}
+      {editModal.presentation && (
+        <EditPresentationModal
+          isOpen={editModal.isOpen}
+          onClose={handleCloseEditModal}
+          presentationName={editModal.presentation.name}
+          slug={editModal.presentation.slug}
+          isPublic={editModal.presentation.isPublic}
+          username={username}
+          onSave={handleUpdatePresentation}
+        />
+      )}
 
       {/* Delete Confirmation Modal */}
       <Modal

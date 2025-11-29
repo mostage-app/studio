@@ -159,13 +159,32 @@ export const GlobalHeader: React.FC = () => {
           setIsLoadingTour(false);
         }
       } else {
-        // Logged in: navigate to basic-example or first presentation
+        // Logged in
         if (!user?.username) {
           setTourError("User information not available");
           setIsLoadingTour(false);
           return;
         }
 
+        // Check if we're already on an editor page (/{username}/{slug})
+        const pathParts = pathname.split("/").filter(Boolean);
+        const isOnEditorPage =
+          pathParts.length === 2 &&
+          pathParts[0] === user.username &&
+          pathParts[1] !== undefined;
+
+        // TODO: Allow tour to work on any presentation, not just user's own presentations
+        // Currently only works on user's own presentations. Should also work when viewing
+        // other users' public presentations in edit mode (if user has edit permissions).
+
+        if (isOnEditorPage) {
+          // Already on an editor page, start tour immediately
+          setShowTour(true);
+          setIsLoadingTour(false);
+          return;
+        }
+
+        // Not on editor page, navigate to basic-example or first presentation
         try {
           const presentations = await getPresentations(user.username);
 

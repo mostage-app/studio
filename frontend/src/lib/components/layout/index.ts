@@ -6,3 +6,4 @@ export {
   subscribeToAuthModal,
   openAuthModal,
 } from "./GlobalHeader";
+export { ConditionalHeader } from "./ConditionalHeader";

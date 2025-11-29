@@ -3,8 +3,7 @@
 import { EditorLayout } from "@/lib/components/layout/EditorLayout";
 import { Loading } from "@/lib/components/ui";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useState, useCallback, useRef } from "react";
-import { Mostage } from "mostage";
+import { useEffect, useState, useCallback } from "react";
 import { Home } from "lucide-react";
 import Link from "next/link";
 import { useAuthContext } from "@/features/auth/components/AuthProvider";
@@ -22,7 +21,7 @@ export default function PresentationPage() {
   const slug = params?.slug as string;
   const mode = searchParams?.get("mode");
 
-  const { user, isAuthenticated } = useAuthContext();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuthContext();
   const isOwner = isAuthenticated && user?.username === username;
 
   const [presentation, setPresentation] = useState<Presentation | null>(null);
@@ -32,10 +31,6 @@ export default function PresentationPage() {
   // Editor state
   const [markdown, setMarkdown] = useState("");
   const [editingSlide, setEditingSlide] = useState(1);
-
-  // View mode refs
-  const containerRef = useRef<HTMLDivElement>(null);
-  const mostageRef = useRef<Mostage | null>(null);
 
   useEffect(() => {
     const fetchPresentation = async () => {
@@ -61,28 +56,24 @@ export default function PresentationPage() {
     fetchPresentation();
   }, [username, slug]);
 
-  // Initialize Mostage for view mode
+  // Redirect to view route if mode=view or user is not owner
+  // Wait for both presentation and auth to load before making decision
   useEffect(() => {
-    if (mode !== "view" || !presentation || !containerRef.current) return;
+    if (isLoading || authLoading || !presentation) return;
 
-    if (mostageRef.current) {
-      mostageRef.current.destroy();
-      mostageRef.current = null;
+    if (mode === "view" || !isOwner) {
+      router.replace(`/${username}/${slug}/view`);
     }
-
-    mostageRef.current = new Mostage({
-      container: containerRef.current,
-      markdown: presentation.markdown,
-      config: presentation.config,
-    });
-
-    return () => {
-      if (mostageRef.current) {
-        mostageRef.current.destroy();
-        mostageRef.current = null;
-      }
-    };
-  }, [presentation, mode]);
+  }, [
+    mode,
+    isOwner,
+    isLoading,
+    authLoading,
+    presentation,
+    username,
+    slug,
+    router,
+  ]);
 
   const handleMarkdownChange = useCallback(
     (newMarkdown: string, resetSlide = false) => {
@@ -126,7 +117,8 @@ export default function PresentationPage() {
     [presentation, username, slug, router]
   );
 
-  if (isLoading) {
+  // Show loading while fetching presentation or checking auth
+  if (isLoading || authLoading) {
     return <Loading />;
   }
 
@@ -159,16 +151,17 @@ export default function PresentationPage() {
     );
   }
 
-  // View-only mode
+  // Redirect to view route if mode=view or user is not owner
+  // Show loading while redirecting
   if (mode === "view" || !isOwner) {
-    return (
-      <div className="h-full bg-background">
-        <div ref={containerRef} className="w-full h-full" />
-      </div>
-    );
+    return <Loading />;
   }
 
-  // Edit mode
+  // TODO: Add additional modes in the future (e.g., mode=share for sharing options)
+  // Currently supported modes: "view" (redirects to /{username}/{slug}/view), "edit" or null (edit mode)
+
+  // Edit mode: if mode=edit or mode is not specified (default to edit)
+  // Only owners can edit
   return (
     <EditorLayout
       markdown={markdown}

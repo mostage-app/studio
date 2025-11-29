@@ -6,9 +6,10 @@ import {
 } from "../types/presentation.types";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Mostage } from "mostage";
-import { Maximize, Upload, Download } from "lucide-react";
+import { Maximize, Upload, Download, MonitorPlay } from "lucide-react";
 import { analytics } from "@/lib/utils/analytics";
 import { EditablePresentationInfo } from "./EditablePresentationInfo";
+import { useParams } from "next/navigation";
 
 export const ContentPreview: React.FC<ContentPreviewProps> = ({
   markdown,
@@ -20,6 +21,8 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
   presentation,
   onPresentationUpdate,
 }) => {
+  const params = useParams();
+  const username = params?.username as string;
   const containerRef = useRef<HTMLDivElement>(null);
   const mostageRef = useRef<Mostage | null>(null);
   const slideInputRef = useRef<HTMLInputElement>(null);
@@ -231,6 +234,26 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
     }
   };
 
+  // Handle opening view popup
+  const handleOpenViewPopup = useCallback(() => {
+    if (!username || !presentation?.slug) {
+      console.error("Username or slug is missing");
+      return;
+    }
+
+    const url = `/${username}/${presentation.slug}/view`;
+    const width = window.screen.width / 1.3;
+    const height = window.screen.height / 1.3;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
+
+    window.open(
+      url,
+      "viewPresentation",
+      `width=${width},height=${height},left=${left},top=${top},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`
+    );
+  }, [username, presentation?.slug]);
+
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between p-3 border-b border-input bg-muted">
@@ -314,6 +337,16 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
               title="Download presentation"
             >
               <Download className="w-3 h-3 sm:w-4 sm:h-4" />
+            </button>
+          )}
+
+          {username && presentation?.slug && (
+            <button
+              onClick={handleOpenViewPopup}
+              className="flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-md transition-colors"
+              title="Open view popup"
+            >
+              <MonitorPlay className="w-3 h-3 sm:w-4 sm:h-4" />
             </button>
           )}
 

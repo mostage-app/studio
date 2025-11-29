@@ -43,6 +43,10 @@ export const useAuth = () => {
         const savedUser = AuthService.getUser();
 
         if (accessToken && savedUser) {
+          // Sync token to cookies if it exists in localStorage but not in cookies
+          // This ensures Server Components can access the token
+          AuthService.syncTokenToCookies();
+
           // Verify token is still valid by fetching user info
           const result = await CognitoService.getCurrentUser(accessToken);
           if (result.success && result.user) {
