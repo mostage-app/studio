@@ -81,14 +81,14 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
 
       <div>
         <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2 sm:mb-3">
-          Mostage App{" "}
+          Mostage Studio{" "}
           <span className="inline-block px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-mono rounded-md ml-1">
             Version {pkg.version || "latest"}
           </span>
         </h3>
         <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 leading-relaxed mb-2">
-          Web editor for Mostage framework. Create and edit presentations in
-          real time. Export to different formats.
+          Web editor for making presentations with Markdown and HTML. Some
+          features include AI Creation, Live Polling System, and Audience Q&A.
         </p>
 
         <ul className="list-disc list-inside text-sm sm:text-base text-gray-600 dark:text-gray-300 leading-relaxed mb-8">
