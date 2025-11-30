@@ -20,8 +20,8 @@ The project uses GitHub Actions for automated testing, building, and deployment.
 
 **Triggers**:
 
-- Push to `main` or `develop` branches **only when files in `frontend/` change**
-- Pull requests to `main` or `develop` branches **only when files in `frontend/` change**
+- Push to `main` or `dev` branches **only when files in `frontend/` change**
+- Pull requests to `main` or `dev` branches **only when files in `frontend/` change**
 
 **Jobs**:
 
@@ -37,8 +37,8 @@ The project uses GitHub Actions for automated testing, building, and deployment.
 
 **Triggers**:
 
-- Push to `main` or `develop` branches **only when files in `infrastructure/` change**
-- Pull requests to `main` or `develop` branches **only when files in `infrastructure/` change**
+- Push to `main` or `dev` branches **only when files in `infrastructure/` change**
+- Pull requests to `main` or `dev` branches **only when files in `infrastructure/` change**
 
 **Jobs**:
 

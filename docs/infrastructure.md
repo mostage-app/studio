@@ -179,6 +179,166 @@ Go to your GitHub repository → **Settings → Secrets and variables → Action
 
 5. **Update GitHub Secrets** (if outputs changed):
 
+## Frontend Deployment (AWS Amplify)
+
+Frontend is deployed via **AWS Amplify Hosting**, managed through CDK.
+
+### Prerequisites
+
+1. **GitHub Personal Access Token** (for connecting repository):
+
+   - Go to GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic)
+   - Create a new token with `repo` scope (for private repos) or `public_repo` (for public repos)
+   - Save the token securely
+
+2. **Connect Repository** (after first deployment):
+   - After deploying the stack, go to AWS Console → Amplify
+   - Find your app: `mostage-studio-frontend-{environment}`
+   - Go to App settings → General → Repository
+   - Click "Connect repository" and authorize GitHub
+   - Select your repository and branch
+
+### Configuration
+
+Amplify configuration is done in `dev.ts` and `prod.ts`:
+
+```typescript
+amplifyConfig: {
+  repository: "https://github.com/mostage-app/studio",
+  branch: "main",
+  // Optional: GitHub token secret ARN from AWS Secrets Manager
+  // githubTokenSecretArn: process.env.GITHUB_TOKEN_SECRET_ARN,
+  // Optional: Custom build spec
+  // buildSpec: "...",
+  // Optional: Additional environment variables
+  environmentVariables: {
+    // Add any additional env vars here
+  },
+  // Optional: Custom domain
+  // customDomain: {
+  //   domainName: "studio.mostage.app",
+  //   certificateArn: "arn:aws:acm:...",
+  // },
+}
+```
+
+### Environment Variables
+
+Amplify automatically receives these environment variables from the stack:
+
+- `NEXT_PUBLIC_COGNITO_USER_POOL_ID` - From Cognito User Pool
+- `NEXT_PUBLIC_COGNITO_CLIENT_ID` - From Cognito User Pool Client
+- `NEXT_PUBLIC_AWS_REGION` - AWS Region
+- `NEXT_PUBLIC_API_URL` - API Gateway URL
+
+Additional variables can be added in `amplifyConfig.environmentVariables`.
+
+### Build Configuration
+
+Build configuration is defined in `amplify.yml` (root directory) or can be customized in `amplifyConfig.buildSpec`.
+
+Default build spec:
+
+```yaml
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - cd frontend
+        - npm ci
+    build:
+      commands:
+        - npm run build
+  artifacts:
+    baseDirectory: frontend/.next
+    files:
+      - "**/*"
+  cache:
+    paths:
+      - frontend/node_modules/**/*
+      - frontend/.next/cache/**/*
+```
+
+### Deployment
+
+1. **Deploy Infrastructure** (includes Amplify app creation):
+
+   ```bash
+   cd infrastructure
+   npm run deploy:dev  # or deploy:prod
+   ```
+
+2. **Connect Repository** (first time only):
+
+   - Go to AWS Console → Amplify
+   - Find your app and connect the repository
+   - Amplify will automatically build and deploy on every push to the configured branch
+
+3. **View Deployment**:
+   - Stack output will show: `AmplifyAppUrl`
+   - Or check AWS Console → Amplify → Your App → Hosting
+
+### Automatic Deployments
+
+After connecting the repository, Amplify will automatically:
+
+- Build on every push to the configured branch
+- Deploy to the Amplify URL
+- Show build logs and status in AWS Console
+
+### Custom Domain
+
+To add a custom domain:
+
+1. **Get SSL Certificate** (if not already):
+
+   ```bash
+   # Request certificate via ACM
+   aws acm request-certificate \
+     --domain-name studio.mostage.app \
+     --validation-method DNS \
+     --region us-east-1  # Must be us-east-1 for Amplify
+   ```
+
+2. **Update Stack Config**:
+
+   ```typescript
+   amplifyConfig: {
+     // ... other config
+     customDomain: {
+       domainName: "studio.mostage.app",
+       certificateArn: "arn:aws:acm:us-east-1:...",
+     },
+   }
+   ```
+
+3. **Redeploy**:
+   ```bash
+   npm run deploy:dev  # or deploy:prod
+   ```
+
+### Troubleshooting
+
+**Build fails:**
+
+- Check build logs in AWS Console → Amplify → Your App → Build history
+- Verify environment variables are set correctly
+- Check that `amplify.yml` exists in root directory
+
+**Repository not connected:**
+
+- Go to AWS Console → Amplify → App settings → General → Repository
+- Click "Connect repository" and authorize GitHub
+
+**Environment variables not working:**
+
+- Verify variables are set in stack config
+- Check Amplify Console → App settings → Environment variables
+- Rebuild the app after changing variables
+
+5. **Update GitHub Secrets** (if outputs changed):
+
    Go to **Settings → Secrets and variables → Actions** and update:
 
    - `NEXT_PUBLIC_COGNITO_USER_POOL_ID` → New `UserPoolId` from stack outputs
@@ -314,13 +474,20 @@ The Unsplash Access Key is configured separately for development and production 
 
    ```bash
    cd infrastructure
-   cp .env.local.example .env.dev.local
+   cp ../.env.example .env.dev.local
    ```
 
-2. Edit `.env.dev.local` and add your development Unsplash Access Key:
+2. Edit `.env.dev.local` and configure:
 
    ```env
+   # Unsplash API Access Key
    UNSPLASH_ACCESS_KEY=your_dev_access_key_here
+
+   # CORS (optional for dev, can be empty or ["*"])
+   ALLOWED_ORIGINS=
+
+   # Amplify Branch (default: dev)
+   AMPLIFY_BRANCH=dev
    ```
 
 3. Deploy:
@@ -335,7 +502,7 @@ The Unsplash Access Key is configured separately for development and production 
 
    ```bash
    cd infrastructure
-   cp .env.prod.local.example .env.prod.local
+   cp ../.env.example .env.prod.local
    ```
 
 2. Edit `.env.prod.local` and configure:
@@ -347,7 +514,11 @@ The Unsplash Access Key is configured separately for development and production 
    # IMPORTANT: Restrict CORS to your frontend domain(s)
    # Only requests from these domains will be allowed
    # Example: https://studio.mostage.app,https://www.mostage.app
+   # Or comma-separated: https://studio.mostage.app,https://www.mostage.app
    ALLOWED_ORIGINS=https://studio.mostage.app
+
+   # Amplify Branch (default: main)
+   AMPLIFY_BRANCH=main
    ```
 
    **⚠️ Security Warning**: If `ALLOWED_ORIGINS` is not set or empty, the API Gateway will reject all CORS requests in production. This is intentional for security.
