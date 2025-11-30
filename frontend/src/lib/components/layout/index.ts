@@ -5,5 +5,9 @@ export {
   subscribeToLayoutMode,
   subscribeToAuthModal,
   openAuthModal,
+  subscribeToAutoSaveState,
+  subscribeToAutoSaveHandlers,
+  emitAutoSaveState,
+  emitAutoSaveHandlers,
 } from "./GlobalHeader";
 export { ConditionalHeader } from "./ConditionalHeader";

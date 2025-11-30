@@ -2,7 +2,6 @@
 
 import React, { useState, useCallback, useEffect } from "react";
 import { Loader2, Settings } from "lucide-react";
-import { useAuthContext } from "@/features/auth/components/AuthProvider";
 import { Modal } from "@/lib/components/ui/Modal";
 import { PresentationFormFields } from "./PresentationFormFields";
 import { generateSlug } from "../utils/slugUtils";

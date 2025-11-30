@@ -1,3 +1,5 @@
+import { PresentationConfig } from "@/features/presentation/types/presentation.types";
+
 export interface EditorState {
   markdown: string;
   showEditor: boolean;
@@ -26,6 +28,20 @@ export interface EditorProps {
     slug: string;
     isPublic: boolean;
   }) => Promise<void>;
+  /** Manual save handler - receives current markdown and config */
+  onManualSave?: (
+    markdown: string,
+    config: PresentationConfig
+  ) => Promise<void>;
+  /** Original markdown (for auto-save comparison) */
+  originalMarkdown?: string;
+  /** Original config (for auto-save comparison) */
+  originalConfig?: PresentationConfig | null;
+  /** Save content handler (for auto-save) */
+  onSaveContent?: (
+    markdown: string,
+    config: PresentationConfig
+  ) => Promise<void>;
 }
 
 export interface ContentEditorProps {

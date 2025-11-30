@@ -9,13 +9,12 @@
 
 import { EditorProps } from "@/features/editor/types/editor.types";
 import { PresentationConfig } from "@/features/presentation/types/presentation.types";
+import { useAutoSave } from "@/features/presentation/hooks/useAutoSave";
+import { useUnsavedChangesWarning } from "@/features/presentation/hooks/useUnsavedChangesWarning";
 import { ContentEditor } from "@/features/editor/components/ContentEditor";
 import { ContentPreview } from "@/features/presentation/components/ContentPreview";
 import { PresentationSettings } from "@/features/presentation/components/PresentationSettings";
-import {
-  usePresentation,
-  DEFAULT_PRESENTATION_CONFIG,
-} from "@/features/presentation/hooks/usePresentation";
+import { usePresentation } from "@/features/presentation/hooks/usePresentation";
 import { ResizableSplitPane } from "@/lib/components/layout/ResizableSplitPane";
 import {
   type LayoutMode,
@@ -25,7 +24,12 @@ import {
 import { ExportModal } from "@/features/export/components/ExportModal";
 import { ImportModal } from "@/features/import/components/ImportModal";
 import { MobileWarning } from "@/lib/components/ui";
-import { subscribeToLayoutMode, openAuthModal } from "./GlobalHeader";
+import {
+  subscribeToLayoutMode,
+  openAuthModal,
+  emitAutoSaveState,
+  emitAutoSaveHandlers,
+} from "./GlobalHeader";
 import React, { useState, useCallback, useEffect } from "react";
 import { FileText } from "lucide-react";
 import {
@@ -60,6 +64,10 @@ export const EditorLayout: React.FC<EditorProps> = ({
   updateEditingSlide,
   presentation,
   onPresentationUpdate,
+  onManualSave,
+  originalMarkdown,
+  originalConfig,
+  onSaveContent,
 }) => {
   // Modal states
   const [showExportModal, setShowExportModal] = useState(false);
@@ -92,6 +100,45 @@ export const EditorLayout: React.FC<EditorProps> = ({
     }
   }, [presentation, setConfig]);
 
+  // Auto-save hook (only enabled if presentation exists and save handler is provided)
+  const autoSaveState = useAutoSave({
+    markdown,
+    config: presentationConfig,
+    originalMarkdown: originalMarkdown || markdown,
+    originalConfig:
+      originalConfig ||
+      (presentation?.config as unknown as PresentationConfig) ||
+      ({} as PresentationConfig),
+    onSave: onSaveContent || (async () => {}),
+    debounceMs: 30000, // 30 seconds
+    enabled: !!presentation && !!onSaveContent,
+  });
+
+  // Warn user before leaving page with unsaved changes
+  useUnsavedChangesWarning(autoSaveState.hasUnsavedChanges);
+
+  // Emit auto-save state to GlobalHeader
+  useEffect(() => {
+    if (presentation && onSaveContent) {
+      emitAutoSaveState(autoSaveState);
+    } else {
+      emitAutoSaveState(null);
+    }
+  }, [autoSaveState, presentation, onSaveContent]);
+
+  // Emit manual save handler to GlobalHeader
+  useEffect(() => {
+    if (presentation && onManualSave && autoSaveState.saveNow) {
+      const handleManualSave = async () => {
+        // Use the saveNow function from autoSaveState which handles state updates
+        await autoSaveState.saveNow();
+      };
+      emitAutoSaveHandlers({ onManualSave: handleManualSave });
+    } else {
+      emitAutoSaveHandlers(null);
+    }
+  }, [presentation, onManualSave, autoSaveState]);
+
   // Handle responsive layout
   useEffect(() => {
     const handleResize = () => {
@@ -108,17 +155,6 @@ export const EditorLayout: React.FC<EditorProps> = ({
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-
-  // Subscribe to layout mode changes from GlobalHeader
-  useEffect(() => {
-    const unsubscribe = subscribeToLayoutMode((mode: LayoutMode) => {
-      if (isMobile) return;
-      const config = LAYOUT_MODES.find((m) => m.mode === mode);
-      if (!config) return;
-      applyLayoutMode(config);
-    });
-    return unsubscribe;
-  }, [isMobile]);
 
   const applyLayoutMode = useCallback(
     (config: LayoutModeConfig) => {
@@ -144,6 +180,17 @@ export const EditorLayout: React.FC<EditorProps> = ({
     },
     [isMobile]
   );
+
+  // Subscribe to layout mode changes from GlobalHeader
+  useEffect(() => {
+    const unsubscribe = subscribeToLayoutMode((mode: LayoutMode) => {
+      if (isMobile) return;
+      const config = LAYOUT_MODES.find((m) => m.mode === mode);
+      if (!config) return;
+      applyLayoutMode(config);
+    });
+    return unsubscribe;
+  }, [isMobile, applyLayoutMode]);
 
   const handleEditorPaneSizeChange = useCallback((newSize: number) => {
     setEditorPaneSize(newSize);

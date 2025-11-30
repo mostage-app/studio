@@ -30,6 +30,10 @@ import {
   HelpCircle,
   Heart,
   Shield,
+  Save,
+  Check,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
 
 export interface LayoutModeHandler {
@@ -60,6 +64,45 @@ export function subscribeToAuthModal(callback: () => void): () => void {
 
 export function openAuthModal() {
   authModalListeners.forEach((cb) => cb());
+}
+
+// Global event for auto-save state
+interface AutoSaveState {
+  isSaving: boolean;
+  lastSaved: Date | null;
+  hasUnsavedChanges: boolean;
+  error: string | null;
+}
+
+interface AutoSaveHandlers {
+  onManualSave?: () => Promise<void>;
+}
+
+const autoSaveStateListeners = new Set<(state: AutoSaveState | null) => void>();
+const autoSaveHandlersListeners = new Set<
+  (handlers: AutoSaveHandlers | null) => void
+>();
+
+export function subscribeToAutoSaveState(
+  callback: (state: AutoSaveState | null) => void
+): () => void {
+  autoSaveStateListeners.add(callback);
+  return () => autoSaveStateListeners.delete(callback);
+}
+
+export function subscribeToAutoSaveHandlers(
+  callback: (handlers: AutoSaveHandlers | null) => void
+): () => void {
+  autoSaveHandlersListeners.add(callback);
+  return () => autoSaveHandlersListeners.delete(callback);
+}
+
+export function emitAutoSaveState(state: AutoSaveState | null) {
+  autoSaveStateListeners.forEach((cb) => cb(state));
+}
+
+export function emitAutoSaveHandlers(handlers: AutoSaveHandlers | null) {
+  autoSaveHandlersListeners.forEach((cb) => cb(handlers));
 }
 
 export const GlobalHeader: React.FC = () => {
@@ -94,6 +137,13 @@ export const GlobalHeader: React.FC = () => {
   const [showTour, setShowTour] = useState(false);
   const [tourError, setTourError] = useState<string | null>(null);
   const [isLoadingTour, setIsLoadingTour] = useState(false);
+
+  // Auto-save state
+  const [autoSaveState, setAutoSaveState] = useState<AutoSaveState | null>(
+    null
+  );
+  const [autoSaveHandlers, setAutoSaveHandlers] =
+    useState<AutoSaveHandlers | null>(null);
 
   // Handle responsive layout
   useEffect(() => {
@@ -132,6 +182,20 @@ export const GlobalHeader: React.FC = () => {
       setShowAuthModal(true);
     });
     return unsubscribe;
+  }, []);
+
+  // Subscribe to auto-save state from EditorLayout
+  useEffect(() => {
+    const unsubscribeState = subscribeToAutoSaveState((state) => {
+      setAutoSaveState(state);
+    });
+    const unsubscribeHandlers = subscribeToAutoSaveHandlers((handlers) => {
+      setAutoSaveHandlers(handlers);
+    });
+    return () => {
+      unsubscribeState();
+      unsubscribeHandlers();
+    };
   }, []);
 
   const handleTourClose = useCallback(() => {
@@ -268,6 +332,70 @@ export const GlobalHeader: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Save Status and Button - only on editor pages */}
+          {isEditorPage && autoSaveState && autoSaveHandlers?.onManualSave && (
+            <>
+              {/* Save Status Indicator */}
+              <div
+                className="hidden sm:flex items-center gap-1.5 px-2 py-1 text-xs"
+                title="Auto-saves every 30 seconds"
+              >
+                {autoSaveState.isSaving ? (
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    <span>Saving...</span>
+                  </div>
+                ) : autoSaveState.error ? (
+                  <div className="flex items-center gap-1.5 text-red-500">
+                    <AlertCircle className="w-3 h-3" />
+                    <span>Error</span>
+                  </div>
+                ) : autoSaveState.lastSaved ? (
+                  <div className="flex items-center gap-1.5 text-green-600 dark:text-green-400">
+                    <Check className="w-3 h-3" />
+                    <span>
+                      Saved{" "}
+                      {autoSaveState.lastSaved.toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
+                ) : autoSaveState.hasUnsavedChanges ? (
+                  <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
+                    <span>Unsaved</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <span>Auto-save (every minute)</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Manual Save Button */}
+              <button
+                onClick={autoSaveHandlers.onManualSave}
+                disabled={
+                  autoSaveState.isSaving || !autoSaveState.hasUnsavedChanges
+                }
+                className="inline-flex items-center justify-center w-8 h-8 text-foreground bg-background hover:bg-secondary border border-input rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title={
+                  autoSaveState.hasUnsavedChanges
+                    ? "Save manually"
+                    : "No changes to save"
+                }
+              >
+                {autoSaveState.isSaving ? (
+                  // TODO: Add loading indicator
+                  <Save className="w-4 h-4" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
+              </button>
+              <div className="hidden sm:block w-px h-6 bg-input mx-1" />
+            </>
+          )}
+
           {/* Layout Toggle - only on editor pages */}
           {isEditorPage && (
             <LayoutModeToggle

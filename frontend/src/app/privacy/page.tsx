@@ -36,10 +36,10 @@ export default function PrivacyPolicyPage() {
               Introduction
             </h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
-              Mostage Studio ("we", "our", "us") respects your privacy and is
-              committed to protecting your personal data. This privacy policy
-              explains how we collect, use, and safeguard your information when
-              you use our service.
+              Mostage Studio (&quot;we&quot;, &quot;our&quot;, &quot;us&quot;)
+              respects your privacy and is committed to protecting your personal
+              data. This privacy policy explains how we collect, use, and
+              safeguard your information when you use our service.
             </p>
             <div className="bg-muted border border-input p-4 rounded-lg">
               <h3 className="font-semibold text-foreground mb-2">

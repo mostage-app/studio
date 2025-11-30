@@ -12,6 +12,7 @@ import {
   updatePresentation,
   type Presentation,
 } from "@/features/presentation/services/presentationService";
+import { PresentationConfig } from "@/features/presentation/types/presentation.types";
 
 export default function PresentationPage() {
   const params = useParams();
@@ -31,6 +32,9 @@ export default function PresentationPage() {
   // Editor state
   const [markdown, setMarkdown] = useState("");
   const [editingSlide, setEditingSlide] = useState(1);
+  const [originalMarkdown, setOriginalMarkdown] = useState("");
+  const [originalConfig, setOriginalConfig] =
+    useState<PresentationConfig | null>(null);
 
   useEffect(() => {
     const fetchPresentation = async () => {
@@ -43,6 +47,10 @@ export default function PresentationPage() {
         const data = await getPresentation(username, slug);
         setPresentation(data);
         setMarkdown(data.markdown);
+        setOriginalMarkdown(data.markdown);
+        setOriginalConfig(
+          (data.config as unknown as PresentationConfig) || null
+        );
       } catch (err) {
         console.error("Error fetching presentation:", err);
         setError(
@@ -117,6 +125,32 @@ export default function PresentationPage() {
     [presentation, username, slug, router]
   );
 
+  // Handler for saving markdown and config
+  const handleSaveContent = useCallback(
+    async (newMarkdown: string, config: PresentationConfig) => {
+      if (!presentation) return;
+
+      await updatePresentation(username, slug, {
+        markdown: newMarkdown,
+        config: config as unknown as Record<string, unknown>,
+      });
+
+      // Update original values after successful save
+      setOriginalMarkdown(newMarkdown);
+      setOriginalConfig(config);
+    },
+    [presentation, username, slug]
+  );
+
+  // Manual save handler - receives markdown and config from EditorLayout
+  const handleManualSave = useCallback(
+    async (newMarkdown: string, config: PresentationConfig) => {
+      if (!presentation) return;
+      await handleSaveContent(newMarkdown, config);
+    },
+    [presentation, handleSaveContent]
+  );
+
   // Show loading while fetching presentation or checking auth
   if (isLoading || authLoading) {
     return <Loading />;
@@ -172,6 +206,10 @@ export default function PresentationPage() {
       updateEditingSlide={handleEditingSlideChange}
       presentation={presentation}
       onPresentationUpdate={handlePresentationUpdate}
+      onManualSave={handleManualSave}
+      originalMarkdown={originalMarkdown}
+      originalConfig={originalConfig}
+      onSaveContent={handleSaveContent}
     />
   );
 }
