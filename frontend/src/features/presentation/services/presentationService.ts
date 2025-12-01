@@ -70,7 +70,14 @@ export interface UpdatePresentationRequest {
   isPublic?: boolean;
 }
 
-function getAuthHeaders(): HeadersInit {
+/**
+ * Get auth headers with automatic token refresh
+ * Ensures token is valid before making API requests
+ */
+async function getAuthHeaders(): Promise<HeadersInit> {
+  // Ensure token is valid (refresh if needed)
+  await AuthService.ensureValidToken();
+
   // Use ID Token for Cognito authentication (contains user claims like username)
   const idToken = AuthService.getIdToken();
   const headers: HeadersInit = {
@@ -90,7 +97,7 @@ export async function getPresentations(
   try {
     const response = await fetch(`${API_URL}/users/${username}/presentations`, {
       method: "GET",
-      headers: getAuthHeaders(),
+      headers: await getAuthHeaders(),
     });
 
     if (!response.ok) {
@@ -128,7 +135,7 @@ export async function getPresentation(
       `${API_URL}/users/${username}/presentations/${slug}`,
       {
         method: "GET",
-        headers: getAuthHeaders(),
+        headers: await getAuthHeaders(),
       }
     );
 
@@ -156,7 +163,7 @@ export async function createPresentation(
   try {
     const response = await fetch(`${API_URL}/users/${username}/presentations`, {
       method: "POST",
-      headers: getAuthHeaders(),
+      headers: await getAuthHeaders(),
       body: JSON.stringify(data),
     });
 
@@ -188,7 +195,7 @@ export async function updatePresentation(
       `${API_URL}/users/${username}/presentations/${slug}`,
       {
         method: "PUT",
-        headers: getAuthHeaders(),
+        headers: await getAuthHeaders(),
         body: JSON.stringify(data),
       }
     );
@@ -225,7 +232,7 @@ export async function deletePresentation(
       `${API_URL}/users/${username}/presentations/${slug}`,
       {
         method: "DELETE",
-        headers: getAuthHeaders(),
+        headers: await getAuthHeaders(),
       }
     );
 

@@ -20,6 +20,10 @@ import type {
   ConfirmForgotPasswordCredentials,
   User,
 } from "../types/auth.types";
+import { AuthService } from "./authService";
+
+// Get API URL from environment variables
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // Get configuration from environment variables
 const getCognitoConfig = () => {
@@ -75,6 +79,53 @@ export class CognitoService {
       givenName: trimmed.substring(0, firstSpaceIndex),
       familyName: trimmed.substring(firstSpaceIndex + 1).trim(),
     };
+  }
+
+  /**
+   * Decode JWT token payload (without verification)
+   * Used to extract cognito:username from ID token
+   */
+  private static decodeJWT(token: string): Record<string, unknown> | null {
+    try {
+      const parts = token.split(".");
+      if (parts.length !== 3) {
+        return null;
+      }
+
+      // Decode base64url encoded payload (second part)
+      const payload = parts[1];
+      // Replace base64url characters with base64
+      const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+      // Add padding if needed
+      const padded = base64 + "=".repeat((4 - (base64.length % 4)) % 4);
+      const decoded = atob(padded);
+      return JSON.parse(decoded);
+    } catch (error) {
+      console.error("Failed to decode JWT:", error);
+      return null;
+    }
+  }
+
+  /**
+   * Check if access token is expired or will expire soon (within 5 minutes)
+   */
+  static isTokenExpiredOrExpiringSoon(accessToken: string): boolean {
+    try {
+      const payload = this.decodeJWT(accessToken);
+      if (!payload || !payload.exp) {
+        return true; // If we can't decode, assume expired
+      }
+
+      const expirationTime = payload.exp as number;
+      const currentTime = Math.floor(Date.now() / 1000);
+      const bufferTime = 5 * 60; // 5 minutes buffer
+
+      // Token is expired or will expire within 5 minutes
+      return expirationTime <= currentTime + bufferTime;
+    } catch (error) {
+      console.error("Failed to check token expiration:", error);
+      return true; // If we can't check, assume expired
+    }
   }
 
   /**
@@ -154,21 +205,6 @@ export class CognitoService {
       });
 
       const response = await client.send(command);
-
-      // Store signup date in localStorage
-      try {
-        const signupDate = new Date().toISOString();
-        const userData = {
-          id: response.UserSub,
-          username: credentials.username,
-          email: credentials.email,
-          name: credentials.name,
-          createdAt: signupDate,
-        };
-        localStorage.setItem("mostage-user-data", JSON.stringify(userData));
-      } catch {
-        // Ignore localStorage errors
-      }
 
       return {
         success: true,
@@ -300,7 +336,52 @@ export class CognitoService {
   }
 
   /**
+   * Fetch user data from backend API (username and createdAt)
+   * This ensures we get the real username from DynamoDB, not the alias (email)
+   */
+  private static async fetchUserDataFromBackend(
+    cognitoUsername: string
+  ): Promise<{ username: string; createdAt: string | null } | null> {
+    if (!API_URL) {
+      return null;
+    }
+
+    try {
+      // Ensure token is valid before making API request
+      await AuthService.ensureValidToken();
+
+      const idToken = AuthService.getIdToken();
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+      };
+
+      if (idToken) {
+        headers.Authorization = `Bearer ${idToken}`;
+      }
+
+      // Try to fetch user data using cognitoUsername (might be email if user logged in with email)
+      const response = await fetch(`${API_URL}/users/${cognitoUsername}`, {
+        method: "GET",
+        headers,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return {
+          username: data.username, // Real username from DynamoDB
+          createdAt: data.createdAt || null,
+        };
+      }
+    } catch (error) {
+      console.error("Failed to fetch user data from backend:", error);
+    }
+
+    return null;
+  }
+
+  /**
    * Get current user information
+   * Fetches data from Cognito and createdAt from backend API
    */
   static async getCurrentUser(
     accessToken: string
@@ -337,43 +418,36 @@ export class CognitoService {
         familyNameAttr?.Value
       );
 
+      // Get real username from ID token (cognito:username)
+      // response.Username might be email if user logged in with email (due to aliasAttributes)
+      let realUsername = response.Username;
+      const idToken = AuthService.getIdToken();
+      if (idToken) {
+        const tokenPayload = this.decodeJWT(idToken);
+        if (tokenPayload && tokenPayload["cognito:username"]) {
+          realUsername = tokenPayload["cognito:username"] as string;
+        }
+      }
+
+      // Fetch user data from backend API using real username
+      const backendUserData = await this.fetchUserDataFromBackend(realUsername);
+
+      if (!backendUserData || !backendUserData.createdAt) {
+        return {
+          success: false,
+          error: "User account not found",
+        };
+      }
+
+      // Build user object from Cognito data
       const user: User = {
         id: subAttr?.Value || response.Username,
-        username: response.Username,
+        // Use real username from backend
+        username: backendUserData.username,
         email: emailAttr?.Value || "",
         name: fullName || undefined,
+        createdAt: backendUserData.createdAt,
       };
-
-      // Try to get createdAt from localStorage (stored during signup)
-      // If not found, use current date as fallback for existing users
-      try {
-        const savedUser = localStorage.getItem("mostage-user-data");
-        if (savedUser) {
-          const parsedUser = JSON.parse(savedUser);
-          if (parsedUser.createdAt) {
-            (user as User & { createdAt?: string }).createdAt =
-              parsedUser.createdAt;
-          } else {
-            // For existing users without createdAt, set current date
-            (user as User & { createdAt?: string }).createdAt =
-              new Date().toISOString();
-            // Update localStorage
-            parsedUser.createdAt = user.createdAt;
-            localStorage.setItem(
-              "mostage-user-data",
-              JSON.stringify(parsedUser)
-            );
-          }
-        } else {
-          // For new logins, set current date
-          (user as User & { createdAt?: string }).createdAt =
-            new Date().toISOString();
-        }
-      } catch {
-        // Ignore localStorage errors, set current date as fallback
-        (user as User & { createdAt?: string }).createdAt =
-          new Date().toISOString();
-      }
 
       return {
         success: true,
@@ -383,6 +457,60 @@ export class CognitoService {
       const errorMessage = this.extractErrorMessage(
         error,
         "Failed to get user"
+      );
+      return {
+        success: false,
+        error: this.parseCognitoError(errorMessage),
+      };
+    }
+  }
+
+  /**
+   * Refresh access token using refresh token
+   */
+  static async refreshToken(refreshToken: string): Promise<{
+    success: boolean;
+    error?: string;
+    tokens?: {
+      accessToken: string;
+      idToken: string;
+    };
+  }> {
+    try {
+      const { clientId } = getCognitoConfig();
+      const client = this.getClient();
+
+      const command = new InitiateAuthCommand({
+        ClientId: clientId,
+        AuthFlow: AuthFlowType.REFRESH_TOKEN_AUTH,
+        AuthParameters: {
+          REFRESH_TOKEN: refreshToken,
+        },
+      });
+
+      const response = await client.send(command);
+
+      if (
+        response.AuthenticationResult?.AccessToken &&
+        response.AuthenticationResult?.IdToken
+      ) {
+        return {
+          success: true,
+          tokens: {
+            accessToken: response.AuthenticationResult.AccessToken,
+            idToken: response.AuthenticationResult.IdToken,
+          },
+        };
+      }
+
+      return {
+        success: false,
+        error: "Token refresh failed: No tokens received",
+      };
+    } catch (error: unknown) {
+      const errorMessage = this.extractErrorMessage(
+        error,
+        "Token refresh failed"
       );
       return {
         success: false,

@@ -16,6 +16,7 @@ interface AuthContextType extends AuthState {
   login: (credentials: LoginCredentials) => Promise<{
     success: boolean;
     error?: string;
+    username?: string;
   }>;
   register: (credentials: RegisterCredentials) => Promise<{
     success: boolean;

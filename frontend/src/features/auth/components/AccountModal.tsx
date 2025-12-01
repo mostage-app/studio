@@ -179,8 +179,9 @@ export function AccountModal({ isOpen, onClose }: AuthModalProps) {
             <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-2 sm:p-3 mb-3 sm:mb-4">
               <div className="flex items-start gap-2">
                 <p className="text-xs sm:text-sm text-blue-800 dark:text-blue-200 flex-1">
-                  Plan upgrades are not yet available for everyone. <br />
-                  You need a referral link to access additional features.
+                  Currently, you cannot upgrade your plan without a referral
+                  link. <br />
+                  In February 2026, the other plans will be made public.
                 </p>
               </div>
             </div>

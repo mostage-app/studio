@@ -70,6 +70,7 @@ const SUCCESS_MESSAGES = {
 
 export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const {
+    user,
     login,
     register,
     verify,
@@ -185,15 +186,15 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         if (result.success) {
           setSuccess(SUCCESS_MESSAGES.LOGIN);
           analytics.trackAuthSuccess("login");
-          // Get username from auth service after successful login
-          const savedUser = await import(
-            "@/features/auth/services/authService"
-          ).then((m) => m.AuthService.getUser());
           setTimeout(() => {
             onClose();
             // Redirect to user's dashboard after login
-            if (savedUser?.username) {
-              router.push(`/${savedUser.username}`);
+            // Use username from login result (real username, not email)
+            if (result.username) {
+              router.push(`/${result.username}`);
+            } else if (user?.username) {
+              // Fallback to user from context if username not in result
+              router.push(`/${user.username}`);
             }
           }, 1000);
         } else {
@@ -214,6 +215,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
       onClose,
       validateCookieConsent,
       router,
+      user?.username,
     ]
   );
 

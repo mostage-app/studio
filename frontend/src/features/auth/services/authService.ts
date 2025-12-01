@@ -4,6 +4,7 @@ export class AuthService {
   private static readonly ACCESS_TOKEN_KEY = "mostage-access-token";
   private static readonly ID_TOKEN_KEY = "mostage-id-token";
   private static readonly REFRESH_TOKEN_KEY = "mostage-refresh-token";
+  // USER_KEY kept for backward compatibility (removeUser still uses it)
   private static readonly USER_KEY = "mostage-user-data";
 
   // Cookie settings for secure token storage (accessible in Server Components)
@@ -99,24 +100,6 @@ export class AuthService {
     }
   }
 
-  static saveUser(user: Record<string, unknown>): void {
-    try {
-      localStorage.setItem(this.USER_KEY, JSON.stringify(user));
-    } catch (error) {
-      console.error("Failed to save user data:", error);
-    }
-  }
-
-  static getUser(): Record<string, unknown> | null {
-    try {
-      const user = localStorage.getItem(this.USER_KEY);
-      return user ? JSON.parse(user) : null;
-    } catch (error) {
-      console.error("Failed to get user data:", error);
-      return null;
-    }
-  }
-
   static removeUser(): void {
     try {
       localStorage.removeItem(this.USER_KEY);
@@ -159,6 +142,48 @@ export class AuthService {
       }
     } catch (error) {
       console.error("Failed to sync token to cookies:", error);
+    }
+  }
+
+  /**
+   * Ensure access token is valid, refresh if needed
+   * This should be called before making API requests
+   */
+  static async ensureValidToken(): Promise<boolean> {
+    try {
+      const accessToken = this.getAccessToken();
+      const refreshToken = this.getRefreshToken();
+
+      if (!accessToken || !refreshToken) {
+        return false;
+      }
+
+      // Import CognitoService dynamically to avoid circular dependency
+      const { CognitoService } = await import("./cognitoService");
+
+      // Check if token is expired or expiring soon
+      if (!CognitoService.isTokenExpiredOrExpiringSoon(accessToken)) {
+        return true; // Token is still valid
+      }
+
+      // Refresh the token
+      const result = await CognitoService.refreshToken(refreshToken);
+
+      if (result.success && result.tokens) {
+        // Save new tokens (keep the same refresh token)
+        const currentRefreshToken = this.getRefreshToken();
+        this.saveTokens({
+          accessToken: result.tokens.accessToken,
+          idToken: result.tokens.idToken,
+          refreshToken: currentRefreshToken || refreshToken,
+        });
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error("Failed to ensure valid token:", error);
+      return false;
     }
   }
 }

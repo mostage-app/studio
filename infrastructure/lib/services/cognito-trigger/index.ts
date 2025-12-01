@@ -38,8 +38,8 @@ export class CognitoTriggerConstruct extends Construct {
     dynamoDB.usersTable.grantReadWriteData(lambdaRole);
     dynamoDB.presentationsTable.grantReadWriteData(lambdaRole);
 
-    // Path to backend root
-    const backendRootPath = path.resolve(__dirname, "../../../..", "backend");
+    // Path to workspace root (to access both backend and shared)
+    const workspaceRootPath = path.resolve(__dirname, "../../../..");
 
     // Environment variables for Lambda functions
     const lambdaEnvironment = {
@@ -49,19 +49,23 @@ export class CognitoTriggerConstruct extends Construct {
     };
 
     // Bundling command
+    // Note: In Docker container, /asset-input points to workspaceRootPath
+    // We can access both backend and shared from there
     const bundlingCommand = [
       "bash",
       "-c",
       [
-        "cd /asset-input",
+        "cd /asset-input/backend",
         "npm install",
-        "mkdir -p /asset-output",
+        "mkdir -p /asset-output/templates/samples/basic",
         // Compile handler
         "npx tsc src/lambda/users/createDefaultPresentation.ts --target ES2020 --module commonjs --esModuleInterop --skipLibCheck --resolveJsonModule --outDir /asset-output --rootDir src",
         // Compile utils
         "npx tsc src/utils/dynamodb.ts src/utils/auth.ts --target ES2020 --module commonjs --esModuleInterop --skipLibCheck --resolveJsonModule --outDir /asset-output --rootDir src",
         // Compile types
         "npx tsc src/types/presentation.ts src/types/user.ts --target ES2020 --module commonjs --esModuleInterop --skipLibCheck --resolveJsonModule --outDir /asset-output --rootDir src",
+        // Copy shared samples to Lambda bundle
+        "cp -r ../shared/samples/basic/* /asset-output/templates/samples/basic/",
         // Copy package.json and install production deps
         "cp package.json /asset-output/",
         "cd /asset-output && npm install --production --no-audit --no-fund",
@@ -76,7 +80,7 @@ export class CognitoTriggerConstruct extends Construct {
         functionName: `mostage-studio-lambda-cognito-post-confirmation-${environment}`,
         runtime: lambda.Runtime.NODEJS_20_X,
         handler: "lambda/users/createDefaultPresentation.handler",
-        code: lambda.Code.fromAsset(backendRootPath, {
+        code: lambda.Code.fromAsset(workspaceRootPath, {
           bundling: {
             image: lambda.Runtime.NODEJS_20_X.bundlingImage,
             command: bundlingCommand,

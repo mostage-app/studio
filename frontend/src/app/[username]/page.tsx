@@ -30,6 +30,7 @@ import { EditPresentationModal } from "@/features/presentation/components/EditPr
 import Link from "next/link";
 import { useEffect, useState, useCallback } from "react";
 import { Modal } from "@/lib/components/ui/Modal";
+import { AuthService } from "@/features/auth/services/authService";
 
 export default function UserProfilePage() {
   const params = useParams();
@@ -58,6 +59,12 @@ export default function UserProfilePage() {
   const [profileSuccess, setProfileSuccess] = useState("");
   const [showUpgradeMessage, setShowUpgradeMessage] = useState(false);
 
+  // State for other users' profile data (only name and username)
+  const [profileUser, setProfileUser] = useState<{
+    name?: string;
+    username: string;
+  } | null>(null);
+
   const isOwnProfile = isAuthenticated && user?.username === username;
 
   useEffect(() => {
@@ -82,6 +89,50 @@ export default function UserProfilePage() {
 
     fetchPresentations();
   }, [username]);
+
+  // Fetch other user's profile data (only name and username)
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!username || isOwnProfile) return;
+
+      try {
+        const API_URL = process.env.NEXT_PUBLIC_API_URL;
+        if (!API_URL) {
+          console.warn("API_URL not configured");
+          return;
+        }
+
+        // Ensure token is valid before making API request
+        await AuthService.ensureValidToken();
+
+        const idToken = AuthService.getIdToken();
+        const headers: HeadersInit = {
+          "Content-Type": "application/json",
+        };
+
+        if (idToken) {
+          headers.Authorization = `Bearer ${idToken}`;
+        }
+
+        const response = await fetch(`${API_URL}/users/${username}`, {
+          method: "GET",
+          headers,
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setProfileUser({
+            name: data.name,
+            username: data.username,
+          });
+        }
+      } catch (error) {
+        console.error("Failed to fetch user profile:", error);
+      }
+    };
+
+    fetchUserProfile();
+  }, [username, isOwnProfile]);
 
   useEffect(() => {
     if (user) {
@@ -339,7 +390,7 @@ export default function UserProfilePage() {
                     <h2 className="text-xl font-semibold text-foreground">
                       {isOwnProfile
                         ? user?.name || user?.username
-                        : user?.name || username}
+                        : profileUser?.name || username}
                     </h2>
                     {isOwnProfile && (
                       <button
@@ -422,8 +473,9 @@ export default function UserProfilePage() {
               {showUpgradeMessage && (
                 <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
                   <p className="text-sm text-blue-800 dark:text-blue-200">
-                    Plan upgrades are not yet available for everyone. You need a
-                    referral link to access additional features.
+                    Currently, you cannot upgrade your plan without a referral
+                    link. <br />
+                    In March 2026, the other plans will be available publicly.
                   </p>
                 </div>
               )}

@@ -35,29 +35,84 @@ const clearAuthState = (): AuthState => ({
 export const useAuth = () => {
   const [state, setState] = useState<AuthState>(initialState);
 
+  /**
+   * Refresh access token if it's expired or expiring soon
+   */
+  const refreshTokenIfNeeded = useCallback(async (): Promise<boolean> => {
+    try {
+      const accessToken = AuthService.getAccessToken();
+      const refreshToken = AuthService.getRefreshToken();
+
+      if (!accessToken || !refreshToken) {
+        return false;
+      }
+
+      // Check if token is expired or expiring soon
+      if (!CognitoService.isTokenExpiredOrExpiringSoon(accessToken)) {
+        return true; // Token is still valid
+      }
+
+      // Refresh the token
+      const result = await CognitoService.refreshToken(refreshToken);
+
+      if (result.success && result.tokens) {
+        // Save new tokens (keep the same refresh token)
+        // Refresh token doesn't change when refreshing, so we keep the existing one
+        const currentRefreshToken =
+          AuthService.getRefreshToken() || refreshToken;
+        AuthService.saveTokens({
+          accessToken: result.tokens.accessToken,
+          idToken: result.tokens.idToken,
+          refreshToken: currentRefreshToken,
+        });
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error("Token refresh failed:", error);
+      return false;
+    }
+  }, []);
+
   // Check authentication status on mount
   useEffect(() => {
     const checkAuth = async () => {
       try {
         const accessToken = AuthService.getAccessToken();
-        const savedUser = AuthService.getUser();
 
-        if (accessToken && savedUser) {
+        if (accessToken) {
+          // Refresh token if needed before checking
+          const tokenRefreshed = await refreshTokenIfNeeded();
+          if (!tokenRefreshed) {
+            // Token refresh failed, clear auth
+            AuthService.clearAuth();
+            setState(clearAuthState());
+            return;
+          }
+
+          // Get the (possibly refreshed) access token
+          const currentAccessToken = AuthService.getAccessToken();
+          if (!currentAccessToken) {
+            AuthService.clearAuth();
+            setState(clearAuthState());
+            return;
+          }
+
           // Sync token to cookies if it exists in localStorage but not in cookies
           // This ensures Server Components can access the token
           AuthService.syncTokenToCookies();
 
           // Verify token is still valid by fetching user info
-          const result = await CognitoService.getCurrentUser(accessToken);
+          const result = await CognitoService.getCurrentUser(
+            currentAccessToken
+          );
           if (result.success && result.user) {
             setState({
               user: result.user,
               isAuthenticated: true,
               isLoading: false,
             });
-            AuthService.saveUser(
-              result.user as unknown as Record<string, unknown>
-            );
             return;
           }
         }
@@ -73,7 +128,7 @@ export const useAuth = () => {
     };
 
     checkAuth();
-  }, []);
+  }, [refreshTokenIfNeeded]);
 
   const login = useCallback(async (credentials: LoginCredentials) => {
     setState((prev) => ({ ...prev, isLoading: true }));
@@ -91,15 +146,15 @@ export const useAuth = () => {
         );
 
         if (userResult.success && userResult.user) {
-          AuthService.saveUser(
-            userResult.user as unknown as Record<string, unknown>
-          );
           setState({
             user: userResult.user,
             isAuthenticated: true,
             isLoading: false,
           });
-          return { success: true };
+          return {
+            success: true,
+            username: userResult.user.username,
+          };
         }
       }
 
@@ -260,9 +315,6 @@ export const useAuth = () => {
         // Refresh user data
         const userResult = await CognitoService.getCurrentUser(accessToken);
         if (userResult.success && userResult.user) {
-          AuthService.saveUser(
-            userResult.user as unknown as Record<string, unknown>
-          );
           setState((prev) => ({
             ...prev,
             user: userResult.user || prev.user,
