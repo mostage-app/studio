@@ -80,8 +80,8 @@ export default function Home() {
       updateEditingSlide={updateEditingSlide}
       presentation={{
         presentationId: "",
-        name: "Basic Example",
-        slug: "example",
+        name: "Basic Sample",
+        slug: "sample",
         config: config as unknown as Record<string, unknown>,
         isPublic: true,
       }}

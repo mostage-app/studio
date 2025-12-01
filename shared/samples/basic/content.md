@@ -1,6 +1,6 @@
-# Welcome to Mostage
+# Basic Sample
 
-## Presentation Framework
+### Mostage as a Presentation Framework
 
 ---
 

@@ -3,139 +3,39 @@ import { PresentationsTable, UsersTable } from "../../utils/dynamodb";
 import { Presentation } from "../../types/presentation";
 import { User } from "../../types/user";
 import { v4 as uuidv4 } from "uuid";
+import * as fs from "fs";
+import * as path from "path";
 
-// Sample presentation content (from frontend/public/samples/basic)
-const SAMPLE_MARKDOWN = `# Welcome to Mostage
+// Read template files from shared directory
+// In Lambda runtime, templates are copied to /asset-output/templates during bundling
+const getTemplatePath = (filename: string): string => {
+  // Try Lambda runtime path first (bundled)
+  const bundledPath = path.join(
+    __dirname,
+    "../../../templates/samples/basic",
+    filename
+  );
+  if (fs.existsSync(bundledPath)) {
+    return bundledPath;
+  }
 
-## Presentation Framework
+  // Fallback to shared directory (for local development/testing)
+  const sharedPath = path.join(
+    __dirname,
+    "../../../../shared/samples/basic",
+    filename
+  );
+  if (fs.existsSync(sharedPath)) {
+    return sharedPath;
+  }
 
----
-
-## What is Mostage?
-
-#### Presentation framework
-
-###### based on
-
-#### Markdown and HTML
-
----
-
-## Key Features
-
-- **Markdown Support** - Write in Markdown
-- **HTML Support** - Use HTML when needed
-- **Web-based** - Runs in any modern browser
-
----
-
-## How can I use Mostage?
-
-- ##### Use the CLI
-- ##### Use the NPM package
-- ##### Use the Online Editor
-
----
-
-<!-- confetti -->
-
-### Happy presenting with Mostage!
-
-#### Get started now [mo.js.org](https://mo.js.org)
-
----
-
-<!-- confetti -->
-
-![LOGO](https://mostage.app/images/logo.svg)
-
----
-`;
-
-const SAMPLE_CONFIG = {
-  name: "Basic Example",
-  slug: "basic-example",
-  theme: "dark",
-  scale: 1.0,
-  loop: false,
-  keyboard: true,
-  touch: true,
-  urlHash: true,
-  transition: {
-    type: "horizontal",
-    duration: 300,
-    easing: "ease-in-out",
-  },
-  centerContent: {
-    vertical: true,
-    horizontal: true,
-  },
-  header: {
-    enabled: true,
-    content: "# Mostage",
-    position: "top-left",
-    showOnFirstSlide: false,
-  },
-  footer: {
-    enabled: true,
-    content: "#### Presentation framework",
-    position: "bottom-left",
-    showOnFirstSlide: false,
-  },
-  plugins: {
-    ProgressBar: {
-      enabled: true,
-      position: "bottom",
-      height: "12px",
-      color: "#007acc",
-    },
-    SlideNumber: {
-      enabled: true,
-      position: "bottom-right",
-      format: "current/total",
-    },
-    Controller: {
-      enabled: true,
-      position: "bottom-center",
-    },
-    Confetti: {
-      enabled: true,
-      particleCount: 50,
-      size: { min: 5, max: 10 },
-      duration: 3000,
-      delay: 0,
-      colors: [
-        "#ff6b6b",
-        "#4ecdc4",
-        "#45b7d1",
-        "#96ceb4",
-        "#feca57",
-        "#ff9ff3",
-        "#54a0ff",
-      ],
-    },
-  },
-  background: [
-    {
-      imagePath: "https://mostage.app/demo/images/background.svg",
-      size: "cover",
-      position: "center",
-      repeat: "no-repeat",
-      bgColor: "#000000",
-      global: false,
-      allSlidesExcept: [4, 5],
-    },
-    {
-      imagePath: "https://mostage.app/demo/images/background-end.svg",
-      size: "cover",
-      position: "center",
-      repeat: "no-repeat",
-      bgColor: "#000000",
-      global: false,
-      allSlides: [5],
-    },
-  ],
+  throw new Error(`Template file not found: ${filename}`);
 };
+
+const SAMPLE_MARKDOWN = fs.readFileSync(getTemplatePath("content.md"), "utf-8");
+const SAMPLE_CONFIG = JSON.parse(
+  fs.readFileSync(getTemplatePath("config.json"), "utf-8")
+);
 
 /**
  * Lambda handler for Cognito Post Confirmation trigger

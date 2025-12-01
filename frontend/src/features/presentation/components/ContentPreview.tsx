@@ -264,8 +264,8 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
           {/* Presentation URL Display */}
           <div className="hidden sm:flex items-center">
             <EditablePresentationInfo
-              presentationName={presentation?.name || "Basic Example"}
-              slug={presentation?.slug || "example"}
+              presentationName={presentation?.name || "Basic Sample"}
+              slug={presentation?.slug || "sample"}
               isPublic={presentation?.isPublic || false}
               onOpenAuthModal={onOpenAuthModal}
               onSave={onPresentationUpdate}
