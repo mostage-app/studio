@@ -69,16 +69,16 @@
       "repeat": "no-repeat",
       "bgColor": "#000000",
       "global": false,
-      "allSlidesExcept": [4, 5]
+      "allSlidesExcept": [5, 6]
     },
     {
       "imagePath": "https://mostage.app/demo/images/background-end.svg",
-      "size": "cover",
+      "size": "contain",
       "position": "center",
       "repeat": "no-repeat",
       "bgColor": "#000000",
       "global": false,
-      "allSlides": [5]
+      "allSlides": [6]
     }
   ]
 }
