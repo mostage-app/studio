@@ -31,6 +31,7 @@ import Link from "next/link";
 import { useEffect, useState, useCallback } from "react";
 import { Modal } from "@/lib/components/ui/Modal";
 import { AuthService } from "@/features/auth/services/authService";
+import { NotFoundPage } from "@/lib/components/NotFoundPage";
 
 export default function UserProfilePage() {
   const params = useParams();
@@ -39,7 +40,11 @@ export default function UserProfilePage() {
   const { user, isAuthenticated, updateUser } = useAuthContext();
   const [presentations, setPresentations] = useState<Presentation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Note: presentationError is kept for potential future use in displaying presentation fetch errors
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [presentationError, setPresentationError] = useState<string | null>(
+    null
+  );
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
     slug: string;
@@ -64,6 +69,7 @@ export default function UserProfilePage() {
     name?: string;
     username: string;
   } | null>(null);
+  const [userNotFound, setUserNotFound] = useState(false);
 
   const isOwnProfile = isAuthenticated && user?.username === username;
 
@@ -72,14 +78,14 @@ export default function UserProfilePage() {
       if (!username) return;
 
       setIsLoading(true);
-      setError(null);
+      setPresentationError(null);
 
       try {
         const data = await getPresentations(username);
         setPresentations(data);
       } catch (err) {
         console.error("Error fetching presentations:", err);
-        setError(
+        setPresentationError(
           err instanceof Error ? err.message : "Failed to load presentations"
         );
       } finally {
@@ -119,7 +125,13 @@ export default function UserProfilePage() {
           headers,
         });
 
+        if (response.status === 404) {
+          setUserNotFound(true);
+          return;
+        }
+
         if (response.ok) {
+          setUserNotFound(false);
           const data = await response.json();
           setProfileUser({
             name: data.name,
@@ -128,6 +140,7 @@ export default function UserProfilePage() {
         }
       } catch (error) {
         console.error("Failed to fetch user profile:", error);
+        // Don't set userNotFound on network errors, only on 404
       }
     };
 
@@ -302,19 +315,16 @@ export default function UserProfilePage() {
     );
   }
 
-  if (error && !isOwnProfile) {
+  if (userNotFound && !isOwnProfile) {
     return (
-      <div className="h-full flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
-        <div className="max-w-md w-full text-center">
-          <div className="text-6xl font-bold text-primary mb-4">404</div>
-          <h1 className="text-2xl font-semibold text-foreground mb-2">
-            User Not Found
-          </h1>
-          <p className="text-muted-foreground">
-            The user &quot;{username}&quot; does not exist.
-          </p>
-        </div>
-      </div>
+      <NotFoundPage
+        title="User Not Found"
+        message={`The user "${username}" does not exist.`}
+        primaryAction={{
+          label: "Go to Home",
+          href: "/",
+        }}
+      />
     );
   }
 

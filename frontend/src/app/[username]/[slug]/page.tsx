@@ -4,8 +4,6 @@ import { EditorLayout } from "@/lib/components/layout/EditorLayout";
 import { Loading } from "@/lib/components/ui";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
-import { Home } from "lucide-react";
-import Link from "next/link";
 import { useAuthContext } from "@/features/auth/components/AuthProvider";
 import {
   getPresentation,
@@ -13,6 +11,7 @@ import {
   type Presentation,
 } from "@/features/presentation/services/presentationService";
 import { PresentationConfig } from "@/features/presentation/types/presentation.types";
+import { NotFoundPage } from "@/lib/components/NotFoundPage";
 
 export default function PresentationPage() {
   const params = useParams();
@@ -158,30 +157,22 @@ export default function PresentationPage() {
 
   if (error || !presentation) {
     return (
-      <div className="h-full flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
-        <div className="max-w-2xl w-full text-center">
-          <div className="text-8xl font-bold text-primary mb-4">404</div>
-          <h1 className="text-4xl font-bold text-foreground mb-2">Not Found</h1>
-          <p className="text-muted-foreground text-lg mb-8">
-            {error || "This presentation does not exist or is private."}
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href={`/${username}`}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90 transition-colors font-medium"
-            >
-              View {username}&apos;s presentations
-            </Link>
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors font-medium"
-            >
-              <Home className="w-4 h-4" />
-              Go to Home
-            </Link>
-          </div>
-        </div>
-      </div>
+      <NotFoundPage
+        title="Presentation Not Found"
+        message={error || "This presentation does not exist or is private."}
+        primaryAction={{
+          label: "Go to Home",
+          href: "/",
+        }}
+        secondaryAction={
+          username
+            ? {
+                label: `View ${username}'s presentations`,
+                href: `/${username}`,
+              }
+            : undefined
+        }
+      />
     );
   }
 
