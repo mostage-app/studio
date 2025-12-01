@@ -36,25 +36,6 @@ export class StudioStackProd extends BaseStudioStack {
           burstLimit: 200, // Max 200 requests in burst
         },
       },
-      amplifyConfig: {
-        repository:
-          process.env.AMPLIFY_REPOSITORY ||
-          "https://github.com/mostage-app/studio",
-        branch: process.env.AMPLIFY_BRANCH || "main",
-        // Optional: GitHub token secret ARN from AWS Secrets Manager
-        // githubTokenSecretArn: process.env.GITHUB_TOKEN_SECRET_ARN,
-        // Optional: Custom build spec
-        // buildSpec: "...",
-        // Optional: Additional environment variables
-        environmentVariables: {
-          // Add any additional env vars here (e.g., GA_MEASUREMENT_ID)
-        },
-        // Optional: Custom domain for production
-        // customDomain: {
-        //   domainName: "studio.mostage.app",
-        //   certificateArn: "arn:aws:acm:...",
-        // },
-      },
     };
   }
 }

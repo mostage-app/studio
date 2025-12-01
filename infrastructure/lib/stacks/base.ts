@@ -9,7 +9,6 @@ import { UsersLambdaConstruct } from "../services/api/users";
 import { CognitoTriggerConstruct } from "../services/cognito-trigger";
 import { ResourceGroupConstruct } from "../services/resource-group";
 import { DynamoDBConstruct } from "../services/dynamodb";
-import { AmplifyConstruct } from "../services/amplify";
 
 /**
  * Configuration interface for Stack
@@ -32,17 +31,6 @@ export interface StackConfig {
       burstLimit?: number;
     };
   };
-  amplifyConfig?: {
-    repository: string; // GitHub repository URL
-    branch: string; // Branch to deploy (e.g., "main")
-    githubTokenSecretArn?: string; // ARN of Secrets Manager secret containing GitHub token
-    buildSpec?: string; // Custom build spec (optional)
-    environmentVariables?: Record<string, string>; // Additional environment variables
-    customDomain?: {
-      domainName: string;
-      certificateArn?: string;
-    };
-  };
 }
 
 /**
@@ -58,7 +46,6 @@ export abstract class BaseStudioStack extends cdk.Stack {
   public readonly resourceGroupName: string;
   public readonly presentationsTableName: string;
   public readonly usersTableName: string;
-  public readonly amplifyAppUrl?: string;
 
   /**
    * Abstract method that must be implemented by subclasses
@@ -76,7 +63,6 @@ export abstract class BaseStudioStack extends cdk.Stack {
       userPoolClientName,
       sesConfig,
       apiConfig,
-      amplifyConfig,
     } = config;
 
     // Default tags for all resources
@@ -188,27 +174,7 @@ export abstract class BaseStudioStack extends cdk.Stack {
     this.cognitoRegion = props.env?.region || "eu-central-1";
     this.apiUrl = apiGateway.apiUrl;
 
-    // Amplify Construct (if config is provided) - create after all values are assigned
-    if (amplifyConfig) {
-      const amplifyConstruct = new AmplifyConstruct(this, "Amplify", {
-        environment,
-        repository: amplifyConfig.repository,
-        branch: amplifyConfig.branch,
-        githubTokenSecretArn: amplifyConfig.githubTokenSecretArn,
-        buildSpec: amplifyConfig.buildSpec,
-        environmentVariables: {
-          NEXT_PUBLIC_COGNITO_USER_POOL_ID: this.cognitoUserPoolId,
-          NEXT_PUBLIC_COGNITO_CLIENT_ID: this.cognitoClientId,
-          NEXT_PUBLIC_AWS_REGION: this.cognitoRegion,
-          NEXT_PUBLIC_API_URL: this.apiUrl,
-          ...amplifyConfig.environmentVariables,
-        },
-        customDomain: amplifyConfig.customDomain,
-      });
-
-      this.amplifyAppUrl = amplifyConstruct.appUrl;
-      // AmplifyAppUrl output is already created in AmplifyConstruct
-    }
+    // instead of separate apps for each environment
 
     new cdk.CfnOutput(this, "UserPoolId", {
       value: this.cognitoUserPoolId,

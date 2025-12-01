@@ -26,25 +26,6 @@ export class StudioStackDev extends BaseStudioStack {
         // Create infrastructure/.env.dev.local and add: UNSPLASH_ACCESS_KEY=your_key_here
         unsplashAccessKey: process.env.UNSPLASH_ACCESS_KEY || "",
       },
-      amplifyConfig: {
-        repository:
-          process.env.AMPLIFY_REPOSITORY ||
-          "https://github.com/mostage-app/studio",
-        branch: process.env.AMPLIFY_BRANCH || "dev",
-        // Optional: GitHub token secret ARN from AWS Secrets Manager
-        // githubTokenSecretArn: process.env.GITHUB_TOKEN_SECRET_ARN,
-        // Optional: Custom build spec
-        // buildSpec: "...",
-        // Optional: Additional environment variables
-        environmentVariables: {
-          // Add any additional env vars here
-        },
-        // Optional: Custom domain
-        // customDomain: {
-        //   domainName: "dev.studio.mostage.app",
-        //   certificateArn: "arn:aws:acm:...",
-        // },
-      },
     };
   }
 }
