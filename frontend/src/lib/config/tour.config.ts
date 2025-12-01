@@ -38,11 +38,24 @@ export const tourSteps: TourStep[] = [
       "Customize your presentation settings. You can change the theme, animations, headers, footers, background and more.",
     position: "auto",
   },
+  // {
+  //   target: "[title='Auto-saves every 30 seconds']",
+  //   title: "Auto save",
+  //   content:
+  //     "Auto-saves your presentation every 30 seconds if you have unsaved changes.",
+  //   position: "bottom",
+  // },
   {
     target: '[title="New presentation"]',
     title: "New Presentation",
     content:
       "Start a new presentation or load a sample template to get started quickly.",
+    position: "bottom",
+  },
+  {
+    target: "[title='Dashboard']",
+    title: "Dashboard",
+    content: "Access your dashboard to view your presentations and more.",
     position: "bottom",
   },
   {
@@ -58,26 +71,18 @@ export const tourSteps: TourStep[] = [
     content: "Manage presentation Name, URL and privacy settings.",
     position: "bottom",
   },
-  {
-    target: '[title="Upload presentation"]',
-    title: "Upload Presentation",
-    content:
-      "Upload existing presentations from your computer (.mostage, .md, or JSON files).",
-    position: "bottom",
-  },
-  {
-    target: '[title="Download presentation"]',
-    title: "Download it",
-    content:
-      "Export your presentation as PDF, HTML, PPTX, JPG, or Mostage format.",
-    position: "bottom",
-  },
-
   // {
-  //   target: '[title="Sign In / Sign Up"]',
-  //   title: "Account",
+  //   target: '[title="Upload presentation"]',
+  //   title: "Upload Presentation",
   //   content:
-  //     "Sign in to your account to save your presentations and access your dashboard.",
+  //     "Upload existing presentations from your computer (.mostage, .md, or JSON files).",
+  //   position: "bottom",
+  // },
+  // {
+  //   target: '[title="Download presentation"]',
+  //   title: "Download it",
+  //   content:
+  //     "Export your presentation as PDF, HTML, PPTX, JPG, or Mostage format.",
   //   position: "bottom",
   // },
 ];

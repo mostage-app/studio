@@ -507,8 +507,8 @@ export function OnboardingTour({
               </button>
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 leading-relaxed">
-              Let&apos;s take a quick tour to help you get started.
-              <br /> We&apos;ll show you the main features and how to use them.
+              Let&apos;s take a quick tour to help you get started. <br />
+              We&apos;ll show you the main features.
             </p>
             <div className="flex items-center justify-between gap-2">
               <Button

@@ -203,6 +203,19 @@ export const GlobalHeader: React.FC = () => {
     localStorage.setItem("tour-completed-v2", "true");
   }, []);
 
+  // Auto-show tour on first visit (only on editor pages)
+  useEffect(() => {
+    // Only show on editor pages
+    if (!isEditorPage) return;
+
+    // Check if user has already seen the tour
+    const hasSeenTour = localStorage.getItem("tour-completed-v2");
+    if (hasSeenTour) return;
+
+    // Show tour immediately
+    setShowTour(true);
+  }, [isEditorPage]);
+
   const handleStartTour = useCallback(async () => {
     setShowMenuDropdown(false);
     setTourError(null);
@@ -367,7 +380,7 @@ export const GlobalHeader: React.FC = () => {
                   </div>
                 ) : (
                   <div className="flex items-center gap-1.5 text-muted-foreground">
-                    <span>Auto-save (every minute)</span>
+                    <span>Auto-save after changes(every 30 seconds)</span>
                   </div>
                 )}
               </div>
