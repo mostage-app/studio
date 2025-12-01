@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📚 Documentation
+    url: https://github.com/mostage-app/studio/tree/main/docs
+    about: Check out our documentation for setup guides and more information
+  - name: 💬 Discussions
+    url: https://github.com/mostage-app/studio/discussions
+    about: Ask questions and discuss ideas with the community
