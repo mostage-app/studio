@@ -1,35 +1,19 @@
 version: 1
-frontend:
-  phases:
-    preBuild:
-      commands:
-        - cd frontend
-        - npm ci
-    build:
-      commands:
-        - npm run build
-  artifacts:
-    baseDirectory: frontend/.next
-    files:
-      - "**/*"
-  cache:
-    paths:
-      - frontend/node_modules/**/*
-      - frontend/.next/cache/**/*
-  customHeaders:
-    - pattern: "**/*"
-      headers:
-        - key: "X-Content-Type-Options"
-          value: "nosniff"
-        - key: "X-Frame-Options"
-          value: "DENY"
-        - key: "X-XSS-Protection"
-          value: "1; mode=block"
-        - key: "Referrer-Policy"
-          value: "strict-origin-when-cross-origin"
-  customRedirects:
-    # Next.js SSR: Handle all routes through Next.js
-    # This ensures dynamic routes like /[username]/[slug] and /[username]/[slug]/view work correctly
-    - source: "/<*>"
-      target: "/index.html"
-      status: "200"
+applications:
+  - appRoot: frontend
+    frontend:
+      phases:
+        preBuild:
+          commands:
+            - npm ci
+        build:
+          commands:
+            - npm run build
+      artifacts:
+        baseDirectory: .next
+        files:
+          - "**/*"
+      cache:
+        paths:
+          - node_modules/**/*
+          - .next/cache/**/*
