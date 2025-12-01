@@ -7,16 +7,24 @@ import * as fs from "fs";
 import * as path from "path";
 
 // Read template files from shared directory
-// In Lambda runtime, templates are copied to /asset-output/templates during bundling
+// In Lambda runtime, templates are copied to /var/task/templates during bundling
 const getTemplatePath = (filename: string): string => {
   // Try Lambda runtime path first (bundled)
+  // In Lambda, __dirname points to /var/task/lambda/users
+  // So templates should be at /var/task/templates/samples/basic
   const bundledPath = path.join(
     __dirname,
-    "../../../templates/samples/basic",
+    "../../templates/samples/basic",
     filename
   );
   if (fs.existsSync(bundledPath)) {
     return bundledPath;
+  }
+
+  // Alternative path (if bundled differently)
+  const altPath = path.join("/var/task/templates/samples/basic", filename);
+  if (fs.existsSync(altPath)) {
+    return altPath;
   }
 
   // Fallback to shared directory (for local development/testing)
@@ -29,13 +37,30 @@ const getTemplatePath = (filename: string): string => {
     return sharedPath;
   }
 
-  throw new Error(`Template file not found: ${filename}`);
+  throw new Error(
+    `Template file not found: ${filename}. Tried: ${bundledPath}, ${altPath}, ${sharedPath}`
+  );
 };
 
-const SAMPLE_MARKDOWN = fs.readFileSync(getTemplatePath("content.md"), "utf-8");
-const SAMPLE_CONFIG = JSON.parse(
-  fs.readFileSync(getTemplatePath("config.json"), "utf-8")
-);
+// Load templates lazily in handler to ensure files are available
+let SAMPLE_MARKDOWN: string | null = null;
+let SAMPLE_CONFIG: Record<string, unknown> | null = null;
+
+function loadTemplates(): {
+  SAMPLE_MARKDOWN: string;
+  SAMPLE_CONFIG: Record<string, unknown>;
+} {
+  if (SAMPLE_MARKDOWN === null || SAMPLE_CONFIG === null) {
+    SAMPLE_MARKDOWN = fs.readFileSync(getTemplatePath("content.md"), "utf-8");
+    SAMPLE_CONFIG = JSON.parse(
+      fs.readFileSync(getTemplatePath("config.json"), "utf-8")
+    ) as Record<string, unknown>;
+  }
+  return {
+    SAMPLE_MARKDOWN: SAMPLE_MARKDOWN,
+    SAMPLE_CONFIG: SAMPLE_CONFIG as Record<string, unknown>,
+  };
+}
 
 /**
  * Lambda handler for Cognito Post Confirmation trigger
@@ -84,10 +109,14 @@ export const handler = async (
       // Continue to create presentation even if user record fails
     }
 
+    // Load templates
+    const { SAMPLE_MARKDOWN: markdown, SAMPLE_CONFIG: config } =
+      loadTemplates();
+
     // Check if default presentation already exists
     const existingPresentation = await PresentationsTable.getByUsernameAndSlug(
       username,
-      SAMPLE_CONFIG.slug
+      config.slug as string
     );
 
     if (existingPresentation) {
@@ -100,10 +129,10 @@ export const handler = async (
       presentationId: uuidv4(),
       userId: userId,
       username: username,
-      name: SAMPLE_CONFIG.name,
-      slug: SAMPLE_CONFIG.slug,
-      markdown: SAMPLE_MARKDOWN,
-      config: SAMPLE_CONFIG as unknown as Presentation["config"],
+      name: config.name as string,
+      slug: config.slug as string,
+      markdown: markdown,
+      config: config as unknown as Presentation["config"],
       isPublic: false,
       createdAt: now,
       updatedAt: now,
@@ -112,7 +141,7 @@ export const handler = async (
     await PresentationsTable.create(presentation);
 
     console.log(
-      `Default presentation "${SAMPLE_CONFIG.name}" created for user: ${username} (${userId})`
+      `Default presentation "${config.name}" created for user: ${username} (${userId})`
     );
 
     return event;

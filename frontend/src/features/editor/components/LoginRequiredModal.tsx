@@ -10,6 +10,7 @@ import {
   MessageSquare,
   LogIn,
   Package,
+  Cloud,
 } from "lucide-react";
 import { Modal } from "@/lib/components/ui/Modal";
 import { useAuthContext } from "@/features/auth/components/AuthProvider";
@@ -22,28 +23,34 @@ interface LoginRequiredModalProps {
 
 const features = [
   {
+    name: "Cloud Storage",
+    description: "Save and sync your presentations in the cloud",
+    icon: Cloud,
+    color: "blue",
+  },
+  {
     name: "QR Code",
     description: "Generate QR codes for presentations",
     icon: QrCode,
-    color: "blue",
+    color: "green",
   },
   {
     name: "Live Polling",
     description: "Create interactive polls for audience",
     icon: BarChart3,
-    color: "green",
+    color: "purple",
   },
   {
     name: "Live Quiz",
     description: "Add quizzes to test audience knowledge",
     icon: HelpCircle,
-    color: "purple",
+    color: "orange",
   },
   {
     name: "Q&A Session",
     description: "Enable audience questions and answers",
     icon: MessageSquare,
-    color: "orange",
+    color: "indigo",
   },
 ];
 
@@ -137,6 +144,11 @@ export function LoginRequiredModal({
                     return {
                       bg: "bg-orange-100 dark:bg-orange-900/30",
                       text: "text-orange-600 dark:text-orange-400",
+                    };
+                  case "indigo":
+                    return {
+                      bg: "bg-indigo-100 dark:bg-indigo-900/30",
+                      text: "text-indigo-600 dark:text-indigo-400",
                     };
                   default:
                     return {

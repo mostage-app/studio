@@ -2,6 +2,7 @@
 
 import { useAuthContext } from "@/features/auth/components/AuthProvider";
 import { useParams } from "next/navigation";
+import Image from "next/image";
 import {
   FileText,
   Globe,
@@ -32,6 +33,21 @@ import { useEffect, useState, useCallback } from "react";
 import { Modal } from "@/lib/components/ui/Modal";
 import { AuthService } from "@/features/auth/services/authService";
 import { NotFoundPage } from "@/lib/components/NotFoundPage";
+import CryptoJS from "crypto-js";
+
+/**
+ * Generate Gravatar URL from email
+ */
+function getGravatarUrl(email: string, size: number = 96): string {
+  // Normalize email: lowercase and trim
+  const normalizedEmail = email.toLowerCase().trim();
+
+  // Generate MD5 hash using crypto-js
+  const emailHash = CryptoJS.MD5(normalizedEmail).toString();
+
+  // Gravatar URL format: https://www.gravatar.com/avatar/{hash}?s={size}&d={default}
+  return `https://www.gravatar.com/avatar/${emailHash}?s=${size}&d=identicon&r=pg`;
+}
 
 export default function UserProfilePage() {
   const params = useParams();
@@ -70,8 +86,19 @@ export default function UserProfilePage() {
     username: string;
   } | null>(null);
   const [userNotFound, setUserNotFound] = useState(false);
+  const [gravatarUrl, setGravatarUrl] = useState<string | null>(null);
 
   const isOwnProfile = isAuthenticated && user?.username === username;
+
+  // Generate Gravatar URL for own profile
+  useEffect(() => {
+    if (isOwnProfile && user?.email) {
+      const url = getGravatarUrl(user.email, 96);
+      setGravatarUrl(url);
+    } else {
+      setGravatarUrl(null);
+    }
+  }, [isOwnProfile, user?.email]);
 
   useEffect(() => {
     const fetchPresentations = async () => {
@@ -337,9 +364,23 @@ export default function UserProfilePage() {
             <div className="bg-background border border-input rounded-sm p-6 sticky top-24">
               {/* Avatar */}
               <div className="flex justify-center mb-4">
-                <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center">
-                  <User className="w-12 h-12 text-primary" />
-                </div>
+                {isOwnProfile && gravatarUrl ? (
+                  <div className="relative w-24 h-24">
+                    <Image
+                      src={gravatarUrl}
+                      alt={user?.name || username}
+                      width={96}
+                      height={96}
+                      className="w-24 h-24 rounded-md object-cover border-2 border-primary/20"
+                      onError={() => setGravatarUrl(null)}
+                      unoptimized
+                    />
+                  </div>
+                ) : (
+                  <div className="w-24 h-24 bg-primary/10 rounded-md flex items-center justify-center">
+                    <User className="w-12 h-12 text-primary" />
+                  </div>
+                )}
               </div>
 
               {/* Messages */}
@@ -362,38 +403,49 @@ export default function UserProfilePage() {
               {/* Name */}
               <div className="text-center mb-6">
                 {isOwnProfile && isEditingName ? (
-                  <div className="space-y-2">
+                  <div className="flex items-center justify-center gap-2">
                     <input
                       type="text"
                       value={editedName}
                       onChange={(e) => setEditedName(e.target.value)}
-                      className="w-full px-3 py-2 text-center border border-input rounded-md bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
+                      onKeyDown={(e) => {
+                        if (
+                          e.key === "Enter" &&
+                          editedName.trim() &&
+                          !isSavingName
+                        ) {
+                          handleSaveName();
+                        } else if (e.key === "Escape") {
+                          handleCancelEditName();
+                        }
+                      }}
+                      className="text-xl font-semibold text-foreground bg-transparent border-none outline-none text-center focus:ring-0 focus:border-b-2 focus:border-primary px-1 py-0.5 min-w-0 flex-1 max-w-xs disabled:opacity-50"
                       placeholder="Enter your name"
                       disabled={isSavingName}
                       autoFocus
                     />
-                    <div className="flex items-center justify-center gap-2">
-                      <button
-                        onClick={handleSaveName}
-                        disabled={isSavingName || !editedName.trim()}
-                        className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-white bg-primary hover:bg-primary/90 disabled:opacity-50 rounded-md transition-colors"
-                      >
-                        {isSavingName ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Check className="w-4 h-4" />
-                        )}
-                        <span>Save</span>
-                      </button>
-                      <button
-                        onClick={handleCancelEditName}
-                        disabled={isSavingName}
-                        className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-foreground bg-secondary hover:bg-secondary/80 rounded-md transition-colors"
-                      >
-                        <X className="w-4 h-4" />
-                        <span>Cancel</span>
-                      </button>
-                    </div>
+                    <button
+                      onClick={handleSaveName}
+                      disabled={isSavingName || !editedName.trim()}
+                      className="p-1.5 text-primary hover:bg-primary/10 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Save (Enter)"
+                      aria-label="Save name"
+                    >
+                      {isSavingName ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Check className="w-4 h-4" />
+                      )}
+                    </button>
+                    <button
+                      onClick={handleCancelEditName}
+                      disabled={isSavingName}
+                      className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-secondary/50 rounded-md transition-colors disabled:opacity-50"
+                      title="Cancel (Esc)"
+                      aria-label="Cancel editing"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
                   </div>
                 ) : (
                   <div className="flex items-center justify-center gap-2">
@@ -407,6 +459,7 @@ export default function UserProfilePage() {
                         onClick={handleStartEditName}
                         className="p-1 text-muted-foreground hover:text-foreground transition-colors"
                         title="Edit name"
+                        aria-label="Edit name"
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>

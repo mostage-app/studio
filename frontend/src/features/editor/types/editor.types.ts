@@ -48,7 +48,7 @@ export interface ContentEditorProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
-  onOpenAuthModal?: () => void;
+  onOpenLoginRequiredModal?: () => void;
   onOpenExportModal?: () => void;
   updateEditingSlide?: (slideNumber: number) => void;
 }

@@ -11,14 +11,14 @@ interface AIModalProps {
   isOpen: boolean;
   onClose: () => void;
   onInsertContent?: (content: string) => void;
-  onOpenAuthModal?: () => void;
+  onOpenLoginRequiredModal?: () => void;
 }
 
 export function AIModal({
   isOpen,
   onClose,
   onInsertContent,
-  onOpenAuthModal,
+  onOpenLoginRequiredModal,
 }: AIModalProps) {
   const { isAuthenticated } = useAuthContext();
   const [isGenerating, setIsGenerating] = useState(false);
@@ -128,7 +128,7 @@ export function AIModal({
     setShowAuthError(false);
     setPrompt("");
     onClose();
-    onOpenAuthModal?.();
+    onOpenLoginRequiredModal?.();
   };
 
   const handleClose = () => {

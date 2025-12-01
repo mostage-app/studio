@@ -27,6 +27,7 @@ import { MobileWarning } from "@/lib/components/ui";
 import {
   subscribeToLayoutMode,
   openAuthModal,
+  openLoginRequiredModal,
   emitAutoSaveState,
   emitAutoSaveHandlers,
 } from "./GlobalHeader";
@@ -229,6 +230,10 @@ export const EditorLayout: React.FC<EditorProps> = ({
     openAuthModal();
   }, []);
 
+  const handleOpenLoginRequiredModal = useCallback(() => {
+    openLoginRequiredModal();
+  }, []);
+
   const handleOpenImportModal = useCallback(() => {
     setShowImportModal(true);
   }, []);
@@ -334,7 +339,7 @@ export const EditorLayout: React.FC<EditorProps> = ({
               markdown={markdown}
               config={presentationConfig}
               editingSlide={editingSlide}
-              onOpenAuthModal={handleOpenAuthModal}
+              onOpenLoginRequiredModal={handleOpenLoginRequiredModal}
               onOpenImportModal={handleOpenImportModal}
               onOpenExportModal={handleOpenExportModal}
               presentation={presentation}
@@ -350,7 +355,7 @@ export const EditorLayout: React.FC<EditorProps> = ({
               <ContentEditor
                 value={markdown}
                 onChange={onChange}
-                onOpenAuthModal={handleOpenAuthModal}
+                onOpenLoginRequiredModal={handleOpenLoginRequiredModal}
                 onOpenExportModal={handleOpenExportModal}
                 updateEditingSlide={updateEditingSlide}
               />
@@ -379,7 +384,7 @@ export const EditorLayout: React.FC<EditorProps> = ({
           <ContentEditor
             value={markdown}
             onChange={onChange}
-            onOpenAuthModal={handleOpenAuthModal}
+            onOpenLoginRequiredModal={handleOpenLoginRequiredModal}
             onOpenExportModal={handleOpenExportModal}
             updateEditingSlide={updateEditingSlide}
           />
@@ -409,7 +414,7 @@ export const EditorLayout: React.FC<EditorProps> = ({
                 markdown={markdown}
                 config={presentationConfig}
                 editingSlide={editingSlide}
-                onOpenAuthModal={handleOpenAuthModal}
+                onOpenLoginRequiredModal={handleOpenLoginRequiredModal}
                 onOpenImportModal={handleOpenImportModal}
                 onOpenExportModal={handleOpenExportModal}
                 presentation={presentation}
@@ -438,7 +443,7 @@ export const EditorLayout: React.FC<EditorProps> = ({
         <ContentEditor
           value={markdown}
           onChange={onChange}
-          onOpenAuthModal={handleOpenAuthModal}
+          onOpenLoginRequiredModal={handleOpenLoginRequiredModal}
           onOpenExportModal={handleOpenExportModal}
           updateEditingSlide={updateEditingSlide}
         />
@@ -453,7 +458,7 @@ export const EditorLayout: React.FC<EditorProps> = ({
           markdown={markdown}
           config={presentationConfig}
           editingSlide={editingSlide}
-          onOpenAuthModal={handleOpenAuthModal}
+          onOpenLoginRequiredModal={handleOpenLoginRequiredModal}
           onOpenImportModal={handleOpenImportModal}
           onOpenExportModal={handleOpenExportModal}
           presentation={presentation}

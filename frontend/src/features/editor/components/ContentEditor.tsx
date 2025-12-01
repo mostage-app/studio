@@ -23,7 +23,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
   value: externalValue,
   onChange,
   placeholder = "Start typing your markdown here...",
-  onOpenAuthModal,
+  onOpenLoginRequiredModal,
   onOpenExportModal,
   updateEditingSlide,
 }) => {
@@ -921,7 +921,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
           onOpenSaveModal={() => setShowSaveModal(true)}
           onOpenAIModal={() => setShowAIModal(true)}
           onOpenUnsplashModal={() => setShowUnsplashModal(true)}
-          onOpenAuthModal={onOpenAuthModal || (() => {})}
+          onOpenLoginRequiredModal={onOpenLoginRequiredModal || (() => {})}
           getSelectedText={getSelectedText}
           onUndo={undo}
           onRedo={redo}
@@ -1026,7 +1026,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
             }, 0);
           }
         }}
-        onOpenAuthModal={onOpenAuthModal || (() => {})}
+        onOpenLoginRequiredModal={onOpenLoginRequiredModal || (() => {})}
       />
 
       {/* Save Modal */}

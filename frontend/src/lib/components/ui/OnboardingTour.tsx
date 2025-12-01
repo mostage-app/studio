@@ -16,8 +16,10 @@ interface OnboardingTourProps {
   steps: TourStep[];
   /** Whether the tour is active */
   isActive: boolean;
-  /** Callback when tour is closed or completed */
+  /** Callback when tour is closed */
   onClose: () => void;
+  /** Callback when tour is completed (Skip or Finish) */
+  onComplete?: () => void;
 }
 
 interface ElementPosition {
@@ -57,6 +59,7 @@ export function OnboardingTour({
   steps,
   isActive,
   onClose,
+  onComplete,
 }: OnboardingTourProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [elementPosition, setElementPosition] =
@@ -378,6 +381,8 @@ export function OnboardingTour({
     if (currentStep < steps.length - 1) {
       setCurrentStep((prev) => prev + 1);
     } else {
+      // Tour finished - mark as completed
+      onComplete?.();
       onClose();
     }
   }, [
@@ -385,6 +390,7 @@ export function OnboardingTour({
     elementPosition,
     steps.length,
     onClose,
+    onComplete,
     updateElementPosition,
   ]);
 
@@ -394,7 +400,14 @@ export function OnboardingTour({
     }
   }, [currentStep]);
 
+  const handleSkipTour = useCallback(() => {
+    // Skip Tour button clicked - mark as completed
+    onComplete?.();
+    onClose();
+  }, [onClose, onComplete]);
+
   const handleCancel = useCallback(() => {
+    // X button clicked - just close without marking as completed
     onClose();
   }, [onClose]);
 
@@ -514,7 +527,7 @@ export function OnboardingTour({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleCancel}
+                onClick={handleSkipTour}
                 className="flex-1 !rounded-sm"
                 style={buttonFocusStyles}
                 onFocus={handleButtonFocus}

@@ -43,7 +43,7 @@ interface MarkdownToolbarProps {
   onOpenSaveModal: () => void;
   onOpenAIModal: () => void;
   onOpenUnsplashModal?: () => void;
-  onOpenAuthModal: () => void;
+  onOpenLoginRequiredModal: () => void;
   getSelectedText?: () => string;
   onUndo?: () => void;
   onRedo?: () => void;
@@ -77,7 +77,7 @@ export function MarkdownToolbar({
   onApplyCodeBlock,
   onOpenAIModal,
   onOpenUnsplashModal,
-  onOpenAuthModal,
+  onOpenLoginRequiredModal,
   getSelectedText,
   onUndo,
   onRedo,
@@ -838,7 +838,7 @@ export function MarkdownToolbar({
       <LoginRequiredModal
         isOpen={showLoginRequiredModal}
         onClose={() => setShowLoginRequiredModal(false)}
-        onOpenAuthModal={onOpenAuthModal}
+        onOpenAuthModal={onOpenLoginRequiredModal}
       />
     </div>
   );

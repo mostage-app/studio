@@ -11,9 +11,11 @@ import {
   LayoutModeToggle,
   type LayoutMode,
 } from "@/lib/common/LayoutModeToggle";
+import { SaveButton } from "@/lib/common/SaveButton";
 import { AuthModal } from "@/features/auth/components/AuthModal";
 import { AboutModal } from "@/features/app-info/components/AboutModal";
 import { NewPresentationModal } from "@/features/editor/components/NewPresentationModal";
+import { LoginRequiredModal } from "@/features/editor/components/LoginRequiredModal";
 import { OnboardingTour } from "@/lib/components/ui";
 import { Modal } from "@/lib/components/ui/Modal";
 import { tourSteps } from "@/lib/config/tour.config";
@@ -30,10 +32,6 @@ import {
   HelpCircle,
   Heart,
   Shield,
-  Save,
-  Check,
-  AlertCircle,
-  Loader2,
 } from "lucide-react";
 
 export interface LayoutModeHandler {
@@ -64,6 +62,20 @@ export function subscribeToAuthModal(callback: () => void): () => void {
 
 export function openAuthModal() {
   authModalListeners.forEach((cb) => cb());
+}
+
+// Global event for login required modal
+const loginRequiredModalListeners = new Set<() => void>();
+
+export function subscribeToLoginRequiredModal(
+  callback: () => void
+): () => void {
+  loginRequiredModalListeners.add(callback);
+  return () => loginRequiredModalListeners.delete(callback);
+}
+
+export function openLoginRequiredModal() {
+  loginRequiredModalListeners.forEach((cb) => cb());
 }
 
 // Global event for auto-save state
@@ -107,6 +119,14 @@ export function emitAutoSaveHandlers(handlers: AutoSaveHandlers | null) {
 
 export const GlobalHeader: React.FC = () => {
   const { isAuthenticated, logout, user } = useAuthContext();
+
+  // Subscribe to global login required modal events
+  useEffect(() => {
+    const unsubscribe = subscribeToLoginRequiredModal(() => {
+      setShowLoginRequiredModal(true);
+    });
+    return unsubscribe;
+  }, []);
   const { resetConsent } = useCookieConsentContext();
   const router = useRouter();
   const pathname = usePathname();
@@ -126,6 +146,7 @@ export const GlobalHeader: React.FC = () => {
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showNewModal, setShowNewModal] = useState(false);
+  const [showLoginRequiredModal, setShowLoginRequiredModal] = useState(false);
 
   // Layout mode state
   const [layoutMode, setLayoutMode] = useState<LayoutMode>(2);
@@ -199,6 +220,10 @@ export const GlobalHeader: React.FC = () => {
   }, []);
 
   const handleTourClose = useCallback(() => {
+    setShowTour(false);
+  }, []);
+
+  const handleTourComplete = useCallback(() => {
     setShowTour(false);
     localStorage.setItem("tour-completed-v2", "true");
   }, []);
@@ -346,65 +371,14 @@ export const GlobalHeader: React.FC = () => {
 
         <div className="flex items-center gap-2">
           {/* Save Status and Button - only on editor pages */}
-          {isEditorPage && autoSaveState && autoSaveHandlers?.onManualSave && (
+          {isEditorPage && (
             <>
-              {/* Save Status Indicator */}
-              <div
-                className="hidden sm:flex items-center gap-1.5 px-2 py-1 text-xs"
-                title="Auto-saves every 30 seconds"
-              >
-                {autoSaveState.isSaving ? (
-                  <div className="flex items-center gap-1.5 text-muted-foreground">
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                    <span>Saving...</span>
-                  </div>
-                ) : autoSaveState.error ? (
-                  <div className="flex items-center gap-1.5 text-red-500">
-                    <AlertCircle className="w-3 h-3" />
-                    <span>Error</span>
-                  </div>
-                ) : autoSaveState.lastSaved ? (
-                  <div className="flex items-center gap-1.5 text-green-600 dark:text-green-400">
-                    <Check className="w-3 h-3" />
-                    <span>
-                      Saved{" "}
-                      {autoSaveState.lastSaved.toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </span>
-                  </div>
-                ) : autoSaveState.hasUnsavedChanges ? (
-                  <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
-                    <span>Unsaved</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-1.5 text-muted-foreground">
-                    <span>Auto-save after changes(every 30 seconds)</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Manual Save Button */}
-              <button
-                onClick={autoSaveHandlers.onManualSave}
-                disabled={
-                  autoSaveState.isSaving || !autoSaveState.hasUnsavedChanges
-                }
-                className="inline-flex items-center justify-center w-8 h-8 text-foreground bg-background hover:bg-secondary border border-input rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                title={
-                  autoSaveState.hasUnsavedChanges
-                    ? "Save manually"
-                    : "No changes to save"
-                }
-              >
-                {autoSaveState.isSaving ? (
-                  // TODO: Add loading indicator
-                  <Save className="w-4 h-4" />
-                ) : (
-                  <Save className="w-4 h-4" />
-                )}
-              </button>
+              <SaveButton
+                autoSaveState={autoSaveState}
+                autoSaveHandlers={autoSaveHandlers}
+                isAuthenticated={isAuthenticated}
+                onLoginRequired={() => setShowLoginRequiredModal(true)}
+              />
               <div className="hidden sm:block w-px h-6 bg-input mx-1" />
             </>
           )}
@@ -527,7 +501,7 @@ export const GlobalHeader: React.FC = () => {
             <button
               onClick={async () => {
                 await logout();
-                router.push("/");
+                window.location.href = "/";
               }}
               className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 text-sm font-medium text-card-foreground bg-card border border-input rounded-sm hover:bg-secondary cursor-pointer focus:outline-none transition-colors"
               title="Sign Out"
@@ -565,11 +539,21 @@ export const GlobalHeader: React.FC = () => {
         onClose={() => setShowNewModal(false)}
       />
 
+      <LoginRequiredModal
+        isOpen={showLoginRequiredModal}
+        onClose={() => setShowLoginRequiredModal(false)}
+        onOpenAuthModal={() => {
+          setShowLoginRequiredModal(false);
+          setShowAuthModal(true);
+        }}
+      />
+
       {/* Onboarding Tour */}
       <OnboardingTour
         steps={tourSteps}
         isActive={showTour}
         onClose={handleTourClose}
+        onComplete={handleTourComplete}
       />
 
       {/* Tour Error Modal */}

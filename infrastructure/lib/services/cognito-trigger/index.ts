@@ -64,8 +64,8 @@ export class CognitoTriggerConstruct extends Construct {
         "npx tsc src/utils/dynamodb.ts src/utils/auth.ts --target ES2020 --module commonjs --esModuleInterop --skipLibCheck --resolveJsonModule --outDir /asset-output --rootDir src",
         // Compile types
         "npx tsc src/types/presentation.ts src/types/user.ts --target ES2020 --module commonjs --esModuleInterop --skipLibCheck --resolveJsonModule --outDir /asset-output --rootDir src",
-        // Copy shared samples to Lambda bundle
-        "cp -r ../shared/samples/basic/* /asset-output/templates/samples/basic/",
+        // Copy shared samples to Lambda bundle (ensure directory exists and copy files)
+        "mkdir -p /asset-output/templates/samples/basic && cp -r ../shared/samples/basic/* /asset-output/templates/samples/basic/ || (echo 'Error copying templates' && ls -la ../shared/samples/basic/ && exit 1)",
         // Copy package.json and install production deps
         "cp package.json /asset-output/",
         "cd /asset-output && npm install --production --no-audit --no-fund",

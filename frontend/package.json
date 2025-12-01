@@ -1,6 +1,6 @@
 {
   "name": "@mostage/studio-frontend",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "private": true,
   "license": "GPL-3.0-or-later",
   "repository": {
@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-cognito-identity-provider": "^3.700.0",
+    "crypto-js": "^4.2.0",
     "lucide-react": "^0.546.0",
     "mostage": "latest",
     "next": "15.5.5",
@@ -25,6 +26,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "@types/crypto-js": "^4.2.2",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

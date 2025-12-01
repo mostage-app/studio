@@ -15,7 +15,7 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
   markdown,
   config,
   editingSlide,
-  onOpenAuthModal,
+  onOpenLoginRequiredModal,
   onOpenImportModal,
   onOpenExportModal,
   presentation,
@@ -267,7 +267,7 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
               presentationName={presentation?.name || "Basic Sample"}
               slug={presentation?.slug || "sample"}
               isPublic={presentation?.isPublic || false}
-              onOpenAuthModal={onOpenAuthModal}
+              onOpenLoginRequiredModal={onOpenLoginRequiredModal}
               onSave={onPresentationUpdate}
             />
           </div>

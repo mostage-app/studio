@@ -9,7 +9,7 @@ interface EditablePresentationInfoProps {
   presentationName?: string;
   slug?: string;
   isPublic?: boolean;
-  onOpenAuthModal?: () => void;
+  onOpenLoginRequiredModal?: () => void;
   onSave?: (data: {
     name: string;
     slug: string;
@@ -23,7 +23,7 @@ export const EditablePresentationInfo: React.FC<
   presentationName = "Untitled",
   slug = "untitled",
   isPublic = false,
-  onOpenAuthModal,
+  onOpenLoginRequiredModal,
   onSave,
 }) => {
   const { user, isAuthenticated } = useAuthContext();
@@ -39,12 +39,12 @@ export const EditablePresentationInfo: React.FC<
     mounted && isAuthenticated && user?.username ? user.username : "[username]";
 
   const handleClick = useCallback(() => {
-    if (!isAuthenticated && onOpenAuthModal) {
-      onOpenAuthModal();
+    if (!isAuthenticated && onOpenLoginRequiredModal) {
+      onOpenLoginRequiredModal();
       return;
     }
     setShowEditModal(true);
-  }, [isAuthenticated, onOpenAuthModal]);
+  }, [isAuthenticated, onOpenLoginRequiredModal]);
 
   const handleClose = useCallback(() => {
     setShowEditModal(false);
