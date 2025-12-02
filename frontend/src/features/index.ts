@@ -4,3 +4,4 @@ export * from "./import";
 export * from "./export";
 export * from "./auth";
 export * from "./app-info";
+export * from "./profile";

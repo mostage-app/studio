@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Save, Loader2, Check, AlertCircle } from "lucide-react";
 
 // Auto-save state interface
@@ -28,6 +29,22 @@ export function SaveButton({
   isAuthenticated,
   onLoginRequired,
 }: SaveButtonProps) {
+  const [formattedTime, setFormattedTime] = useState<string>("");
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Only format time on client side to avoid hydration mismatch
+  useEffect(() => {
+    setIsMounted(true);
+    if (autoSaveState?.lastSaved) {
+      setFormattedTime(
+        autoSaveState.lastSaved.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      );
+    }
+  }, [autoSaveState?.lastSaved]);
+
   const handleSaveClick = () => {
     if (!isAuthenticated) {
       onLoginRequired();
@@ -80,11 +97,7 @@ export function SaveButton({
             <div className="flex items-center gap-1.5 text-green-600 dark:text-green-400">
               <Check className="w-3 h-3" />
               <span>
-                Saved{" "}
-                {autoSaveState.lastSaved.toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
+                Saved{isMounted && formattedTime ? ` ${formattedTime}` : ""}
               </span>
             </div>
           ) : autoSaveState.hasUnsavedChanges ? (
