@@ -4,13 +4,13 @@ This document describes the Continuous Integration and Continuous Deployment (CI
 
 ## Overview
 
-The project uses GitHub Actions for automated testing, building, and deployment. There are three main workflows:
+The project uses GitHub Actions for automated testing, building, and deployment. There are three main CI workflows:
 
 1. **CI Frontend Workflow** - Runs on frontend changes
-2. **CI Infrastructure Workflow** - Runs on infrastructure changes
-3. **Deploy Frontend Workflow** - Deploys frontend to GitHub Pages
+2. **CI Backend Workflow** - Runs on backend changes
+3. **CI Infrastructure Workflow** - Runs on infrastructure changes
 
-**Note**: Infrastructure deployment is performed **manually** using AWS CDK commands locally. See [Infrastructure Setup](infrastructure.md) for deployment instructions.
+**Note**: Infrastructure deployment is performed **manually** using AWS CDK commands locally. Frontend deployment is handled by AWS Amplify (see `amplify.yml`). See [Infrastructure Setup](infrastructure.md) for deployment instructions.
 
 ## Workflows
 
@@ -47,74 +47,38 @@ The project uses GitHub Actions for automated testing, building, and deployment.
 
 **Location**: `.github/workflows/ci-infrastructure.yml`
 
-### 3. Deploy Frontend Workflow (`deploy-frontend.yml`)
+### 3. CI Backend Workflow (`ci-backend.yml`)
 
-**Purpose**: Deploys the frontend application to GitHub Pages
+**Purpose**: Automated validation for backend Lambda functions
 
 **Triggers**:
 
-- Push to `main` branch **only when files in `frontend/` change**
-- Manual trigger via `workflow_dispatch`
+- Push to `main` or `dev` branches **only when files in `backend/` change**
+- Pull requests to `main` or `dev` branches **only when files in `backend/` change**
 
-**Process**:
+**Jobs**:
 
-1. Installs dependencies
-2. Builds the Next.js application (lint and type-check are handled by CI workflow)
-3. Uploads build artifacts
-4. Deploys to GitHub Pages
+- **Build**: Compiles TypeScript to JavaScript
+- **Type Check**: Validates TypeScript types
 
-**Note**: This workflow only builds and deploys. Lint and type-check are performed by the CI Frontend workflow to avoid duplicate work.
-
-**Environment Variables**:
-
-- `NEXT_PUBLIC_GA_MEASUREMENT_ID` (optional) - Google Analytics ID
-- `NEXT_PUBLIC_COGNITO_USER_POOL_ID_PROD` (required) - Production Cognito User Pool ID
-- `NEXT_PUBLIC_COGNITO_CLIENT_ID_PROD` (required) - Production Cognito Client ID
-- `NEXT_PUBLIC_AWS_REGION` (required) - AWS Region (e.g., `eu-central-1`)
-- `NEXT_PUBLIC_API_URL` (required) - API Gateway URL for backend services
-
-**Note**: These environment variables must be set in GitHub Secrets (Settings → Secrets and variables → Actions) because Next.js requires them at build time for static export.
-
-**Location**: `.github/workflows/deploy-frontend.yml`
+**Location**: `.github/workflows/ci-backend.yml`
 
 ## GitHub Setup
 
 ### Required Secrets
 
-Go to **Settings → Secrets and variables → Actions** and add:
-
-#### For Frontend Deploy
-
-- `NEXT_PUBLIC_GA_MEASUREMENT_ID` (optional) - Google Analytics Measurement ID
-- `NEXT_PUBLIC_COGNITO_USER_POOL_ID_PROD` (required) - Production Cognito User Pool ID
-- `NEXT_PUBLIC_COGNITO_CLIENT_ID_PROD` (required) - Production Cognito Client ID
-- `NEXT_PUBLIC_AWS_REGION` (required) - AWS Region (e.g., `eu-central-1`)
-- `NEXT_PUBLIC_API_URL` (required) - API Gateway URL for backend services
-
-### Required Environments
-
-Go to **Settings → Environments** and create:
-
-#### `github-pages`
-
-- Usually created automatically
-- Used for frontend deployment
-
-### GitHub Pages Configuration
-
-Go to **Settings → Pages**:
-
-- **Source**: Select "GitHub Actions"
-- **Branch**: `main` (or your default branch)
+Currently, no GitHub Secrets are required for CI workflows. Environment variables for frontend builds are handled by AWS Amplify (see `amplify.yml`).
 
 ## Workflow Files
 
 ```text
 .github/workflows/
 ├── ci-frontend.yml            # Frontend CI checks (lint, type-check, build)
-├── ci-infrastructure.yml      # Infrastructure CI checks (validate, format)
-└── deploy-frontend.yml        # Frontend deployment to GitHub Pages
+├── ci-backend.yml             # Backend CI checks (build, type-check)
+└── ci-infrastructure.yml      # Infrastructure CI checks (build, type-check)
 ```
+
+**Note**: Frontend deployment is handled by AWS Amplify (see `amplify.yml` in the root directory).
 
 ## Usage
 
@@ -123,20 +87,14 @@ Go to **Settings → Pages**:
 CI checks run automatically on:
 
 - **Frontend CI**: When files in `frontend/` change
+- **Backend CI**: When files in `backend/` change
 - **Infrastructure CI**: When files in `infrastructure/` change
 
-You can also manually trigger from **Actions → CI Frontend** or **Actions → CI Infrastructure**
+You can also manually trigger from **Actions → CI Frontend**, **Actions → CI Backend**, or **Actions → CI Infrastructure**
 
 ### Deploying Frontend
 
-Frontend deploys automatically when you push to `main` branch.
-
-To deploy manually:
-
-1. Go to **Actions → Deploy Frontend**
-2. Click **Run workflow**
-3. Select branch (usually `main`)
-4. Click **Run workflow**
+Frontend deployment is handled by AWS Amplify. See `amplify.yml` in the root directory for configuration.
 
 ### Deploying Infrastructure
 
@@ -202,24 +160,31 @@ See [Infrastructure Setup](infrastructure.md) for detailed instructions.
 - Check type check output in Actions logs
 - Type check locally: `cd infrastructure && npx tsc --noEmit`
 
-### Deploy Frontend Fails
+### CI Backend Workflow Fails
 
 **Build errors**:
 
-- Check if environment variables are set correctly
-- Verify `NEXT_PUBLIC_GA_MEASUREMENT_ID` is set (if using analytics)
+- Check build output in Actions logs
+- Build locally: `cd backend && npm run build`
 
-**Deployment errors**:
+**TypeScript type errors**:
 
-- Check GitHub Pages settings
-- Verify Pages source is set to "GitHub Actions"
+- Check type check output in Actions logs
+- Type check locally: `cd backend && npx tsc --noEmit`
 
 ## Best Practices
 
 1. **Always run CI locally** before pushing:
 
    ```bash
+   # Frontend
    cd frontend && npm run lint && npx tsc --noEmit && npm run build
+
+   # Backend
+   cd backend && npm run build && npx tsc --noEmit
+
+   # Infrastructure
+   cd infrastructure && npm run build && npx tsc --noEmit
    ```
 
 2. **Review CI results** before merging PRs

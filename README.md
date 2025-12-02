@@ -1,11 +1,22 @@
 # Mostage Studio
 
 ![CI Frontend](https://github.com/mostage-app/studio/actions/workflows/ci-frontend.yml/badge.svg)
+![CI Backend](https://github.com/mostage-app/studio/actions/workflows/ci-backend.yml/badge.svg)
 ![CI Infrastructure](https://github.com/mostage-app/studio/actions/workflows/ci-infrastructure.yml/badge.svg)
+
 ![Next.js](https://img.shields.io/badge/Next.js-15.5.5-black?logo=next.js)
-![React](https://img.shields.io/badge/React-19.1.0-blue?logo=react)
-![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)
-![AWS CDK](https://img.shields.io/badge/AWS%20CDK-2.100.0-orange?logo=aws)
+![React](https://img.shields.io/badge/React-19.1.0-61DAFB?logo=react&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4-38B2AC?logo=tailwind-css&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-20-339933?logo=node.js&logoColor=white)
+
+![AWS CDK](https://img.shields.io/badge/AWS%20CDK-2.100.0-FF9900?logo=amazon-aws&logoColor=white)
+![AWS Lambda](https://img.shields.io/badge/AWS%20Lambda-FF9900?logo=aws-lambda&logoColor=white)
+![AWS DynamoDB](https://img.shields.io/badge/AWS%20DynamoDB-FF9900?logo=amazon-dynamodb&logoColor=white)
+![AWS Cognito](https://img.shields.io/badge/AWS%20Cognito-FF9900?logo=amazon-aws&logoColor=white)
+![AWS API Gateway](https://img.shields.io/badge/AWS%20API%20Gateway-FF9900?logo=amazon-api-gateway&logoColor=white)
+![AWS S3](https://img.shields.io/badge/AWS%20S3-FF9900?logo=amazon-s3&logoColor=white)
+![AWS Amplify](https://img.shields.io/badge/AWS%20Amplify-FF9900?logo=aws-amplify&logoColor=white)
 
 Mostage Studio is a simple online tool for making presentations with Markdown and HTML. Some features include AI Creation, Live Polling System, and Audience Q&A.
 

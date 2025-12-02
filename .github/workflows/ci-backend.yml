@@ -1,16 +1,16 @@
-name: CI Infrastructure
+name: CI Backend
 
 on:
   push:
     branches: [main, dev]
     paths:
-      - "infrastructure/**"
-      - ".github/workflows/ci-infrastructure.yml"
+      - "backend/**"
+      - ".github/workflows/ci-backend.yml"
   pull_request:
     branches: [main, dev]
     paths:
-      - "infrastructure/**"
-      - ".github/workflows/ci-infrastructure.yml"
+      - "backend/**"
+      - ".github/workflows/ci-backend.yml"
 
 permissions:
   contents: read
@@ -28,14 +28,14 @@ jobs:
         with:
           node-version: "22"
           cache: "npm"
-          cache-dependency-path: infrastructure/package-lock.json
+          cache-dependency-path: backend/package-lock.json
 
       - name: Install dependencies
-        working-directory: ./infrastructure
+        working-directory: ./backend
         run: npm ci
 
       - name: Build project
-        working-directory: ./infrastructure
+        working-directory: ./backend
         run: npm run build
 
   type-check:
@@ -50,12 +50,12 @@ jobs:
         with:
           node-version: "22"
           cache: "npm"
-          cache-dependency-path: infrastructure/package-lock.json
+          cache-dependency-path: backend/package-lock.json
 
       - name: Install dependencies
-        working-directory: ./infrastructure
+        working-directory: ./backend
         run: npm ci
 
       - name: Type check
-        working-directory: ./infrastructure
+        working-directory: ./backend
         run: npx tsc --noEmit
