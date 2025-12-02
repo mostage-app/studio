@@ -1,12 +1,12 @@
 "use client";
 
-import { FileUser, Users } from "lucide-react";
+import { FileSymlink } from "lucide-react";
 import type { Presentation } from "@/features/presentation/services/presentationService";
 import type { SharePlatform } from "../types";
 import { PresentationCard } from "./PresentationCard";
 
-interface SharedPresentationsGridProps {
-  presentations: Presentation[];
+interface TemplatesGridProps {
+  templates: Presentation[];
   username: string;
   shareMenuOpen: string | null;
   presentationLinkCopied: string | null;
@@ -17,8 +17,8 @@ interface SharedPresentationsGridProps {
   menuRefs: Record<string, HTMLDivElement | null>;
 }
 
-export function SharedPresentationsGrid({
-  presentations,
+export function TemplatesGrid({
+  templates,
   username,
   shareMenuOpen,
   presentationLinkCopied,
@@ -27,31 +27,29 @@ export function SharedPresentationsGrid({
   onEdit,
   onDelete,
   menuRefs,
-}: SharedPresentationsGridProps) {
+}: TemplatesGridProps) {
   return (
     <div className="bg-background border border-input rounded-sm p-6 mt-6">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <div className="p-2 bg-primary/10 rounded-md">
-          <Users className="w-5 h-5 text-primary" />
+          <FileSymlink className="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h3 className="text-base font-semibold text-foreground">
-            Shared with Me
-          </h3>
+          <h3 className="text-base font-semibold text-foreground">Templates</h3>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Presentations shared with you by other users
+            Browse and use presentation templates
           </p>
         </div>
       </div>
 
-      {/* Presentations Grid */}
-      {presentations.length > 0 ? (
+      {/* Templates Grid */}
+      {templates.length > 0 ? (
         <div className="grid grid-cols-2 gap-4 2xl:grid-cols-4">
-          {presentations.map((pres) => (
+          {templates.map((template) => (
             <PresentationCard
-              key={pres.presentationId}
-              presentation={pres}
+              key={template.presentationId}
+              presentation={template}
               username={username}
               isOwnProfile={false}
               shareMenuOpen={shareMenuOpen}
@@ -61,7 +59,7 @@ export function SharedPresentationsGrid({
               onEdit={onEdit}
               onDelete={onDelete}
               menuRef={(el) => {
-                menuRefs[pres.slug] = el;
+                menuRefs[template.slug] = el;
               }}
             />
           ))}
@@ -69,13 +67,13 @@ export function SharedPresentationsGrid({
       ) : (
         <div className="py-12 px-4 text-center">
           <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-4">
-            <FileUser className="w-8 h-8 text-muted-foreground" />
+            <FileSymlink className="w-8 h-8 text-muted-foreground" />
           </div>
           <h3 className="text-lg font-semibold text-foreground mb-2">
-            No shared presentations
+            No templates available
           </h3>
           <p className="text-sm text-muted-foreground max-w-md mx-auto">
-            Presentations shared with you will appear here
+            Templates will appear here when they become available
           </p>
         </div>
       )}
