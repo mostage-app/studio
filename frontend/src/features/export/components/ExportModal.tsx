@@ -57,6 +57,7 @@ const EXPORT_FORMATS = [
     icon: Settings,
     color: "text-green-600",
     bgColor: "bg-green-50 dark:bg-green-900/20",
+    isAvailable: true,
   },
   {
     id: "content",
@@ -65,6 +66,7 @@ const EXPORT_FORMATS = [
     icon: File,
     color: "text-cyan-600",
     bgColor: "bg-cyan-50 dark:bg-cyan-900/20",
+    isAvailable: true,
   },
   {
     id: "mostage",
@@ -191,6 +193,11 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                     {format.isRecommended && (
                       <span className="px-2 py-0.5 text-xs font-medium bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-full">
                         Recommended
+                      </span>
+                    )}
+                    {format.isAvailable && (
+                      <span className="px-2 py-0.5 text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full">
+                        Available
                       </span>
                     )}
                   </div>
