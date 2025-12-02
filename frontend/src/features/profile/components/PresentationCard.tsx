@@ -117,7 +117,7 @@ export function PresentationCard({
         {/* View button */}
         <button
           onClick={() => onView(pres.slug)}
-          className="flex-1 min-w-[80px] flex items-center justify-center gap-1.5 px-3 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80 transition-colors text-sm font-medium"
+          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-background text-foreground rounded-md hover:bg-secondary border border-input transition-colors text-sm font-medium"
           title="View presentation"
         >
           <MonitorPlay className="w-4 h-4 flex-shrink-0" />
@@ -129,7 +129,7 @@ export function PresentationCard({
             {/* Edit Content button */}
             <Link
               href={`/${username}/${pres.slug}`}
-              className="flex-1 min-w-[80px] flex items-center justify-center gap-1.5 px-3 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors text-sm font-medium"
+              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-primary text-primary-foreground rounded-md hover:bg-secondary border border-input transition-colors text-sm font-medium"
               title="Edit presentation content"
             >
               <Pencil className="w-4 h-4 flex-shrink-0" />
