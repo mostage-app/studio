@@ -1,27 +1,13 @@
 "use client";
 
-import { useAuthContext } from "@/features/auth/components/AuthProvider";
+// React & Next.js
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
-import Image from "next/image";
-import {
-  FileText,
-  Globe,
-  Calendar,
-  Lock,
-  Loader2,
-  Pencil,
-  Trash2,
-  Link as LinkIcon,
-  User,
-  Mail,
-  Package,
-  Settings,
-  Edit2,
-  Check,
-  X,
-  MonitorPlay,
-  Heart,
-} from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
+
+// Features
+import { useAuthContext } from "@/features/auth/components/AuthProvider";
+import { AuthService } from "@/features/auth/services/authService";
 import {
   deletePresentation,
   getPresentations,
@@ -29,51 +15,69 @@ import {
   type Presentation,
 } from "@/features/presentation/services/presentationService";
 import { EditPresentationModal } from "@/features/presentation/components/EditPresentationModal";
-import Link from "next/link";
-import { useEffect, useState, useCallback } from "react";
+
+// Components
 import { Modal } from "@/lib/components/ui/Modal";
-import { AuthService } from "@/features/auth/services/authService";
 import { NotFoundPage } from "@/lib/components/NotFoundPage";
-import CryptoJS from "crypto-js";
+import {
+  ProfileCard,
+  ShareProfileBox,
+  PresentationsGrid,
+  SharedPresentationsGrid,
+} from "@/features/profile";
+import type {
+  ProfileUser,
+  DeleteModalState,
+  EditModalState,
+  SharePlatform,
+} from "@/features/profile";
+import { COPY_FEEDBACK_DURATION, getGravatarUrl } from "@/features/profile";
 
-/**
- * Generate Gravatar URL from email
- */
-function getGravatarUrl(email: string, size: number = 96): string {
-  // Normalize email: lowercase and trim
-  const normalizedEmail = email.toLowerCase().trim();
-
-  // Generate MD5 hash using crypto-js
-  const emailHash = CryptoJS.MD5(normalizedEmail).toString();
-
-  // Gravatar URL format: https://www.gravatar.com/avatar/{hash}?s={size}&d={default}
-  return `https://www.gravatar.com/avatar/${emailHash}?s=${size}&d=identicon&r=pg`;
-}
+// ============================================================================
+// Main Component
+// ============================================================================
 
 export default function UserProfilePage() {
+  // ========================================================================
+  // Hooks & Context
+  // ========================================================================
   const params = useParams();
   const username = params?.username as string;
-
   const { user, isAuthenticated, updateUser } = useAuthContext();
+
+  // ========================================================================
+  // State Management
+  // ========================================================================
+
+  // Presentations
   const [presentations, setPresentations] = useState<Presentation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  // Note: presentationError is kept for potential future use in displaying presentation fetch errors
+  // Note: presentationError is kept for potential future use
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [presentationError, setPresentationError] = useState<string | null>(
     null
   );
-  const [deleteModal, setDeleteModal] = useState<{
-    isOpen: boolean;
-    slug: string;
-    name: string;
-  }>({ isOpen: false, slug: "", name: "" });
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [editModal, setEditModal] = useState<{
-    isOpen: boolean;
-    presentation: Presentation | null;
-  }>({ isOpen: false, presentation: null });
 
-  // Profile editing states
+  // Shared presentations (presentations shared with the user)
+  // Note: setSharedPresentations will be used when backend API is implemented
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [sharedPresentations, setSharedPresentations] = useState<
+    Presentation[]
+  >([]);
+
+  // Presentation modals
+  const [deleteModal, setDeleteModal] = useState<DeleteModalState>({
+    isOpen: false,
+    slug: "",
+    name: "",
+  });
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [editModal, setEditModal] = useState<EditModalState>({
+    isOpen: false,
+    presentation: null,
+  });
+
+  // Profile editing
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState("");
   const [isSavingName, setIsSavingName] = useState(false);
@@ -81,14 +85,22 @@ export default function UserProfilePage() {
   const [profileSuccess, setProfileSuccess] = useState("");
   const [showUpgradeMessage, setShowUpgradeMessage] = useState(false);
 
-  // State for other users' profile data (only name and username)
-  const [profileUser, setProfileUser] = useState<{
-    name?: string;
-    username: string;
-  } | null>(null);
+  // Other user's profile
+  const [profileUser, setProfileUser] = useState<ProfileUser | null>(null);
   const [userNotFound, setUserNotFound] = useState(false);
   const [gravatarUrl, setGravatarUrl] = useState<string | null>(null);
 
+  // Sharing
+  const [linkCopied, setLinkCopied] = useState(false);
+  const [shareMenuOpen, setShareMenuOpen] = useState<string | null>(null);
+  const [presentationLinkCopied, setPresentationLinkCopied] = useState<
+    string | null
+  >(null);
+  const shareMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  // ========================================================================
+  // Computed Values
+  // ========================================================================
   const isOwnProfile = isAuthenticated && user?.username === username;
 
   // Generate Gravatar URL for own profile
@@ -164,6 +176,7 @@ export default function UserProfilePage() {
           setProfileUser({
             name: data.name,
             username: data.username,
+            createdAt: data.createdAt,
           });
         }
       } catch (error) {
@@ -254,28 +267,9 @@ export default function UserProfilePage() {
     [editModal.presentation, username]
   );
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
-
-  const formatFullDate = (dateString?: string): string => {
-    if (!dateString) return "N/A";
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-    } catch {
-      return "N/A";
-    }
-  };
+  // ========================================================================
+  // Event Handlers
+  // ========================================================================
 
   // Profile editing handlers
   const handleStartEditName = () => {
@@ -328,6 +322,113 @@ export default function UserProfilePage() {
     setShowUpgradeMessage((prev) => !prev);
   };
 
+  const handleCopyLink = useCallback(async () => {
+    const profileUrl = `${window.location.origin}/${username}`;
+    const shareText = `Check out my presentations on Mostage! #mostage #presentation `;
+    const fullText = `${shareText}${profileUrl}`;
+    try {
+      await navigator.clipboard.writeText(fullText);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), COPY_FEEDBACK_DURATION);
+    } catch (err) {
+      console.error("Failed to copy link:", err);
+    }
+  }, [username]);
+
+  const handleShare = useCallback(
+    (platform: Exclude<SharePlatform, "copy">) => {
+      const profileUrl = `${window.location.origin}/${username}`;
+
+      // Professional sharing text
+      const shareText = `Check out my presentations on Mostage! #mostage #presentation `;
+      const shareTextEncoded = encodeURIComponent(shareText);
+      const profileUrlEncoded = encodeURIComponent(profileUrl);
+
+      const urls: Record<typeof platform, string> = {
+        twitter: `https://twitter.com/intent/tweet?url=${profileUrlEncoded}&text=${shareTextEncoded}`,
+        facebook: `https://www.facebook.com/sharer.php?u=${profileUrl}`,
+        linkedin: `https://www.linkedin.com/feed/?shareActive&mini=true&text=${shareTextEncoded}${profileUrlEncoded}`,
+      };
+
+      window.open(urls[platform], "_blank", "width=600,height=400");
+    },
+    [username]
+  );
+
+  const handleSharePresentation = useCallback(
+    (slug: string, name: string, platform?: SharePlatform) => {
+      const presentationUrl = `${window.location.origin}/${username}/${slug}/view`;
+      const shareText = `Check out "${name}" presentation on Mostage! #mostage #presentation `;
+      const shareTextEncoded = encodeURIComponent(shareText);
+      const presentationUrlEncoded = encodeURIComponent(presentationUrl);
+
+      // Handle copy to clipboard
+      if (platform === "copy") {
+        const fullText = `${shareText}${presentationUrl}`;
+        navigator.clipboard.writeText(fullText).then(() => {
+          setPresentationLinkCopied(slug);
+          setTimeout(
+            () => setPresentationLinkCopied(null),
+            COPY_FEEDBACK_DURATION
+          );
+        });
+        setShareMenuOpen(null);
+        return;
+      }
+
+      // Handle social platform sharing
+      if (platform) {
+        const urls: Record<Exclude<SharePlatform, "copy">, string> = {
+          twitter: `https://twitter.com/intent/tweet?url=${presentationUrlEncoded}&text=${shareTextEncoded}`,
+          facebook: `https://www.facebook.com/sharer.php?u=${presentationUrlEncoded}`,
+          linkedin: `https://www.linkedin.com/feed/?shareActive&mini=true&text=${shareTextEncoded}&url=${presentationUrlEncoded}`,
+        };
+
+        window.open(urls[platform], "_blank", "width=600,height=400");
+        setShareMenuOpen(null);
+        return;
+      }
+
+      // Try Web Share API first (works on mobile and some desktop browsers)
+      if (navigator.share) {
+        navigator
+          .share({
+            title: `${name} - Mostage`,
+            text: shareText,
+            url: presentationUrl,
+          })
+          .catch(() => {
+            // User cancelled or error occurred
+          });
+        setShareMenuOpen(null);
+        return;
+      }
+
+      // Default: open share menu
+      setShareMenuOpen(slug);
+    },
+    [username]
+  );
+
+  // Close share menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (shareMenuOpen) {
+        const menuElement = shareMenuRefs.current[shareMenuOpen];
+        if (menuElement && !menuElement.contains(event.target as Node)) {
+          setShareMenuOpen(null);
+        }
+      }
+    };
+
+    if (shareMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }
+  }, [shareMenuOpen]);
+
   const displayedPresentations = isOwnProfile
     ? presentations
     : presentations.filter((p) => p.isPublic);
@@ -362,316 +463,64 @@ export default function UserProfilePage() {
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Left Sidebar - Profile Info */}
           <div className="w-full lg:w-80 flex-shrink-0">
-            <div className="bg-background border border-input rounded-sm p-6 sticky top-24">
-              {/* Avatar */}
-              <div className="flex justify-center mb-4">
-                {isOwnProfile && gravatarUrl ? (
-                  <div className="relative w-24 h-24">
-                    <Image
-                      src={gravatarUrl}
-                      alt={user?.name || username}
-                      width={96}
-                      height={96}
-                      className="w-24 h-24 rounded-md object-cover border-2 border-primary/20"
-                      onError={() => setGravatarUrl(null)}
-                      unoptimized
-                    />
-                  </div>
-                ) : (
-                  <div className="w-24 h-24 bg-primary/10 rounded-md flex items-center justify-center">
-                    <User className="w-12 h-12 text-primary" />
-                  </div>
-                )}
-              </div>
+            <ProfileCard
+              username={username}
+              isOwnProfile={isOwnProfile}
+              user={user}
+              profileUser={profileUser}
+              gravatarUrl={gravatarUrl}
+              isEditingName={isEditingName}
+              editedName={editedName}
+              isSavingName={isSavingName}
+              profileError={profileError}
+              profileSuccess={profileSuccess}
+              showUpgradeMessage={showUpgradeMessage}
+              onStartEditName={handleStartEditName}
+              onCancelEditName={handleCancelEditName}
+              onSaveName={handleSaveName}
+              onNameChange={setEditedName}
+              onChangePlan={handleChangePlan}
+              onGravatarError={() => setGravatarUrl(null)}
+            />
 
-              {/* Messages */}
-              {profileSuccess && (
-                <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md">
-                  <p className="text-sm text-green-800 dark:text-green-200">
-                    {profileSuccess}
-                  </p>
-                </div>
-              )}
-
-              {profileError && (
-                <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
-                  <p className="text-sm text-red-800 dark:text-red-200">
-                    {profileError}
-                  </p>
-                </div>
-              )}
-
-              {/* Name */}
-              <div className="text-center mb-6">
-                {isOwnProfile && isEditingName ? (
-                  <div className="flex items-center justify-center gap-2">
-                    <input
-                      type="text"
-                      value={editedName}
-                      onChange={(e) => setEditedName(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (
-                          e.key === "Enter" &&
-                          editedName.trim() &&
-                          !isSavingName
-                        ) {
-                          handleSaveName();
-                        } else if (e.key === "Escape") {
-                          handleCancelEditName();
-                        }
-                      }}
-                      className="text-xl font-semibold text-foreground bg-transparent border-none outline-none text-center focus:ring-0 focus:border-b-2 focus:border-primary px-1 py-0.5 min-w-0 flex-1 max-w-xs disabled:opacity-50"
-                      placeholder="Enter your name"
-                      disabled={isSavingName}
-                      autoFocus
-                    />
-                    <button
-                      onClick={handleSaveName}
-                      disabled={isSavingName || !editedName.trim()}
-                      className="p-1.5 text-primary hover:bg-primary/10 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      title="Save (Enter)"
-                      aria-label="Save name"
-                    >
-                      {isSavingName ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Check className="w-4 h-4" />
-                      )}
-                    </button>
-                    <button
-                      onClick={handleCancelEditName}
-                      disabled={isSavingName}
-                      className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-secondary/50 rounded-md transition-colors disabled:opacity-50"
-                      title="Cancel (Esc)"
-                      aria-label="Cancel editing"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center gap-2">
-                    <h2 className="text-xl font-semibold text-foreground">
-                      {isOwnProfile
-                        ? user?.name || user?.username
-                        : profileUser?.name || username}
-                    </h2>
-                    {isOwnProfile && (
-                      <button
-                        onClick={handleStartEditName}
-                        className="p-1 text-muted-foreground hover:text-foreground transition-colors"
-                        title="Edit name"
-                        aria-label="Edit name"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* User Details */}
-              <div className="space-y-4">
-                {/* Username */}
-                <div className="flex items-center gap-3">
-                  <User className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-muted-foreground">Username</p>
-                    <p className="text-sm text-foreground truncate">
-                      @{username}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Email - only for own profile */}
-                {isOwnProfile && user?.email && (
-                  <div className="flex items-center gap-3">
-                    <Mail className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-muted-foreground">Email</p>
-                      <p className="text-sm text-foreground truncate">
-                        {user.email}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Member Since */}
-                {isOwnProfile && (
-                  <div className="flex items-center gap-3">
-                    <Calendar className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-muted-foreground">
-                        Member Since
-                      </p>
-                      <p className="text-sm text-foreground">
-                        {formatFullDate(user?.createdAt)}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Subscription - only for own profile */}
-                {isOwnProfile && (
-                  <div className="flex items-center gap-3">
-                    <Package className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-muted-foreground">Plan</p>
-                      <p className="text-sm text-foreground">Basic Plan</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Account Actions - only for own profile */}
-              {isOwnProfile && (
-                <div className="mt-6 pt-6 border-t border-input">
-                  <button
-                    onClick={handleChangePlan}
-                    className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    Change Plan
-                  </button>
-                </div>
-              )}
-
-              {showUpgradeMessage && (
-                <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
-                  <p className="text-sm text-blue-800 dark:text-blue-200">
-                    Currently, you cannot upgrade your plan without a referral
-                    link.
-                    <br />
-                    <br />
-                    In March 2026, the other plans will be available publicly.
-                    <br />
-                    <br />
-                    You can{" "}
-                    <a
-                      href="https://github.com/sponsors/mostage-app"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-500 hover:text-blue-600 underline inline-flex items-center gap-2"
-                    >
-                      donate
-                    </a>{" "}
-                    for supporting faster development.
-                  </p>
-                </div>
-              )}
-            </div>
+            {/* Share Profile Box - only for own profile */}
+            {isOwnProfile && (
+              <ShareProfileBox
+                linkCopied={linkCopied}
+                onCopyLink={handleCopyLink}
+                onShare={handleShare}
+              />
+            )}
           </div>
 
           {/* Right Content - Presentations */}
           <div className="flex-1 min-w-0">
-            {displayedPresentations.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                {displayedPresentations.map((pres) => (
-                  <div
-                    key={pres.presentationId}
-                    className="bg-background border border-input rounded-sm p-4 hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <FileText className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-                        <h3 className="font-semibold text-foreground truncate">
-                          {pres.name}
-                        </h3>
-                      </div>
-                    </div>
+            <PresentationsGrid
+              presentations={displayedPresentations}
+              username={username}
+              isOwnProfile={isOwnProfile}
+              shareMenuOpen={shareMenuOpen}
+              presentationLinkCopied={presentationLinkCopied}
+              onShare={handleSharePresentation}
+              onView={handleOpenViewPopup}
+              onEdit={handleOpenEditModal}
+              onDelete={openDeleteModal}
+              menuRefs={shareMenuRefs.current}
+            />
 
-                    {/* Slug */}
-                    <div className="flex items-center gap-1 mb-2 text-xs text-muted-foreground">
-                      <LinkIcon className="w-3 h-3" />
-                      <span className="font-mono truncate">{pres.slug}</span>
-                    </div>
-
-                    <div className="flex items-center gap-2 mb-3">
-                      {pres.isPublic ? (
-                        <div className="flex items-center gap-1 px-2 py-0.5 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded text-xs font-medium">
-                          <Globe className="w-3 h-3" />
-                          <span>Public</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-1 px-2 py-0.5 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 rounded text-xs font-medium">
-                          <Lock className="w-3 h-3" />
-                          <span>Private</span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="space-y-1 mb-3 text-xs text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        <span>Created: {formatDate(pres.createdAt)}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        <span>Updated: {formatDate(pres.updatedAt)}</span>
-                      </div>
-                    </div>
-
-                    {/* Action buttons */}
-                    <div className="flex items-center gap-2">
-                      {/* View button */}
-                      <button
-                        onClick={() => handleOpenViewPopup(pres.slug)}
-                        className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80 transition-colors text-sm"
-                        title="View presentation"
-                      >
-                        <MonitorPlay className="w-4 h-4" />
-                        <span>View</span>
-                      </button>
-
-                      {isOwnProfile && (
-                        <>
-                          {/* Edit Content button */}
-                          <Link
-                            href={`/${username}/${pres.slug}`}
-                            className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors text-sm"
-                            title="Edit presentation content"
-                          >
-                            <Pencil className="w-4 h-4" />
-                            <span>Edit</span>
-                          </Link>
-
-                          {/* Settings button */}
-                          <button
-                            onClick={() => handleOpenEditModal(pres)}
-                            className="flex items-center justify-center p-1.5 text-muted-foreground hover:bg-secondary rounded-md transition-colors"
-                            title="Edit presentation info"
-                          >
-                            <Settings className="w-4 h-4" />
-                          </button>
-
-                          {/* Delete button */}
-                          <button
-                            onClick={() =>
-                              openDeleteModal(pres.slug, pres.name)
-                            }
-                            className="flex items-center justify-center p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
-                            title="Delete presentation"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="bg-background border border-input rounded-sm p-12 text-center">
-                <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-foreground mb-2">
-                  {isOwnProfile
-                    ? "No presentations yet"
-                    : "No public presentations"}
-                </h3>
-                <p className="text-muted-foreground">
-                  {isOwnProfile
-                    ? "Create your first presentation to get started"
-                    : `${username} hasn't shared any public presentations yet`}
-                </p>
-              </div>
+            {/* Shared Presentations - only for own profile */}
+            {isOwnProfile && (
+              <SharedPresentationsGrid
+                presentations={sharedPresentations}
+                username={username}
+                shareMenuOpen={shareMenuOpen}
+                presentationLinkCopied={presentationLinkCopied}
+                onShare={handleSharePresentation}
+                onView={handleOpenViewPopup}
+                onEdit={handleOpenEditModal}
+                onDelete={openDeleteModal}
+                menuRefs={shareMenuRefs.current}
+              />
             )}
           </div>
         </div>
