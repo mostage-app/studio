@@ -152,6 +152,35 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
         </ul>
       </div>
 
+      <div>
+        <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2 sm:mb-3">
+          Sponsors
+        </h3>
+        <ul className="list-disc list-inside text-sm sm:text-base text-gray-600 dark:text-gray-300 leading-relaxed mb-8">
+          <li>
+            <a
+              href="https://mirmousavi.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-500 hover:underline"
+            >
+              Mostafa Mirmousavi
+            </a>
+          </li>
+
+          <li>
+            <a
+              href="https://www.linkedin.com/in/omidm/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-500 hover:underline"
+            >
+              Omid Rad
+            </a>
+          </li>
+        </ul>
+      </div>
+
       {/* <div>
         <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2 sm:mb-3">
           Donate
