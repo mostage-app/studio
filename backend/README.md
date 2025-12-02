@@ -4,7 +4,7 @@ Backend Lambda functions for Mostage Studio.
 
 ## Structure
 
-```
+```text
 backend/
   src/
     lambda/
@@ -93,3 +93,24 @@ Watch mode:
 ```bash
 npm run watch
 ```
+
+## CI/CD
+
+The backend has automated CI checks via GitHub Actions. The CI workflow runs on:
+
+- Push to `main` or `dev` branches when files in `backend/` change
+- Pull requests to `main` or `dev` branches when files in `backend/` change
+
+**CI Jobs**:
+
+- **Build**: Compiles TypeScript to JavaScript
+- **Type Check**: Validates TypeScript types
+
+To run CI checks locally:
+
+```bash
+npm run build
+npx tsc --noEmit
+```
+
+See [CI/CD Documentation](../docs/ci-cd.md) for more details.

@@ -31,7 +31,7 @@ body:
     attributes:
       label: Problem or Need
       description: Is this feature related to solving a problem? Please describe.
-      placeholder: Example: I'm always frustrated when...
+      placeholder: "Example: I'm always frustrated when..."
     validations:
       required: true
 
