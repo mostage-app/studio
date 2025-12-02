@@ -20,6 +20,7 @@ import {
   Check,
   X,
   MonitorPlay,
+  Heart,
 } from "lucide-react";
 import {
   deletePresentation,
@@ -537,8 +538,22 @@ export default function UserProfilePage() {
                 <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
                   <p className="text-sm text-blue-800 dark:text-blue-200">
                     Currently, you cannot upgrade your plan without a referral
-                    link. <br />
+                    link.
+                    <br />
+                    <br />
                     In March 2026, the other plans will be available publicly.
+                    <br />
+                    <br />
+                    You can{" "}
+                    <a
+                      href="https://github.com/sponsors/mostage-app"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500 hover:text-blue-600 underline inline-flex items-center gap-2"
+                    >
+                      donate
+                    </a>{" "}
+                    for supporting faster development.
                   </p>
                 </div>
               )}

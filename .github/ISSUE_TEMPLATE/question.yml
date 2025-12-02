@@ -1,0 +1,55 @@
+name: ❓ Question
+description: Ask a question about the website
+title: "[Question]: "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for your question! We're here to help. Please provide as much detail as possible.
+
+  - type: textarea
+    id: question
+    attributes:
+      label: What is your question?
+      description: What would you like to know?
+      placeholder: Ask your question here...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Question Category
+      description: Which area does your question relate to?
+      options:
+        - Getting Started
+        - Using the Editor
+        - Import / Export
+        - Login / Sign Up
+        - User Dashboard
+        - AI Features
+        - Troubleshooting
+        - Mostage Library
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Details (Optional)
+      description: Any additional information that might be helpful
+      placeholder: |
+        - What are you trying to accomplish?
+        - What have you already tried?
+        - Have you seen any error messages?
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Information (Optional)
+      description: Any other information that might be helpful
+      placeholder: Add any other context, screenshots, or examples here...
