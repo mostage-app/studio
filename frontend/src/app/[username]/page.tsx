@@ -24,6 +24,7 @@ import {
   ShareProfileBox,
   PresentationsGrid,
   SharedPresentationsGrid,
+  TemplatesGrid,
 } from "@/features/profile";
 import type {
   ProfileUser,
@@ -64,6 +65,11 @@ export default function UserProfilePage() {
   const [sharedPresentations, setSharedPresentations] = useState<
     Presentation[]
   >([]);
+
+  // Templates
+  // Note: setTemplates will be used when backend API is implemented
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [templates, setTemplates] = useState<Presentation[]>([]);
 
   // Presentation modals
   const [deleteModal, setDeleteModal] = useState<DeleteModalState>({
@@ -510,6 +516,32 @@ export default function UserProfilePage() {
 
             {/* Shared Presentations - only for own profile */}
             {isOwnProfile && (
+              <>
+                <SharedPresentationsGrid
+                  presentations={sharedPresentations}
+                  username={username}
+                  shareMenuOpen={shareMenuOpen}
+                  presentationLinkCopied={presentationLinkCopied}
+                  onShare={handleSharePresentation}
+                  onView={handleOpenViewPopup}
+                  onEdit={handleOpenEditModal}
+                  onDelete={openDeleteModal}
+                  menuRefs={shareMenuRefs.current}
+                />
+
+                {/* Templates */}
+                <TemplatesGrid
+                  templates={templates}
+                  username={username}
+                  shareMenuOpen={shareMenuOpen}
+                  presentationLinkCopied={presentationLinkCopied}
+                  onShare={handleSharePresentation}
+                  onView={handleOpenViewPopup}
+                  onEdit={handleOpenEditModal}
+                  onDelete={openDeleteModal}
+                  menuRefs={shareMenuRefs.current}
+                />
+              </>
               <SharedPresentationsGrid
                 presentations={sharedPresentations}
                 username={username}
