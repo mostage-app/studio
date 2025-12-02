@@ -51,7 +51,7 @@ export function PresentationsGrid({
 
       {/* Presentations Grid */}
       {presentations.length > 0 ? (
-        <div className="grid grid-cols-2 gap-4 2xl:grid-cols-4">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3">
           {presentations.map((pres) => (
             <PresentationCard
               key={pres.presentationId}
