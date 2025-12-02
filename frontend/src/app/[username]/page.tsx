@@ -542,17 +542,6 @@ export default function UserProfilePage() {
                   menuRefs={shareMenuRefs.current}
                 />
               </>
-              <SharedPresentationsGrid
-                presentations={sharedPresentations}
-                username={username}
-                shareMenuOpen={shareMenuOpen}
-                presentationLinkCopied={presentationLinkCopied}
-                onShare={handleSharePresentation}
-                onView={handleOpenViewPopup}
-                onEdit={handleOpenEditModal}
-                onDelete={openDeleteModal}
-                menuRefs={shareMenuRefs.current}
-              />
             )}
           </div>
         </div>
