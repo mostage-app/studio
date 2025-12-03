@@ -32,6 +32,8 @@ import {
   HelpCircle,
   Heart,
   Shield,
+  Bug,
+  Sparkles,
 } from "lucide-react";
 
 export interface LayoutModeHandler {
@@ -452,6 +454,27 @@ export const GlobalHeader: React.FC = () => {
                     {isLoadingTour ? "Loading..." : "Onboarding Tour"}
                   </span>
                 </button>
+                <a
+                  href="https://github.com/mostage-app/studio/issues/new?template=bug_report.yml"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setShowMenuDropdown(false)}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-secondary transition-colors"
+                >
+                  <Bug className="w-4 h-4" />
+                  <span>Bug Report</span>
+                </a>
+                <a
+                  href="https://github.com/mostage-app/studio/issues/new?template=feature_request.yml"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setShowMenuDropdown(false)}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-secondary transition-colors"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  <span>Feature Request</span>
+                </a>
+
                 {!isAuthenticated && (
                   <button
                     onClick={() => {
