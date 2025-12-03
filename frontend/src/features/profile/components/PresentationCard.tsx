@@ -64,7 +64,7 @@ export function PresentationCard({
         <div className="relative flex-shrink-0">
           <button
             onClick={() => onShare(pres.slug, pres.name)}
-            className="flex items-center justify-center p-1.5 text-muted-foreground hover:text-foreground hover:bg-secondary border border-input rounded-md hover:border-primary/50 transition-all"
+            className="flex items-center justify-center p-1.5 text-muted-foreground hover:text-foreground hover:bg-secondary border border-input rounded-md hover:border-primary/50 transition-all cursor-pointer"
             title="Share presentation"
           >
             <Share2 className="w-4 h-4" />
@@ -126,27 +126,27 @@ export function PresentationCard({
 
       {/* Action buttons */}
       <div className="flex flex-wrap items-center gap-2">
-        {/* View button */}
-        <button
-          onClick={() => onView(pres.slug)}
-          className="flex-1 flex items-center justify-center gap-1 px-0.5 py-2 bg-background text-foreground rounded-md hover:bg-secondary border border-input transition-colors text-sm font-medium"
-          title="View presentation"
-        >
-          <MonitorPlay className="w-4 h-4 flex-shrink-0" />
-          <span>View</span>
-        </button>
-
         {/* Use Template button (for all authenticated users) */}
         {isTemplate && isAuthenticated && onUseTemplate && (
           <button
             onClick={() => onUseTemplate(pres)}
-            className="flex-1 flex items-center justify-center gap-1 px-0.5 py-2 bg-primary text-primary-foreground rounded-md hover:bg-secondary border border-input transition-colors text-sm font-medium"
+            className="flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 text-sm font-medium text-card-foreground bg-card border border-input rounded-sm hover:bg-secondary cursor-pointer focus:outline-none transition-colors"
             title="Create presentation from template"
           >
             <FileSymlink className="w-4 h-4 flex-shrink-0" />
             <span className="whitespace-nowrap">Use Template</span>
           </button>
         )}
+
+        {/* View button */}
+        <button
+          onClick={() => onView(pres.slug)}
+          className="flex-1 flex items-center justify-center gap-1 px-0.5 py-2 bg-background text-foreground rounded-md hover:bg-secondary border border-input transition-colors text-sm font-medium cursor-pointer"
+          title="View presentation"
+        >
+          <MonitorPlay className="w-4 h-4 flex-shrink-0" />
+          <span>View</span>
+        </button>
 
         {isOwnProfile && (
           <>
@@ -163,7 +163,7 @@ export function PresentationCard({
             {/* Settings button */}
             <button
               onClick={() => onEdit(pres)}
-              className="flex items-center justify-center p-2 text-muted-foreground hover:bg-secondary hover:text-foreground rounded-md transition-colors flex-shrink-0"
+              className="flex items-center justify-center p-2 text-muted-foreground hover:bg-secondary hover:text-foreground rounded-md transition-colors flex-shrink-0 cursor-pointer"
               title="Edit presentation info"
             >
               <Settings className="w-4 h-4" />
@@ -172,7 +172,7 @@ export function PresentationCard({
             {/* Delete button */}
             <button
               onClick={() => onDelete(pres.slug, pres.name)}
-              className="flex items-center justify-center p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors flex-shrink-0"
+              className="flex items-center justify-center p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors flex-shrink-0 cursor-pointer"
               title="Delete presentation"
             >
               <Trash2 className="w-4 h-4" />

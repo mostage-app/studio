@@ -201,7 +201,8 @@ export default function UserProfilePage() {
     if (user) {
       setEditedName(user.name || "");
     }
-  }, [user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.name]);
 
   const openDeleteModal = useCallback((slug: string, name: string) => {
     setDeleteModal({ isOpen: true, slug, name });
@@ -489,7 +490,7 @@ export default function UserProfilePage() {
       <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Left Sidebar - Profile Info */}
-          <div className="w-full lg:w-80 flex-shrink-0">
+          <div className="w-full lg:w-80 flex-shrink-0 lg:sticky lg:top-8 lg:self-start">
             <ProfileCard
               username={username}
               isOwnProfile={isOwnProfile}
@@ -536,22 +537,20 @@ export default function UserProfilePage() {
             />
 
             {/* Templates - show for all profiles (only public templates for others) */}
-            {templates.length > 0 && (
-              <TemplatesGrid
-                templates={templates}
-                username={username}
-                isOwnProfile={isOwnProfile}
-                isAuthenticated={isAuthenticated}
-                shareMenuOpen={shareMenuOpen}
-                presentationLinkCopied={presentationLinkCopied}
-                onShare={handleSharePresentation}
-                onView={handleOpenViewPopup}
-                onEdit={handleOpenEditModal}
-                onDelete={openDeleteModal}
-                onUseTemplate={handleOpenUseTemplateModal}
-                menuRefs={shareMenuRefs.current}
-              />
-            )}
+            <TemplatesGrid
+              templates={templates}
+              username={username}
+              isOwnProfile={isOwnProfile}
+              isAuthenticated={isAuthenticated}
+              shareMenuOpen={shareMenuOpen}
+              presentationLinkCopied={presentationLinkCopied}
+              onShare={handleSharePresentation}
+              onView={handleOpenViewPopup}
+              onEdit={handleOpenEditModal}
+              onDelete={openDeleteModal}
+              onUseTemplate={handleOpenUseTemplateModal}
+              menuRefs={shareMenuRefs.current}
+            />
 
             {/* Shared Presentations - only for own profile */}
             {isOwnProfile && (

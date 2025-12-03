@@ -401,7 +401,7 @@ export const GlobalHeader: React.FC = () => {
           {/* New Presentation */}
           <button
             onClick={handleOpenNewModal}
-            className="inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 text-sm font-medium text-primary-foreground bg-primary hover:bg-secondary border border-input rounded-md transition-colors"
+            className="inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 text-sm font-medium text-primary-foreground bg-primary hover:bg-secondary border border-input rounded-md transition-colors cursor-pointer"
             title="New presentation"
           >
             <Plus className="w-4 h-4" />
@@ -447,7 +447,7 @@ export const GlobalHeader: React.FC = () => {
                 <button
                   onClick={handleStartTour}
                   disabled={isLoadingTour}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-secondary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-secondary transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   <HelpCircle className="w-4 h-4" />
                   <span>
@@ -510,7 +510,7 @@ export const GlobalHeader: React.FC = () => {
                     handleOpenAboutModal();
                     setShowMenuDropdown(false);
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-secondary transition-colors"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-secondary transition-colors cursor-pointer"
                 >
                   <Info className="w-4 h-4" />
                   <span>About</span>
