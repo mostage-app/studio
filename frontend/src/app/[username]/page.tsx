@@ -26,6 +26,7 @@ import {
   SharedPresentationsGrid,
   TemplatesGrid,
 } from "@/features/profile";
+import { UseTemplateModal } from "@/features/profile/components/UseTemplateModal";
 import type {
   ProfileUser,
   DeleteModalState,
@@ -66,11 +67,6 @@ export default function UserProfilePage() {
     Presentation[]
   >([]);
 
-  // Templates
-  // Note: setTemplates will be used when backend API is implemented
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [templates, setTemplates] = useState<Presentation[]>([]);
-
   // Presentation modals
   const [deleteModal, setDeleteModal] = useState<DeleteModalState>({
     isOpen: false,
@@ -81,6 +77,13 @@ export default function UserProfilePage() {
   const [editModal, setEditModal] = useState<EditModalState>({
     isOpen: false,
     presentation: null,
+  });
+  const [useTemplateModal, setUseTemplateModal] = useState<{
+    isOpen: boolean;
+    template: Presentation | null;
+  }>({
+    isOpen: false,
+    template: null,
   });
 
   // Profile editing
@@ -246,12 +249,25 @@ export default function UserProfilePage() {
     setEditModal({ isOpen: true, presentation });
   }, []);
 
+  const handleOpenUseTemplateModal = useCallback((template: Presentation) => {
+    setUseTemplateModal({ isOpen: true, template });
+  }, []);
+
+  const handleCloseUseTemplateModal = useCallback(() => {
+    setUseTemplateModal({ isOpen: false, template: null });
+  }, []);
+
   const handleCloseEditModal = useCallback(() => {
     setEditModal({ isOpen: false, presentation: null });
   }, []);
 
   const handleUpdatePresentation = useCallback(
-    async (data: { name: string; slug: string; isPublic: boolean }) => {
+    async (data: {
+      name: string;
+      slug: string;
+      isPublic: boolean;
+      isTemplate?: boolean;
+    }) => {
       if (!editModal.presentation) return;
 
       try {
@@ -435,9 +451,14 @@ export default function UserProfilePage() {
     }
   }, [shareMenuOpen]);
 
-  const displayedPresentations = isOwnProfile
-    ? presentations
-    : presentations.filter((p) => p.isPublic);
+  // Filter presentations and templates
+  const regularPresentations = isOwnProfile
+    ? presentations.filter((p) => !p.isTemplate)
+    : presentations.filter((p) => !p.isTemplate && p.isPublic);
+
+  const templates = isOwnProfile
+    ? presentations.filter((p) => p.isTemplate === true)
+    : presentations.filter((p) => p.isTemplate === true && p.isPublic);
 
   if (isLoading) {
     return (
@@ -502,7 +523,7 @@ export default function UserProfilePage() {
           {/* Right Content - Presentations */}
           <div className="flex-1 min-w-0">
             <PresentationsGrid
-              presentations={displayedPresentations}
+              presentations={regularPresentations}
               username={username}
               isOwnProfile={isOwnProfile}
               shareMenuOpen={shareMenuOpen}
@@ -514,34 +535,37 @@ export default function UserProfilePage() {
               menuRefs={shareMenuRefs.current}
             />
 
+            {/* Templates - show for all profiles (only public templates for others) */}
+            {templates.length > 0 && (
+              <TemplatesGrid
+                templates={templates}
+                username={username}
+                isOwnProfile={isOwnProfile}
+                isAuthenticated={isAuthenticated}
+                shareMenuOpen={shareMenuOpen}
+                presentationLinkCopied={presentationLinkCopied}
+                onShare={handleSharePresentation}
+                onView={handleOpenViewPopup}
+                onEdit={handleOpenEditModal}
+                onDelete={openDeleteModal}
+                onUseTemplate={handleOpenUseTemplateModal}
+                menuRefs={shareMenuRefs.current}
+              />
+            )}
+
             {/* Shared Presentations - only for own profile */}
             {isOwnProfile && (
-              <>
-                <SharedPresentationsGrid
-                  presentations={sharedPresentations}
-                  username={username}
-                  shareMenuOpen={shareMenuOpen}
-                  presentationLinkCopied={presentationLinkCopied}
-                  onShare={handleSharePresentation}
-                  onView={handleOpenViewPopup}
-                  onEdit={handleOpenEditModal}
-                  onDelete={openDeleteModal}
-                  menuRefs={shareMenuRefs.current}
-                />
-
-                {/* Templates */}
-                <TemplatesGrid
-                  templates={templates}
-                  username={username}
-                  shareMenuOpen={shareMenuOpen}
-                  presentationLinkCopied={presentationLinkCopied}
-                  onShare={handleSharePresentation}
-                  onView={handleOpenViewPopup}
-                  onEdit={handleOpenEditModal}
-                  onDelete={openDeleteModal}
-                  menuRefs={shareMenuRefs.current}
-                />
-              </>
+              <SharedPresentationsGrid
+                presentations={sharedPresentations}
+                username={username}
+                shareMenuOpen={shareMenuOpen}
+                presentationLinkCopied={presentationLinkCopied}
+                onShare={handleSharePresentation}
+                onView={handleOpenViewPopup}
+                onEdit={handleOpenEditModal}
+                onDelete={openDeleteModal}
+                menuRefs={shareMenuRefs.current}
+              />
             )}
           </div>
         </div>
@@ -555,10 +579,18 @@ export default function UserProfilePage() {
           presentationName={editModal.presentation.name}
           slug={editModal.presentation.slug}
           isPublic={editModal.presentation.isPublic}
+          isTemplate={editModal.presentation.isTemplate}
           username={username}
           onSave={handleUpdatePresentation}
         />
       )}
+
+      {/* Use Template Modal */}
+      <UseTemplateModal
+        isOpen={useTemplateModal.isOpen}
+        onClose={handleCloseUseTemplateModal}
+        template={useTemplateModal.template}
+      />
 
       {/* Delete Confirmation Modal */}
       <Modal

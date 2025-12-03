@@ -1,20 +1,23 @@
 "use client";
 
 import React from "react";
-import { Globe, Lock } from "lucide-react";
+import { Globe, Lock, FileSymlink } from "lucide-react";
 
 export interface PresentationFormFieldsProps {
   name: string;
   slug: string;
   isPublic: boolean;
+  isTemplate?: boolean;
   username?: string;
   disabled?: boolean;
   onNameChange: (value: string) => void;
   onSlugChange: (value: string) => void;
   onPrivacyChange: (isPublic: boolean) => void;
+  onTemplateChange?: (isTemplate: boolean) => void;
   namePlaceholder?: string;
   slugPlaceholder?: string;
   showUrlPreview?: boolean;
+  showTemplateOption?: boolean;
 }
 
 /**
@@ -25,14 +28,17 @@ export const PresentationFormFields: React.FC<PresentationFormFieldsProps> = ({
   name,
   slug,
   isPublic,
+  isTemplate = false,
   username,
   disabled = false,
   onNameChange,
   onSlugChange,
   onPrivacyChange,
+  onTemplateChange,
   namePlaceholder = "My Presentation",
   slugPlaceholder = "my-presentation",
   showUrlPreview = true,
+  showTemplateOption = false,
 }) => {
   const displayUsername = username || "username";
   const displaySlug = slug || (showUrlPreview ? "slug" : "my-presentation");
@@ -116,6 +122,35 @@ export const PresentationFormFields: React.FC<PresentationFormFieldsProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Template Option */}
+      {showTemplateOption && onTemplateChange && (
+        <div>
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Mark as Template
+          </label>
+          <div className="flex items-center gap-3 p-3 border border-input rounded-md bg-background">
+            <input
+              id="is-template"
+              type="checkbox"
+              checked={isTemplate}
+              onChange={(e) => onTemplateChange(e.target.checked)}
+              disabled={disabled}
+              className="w-4 h-4 text-primary border-input rounded focus:ring-primary focus:ring-2"
+            />
+            <label
+              htmlFor="is-template"
+              className="flex items-center gap-2 text-sm text-foreground cursor-pointer"
+            >
+              <FileSymlink className="w-4 h-4 text-muted-foreground" />
+              <span>Template</span>
+            </label>
+            <p className="text-xs text-muted-foreground ml-auto">
+              Templates can be used to create new presentations
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

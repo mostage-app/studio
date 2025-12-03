@@ -50,6 +50,7 @@ export interface Presentation {
   markdown: string;
   config: Record<string, unknown>;
   isPublic: boolean;
+  isTemplate?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -60,6 +61,7 @@ export interface CreatePresentationRequest {
   markdown: string;
   config: Record<string, unknown>;
   isPublic: boolean;
+  isTemplate?: boolean;
 }
 
 export interface UpdatePresentationRequest {
@@ -68,6 +70,7 @@ export interface UpdatePresentationRequest {
   markdown?: string;
   config?: Record<string, unknown>;
   isPublic?: boolean;
+  isTemplate?: boolean;
 }
 
 /**

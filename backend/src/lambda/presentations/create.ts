@@ -140,6 +140,7 @@ export const handler = async (
       markdown: requestData.markdown,
       config: requestData.config,
       isPublic: requestData.isPublic ?? false,
+      isTemplate: requestData.isTemplate ?? false,
       createdAt: now,
       updatedAt: now,
     };

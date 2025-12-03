@@ -95,6 +95,7 @@ export interface Presentation {
   markdown: string;
   config: PresentationConfig;
   isPublic: boolean;
+  isTemplate?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -108,6 +109,7 @@ export interface CreatePresentationRequest {
   markdown: string;
   config: PresentationConfig;
   isPublic: boolean;
+  isTemplate?: boolean;
 }
 
 /**
@@ -119,4 +121,5 @@ export interface UpdatePresentationRequest {
   markdown?: string;
   config?: PresentationConfig;
   isPublic?: boolean;
+  isTemplate?: boolean;
 }

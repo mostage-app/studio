@@ -152,7 +152,7 @@ export function ProfileCard({
             {isOwnProfile && (
               <button
                 onClick={onStartEditName}
-                className="p-1 text-muted-foreground hover:text-foreground transition-colors"
+                className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-secondary/50 rounded-md transition-colors"
                 title="Edit name"
                 aria-label="Edit name"
               >

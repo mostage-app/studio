@@ -12,6 +12,7 @@ import {
   Settings,
   Trash2,
   Share2,
+  FileSymlink,
 } from "lucide-react";
 import type { Presentation } from "@/features/presentation/services/presentationService";
 import type { SharePlatform } from "../types";
@@ -22,12 +23,14 @@ interface PresentationCardProps {
   presentation: Presentation;
   username: string;
   isOwnProfile: boolean;
+  isAuthenticated?: boolean;
   shareMenuOpen: string | null;
   presentationLinkCopied: string | null;
   onShare: (slug: string, name: string, platform?: SharePlatform) => void;
   onView: (slug: string) => void;
   onEdit: (presentation: Presentation) => void;
   onDelete: (slug: string, name: string) => void;
+  onUseTemplate?: (template: Presentation) => void;
   menuRef: (el: HTMLDivElement | null) => void;
 }
 
@@ -35,14 +38,17 @@ export function PresentationCard({
   presentation: pres,
   username,
   isOwnProfile,
+  isAuthenticated = false,
   shareMenuOpen,
   presentationLinkCopied,
   onShare,
   onView,
   onEdit,
   onDelete,
+  onUseTemplate,
   menuRef,
 }: PresentationCardProps) {
+  const isTemplate = pres.isTemplate === true;
   return (
     <div className="bg-muted/30 border border-input rounded-md p-5 hover:shadow-lg hover:border-primary/50 transition-all">
       {/* Header with Share button */}
@@ -82,7 +88,13 @@ export function PresentationCard({
       </div>
 
       {/* Visibility Badge */}
-      <div className="flex items-center gap-2 mb-4">
+      <div className="flex items-center gap-2 mb-4 flex-wrap">
+        {isTemplate && (
+          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 rounded-md text-xs font-medium">
+            <FileSymlink className="w-3.5 h-3.5" />
+            <span>Template</span>
+          </div>
+        )}
         {pres.isPublic ? (
           <div className="flex items-center gap-1.5 px-2.5 py-1 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-md text-xs font-medium">
             <Globe className="w-3.5 h-3.5" />
@@ -117,19 +129,31 @@ export function PresentationCard({
         {/* View button */}
         <button
           onClick={() => onView(pres.slug)}
-          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-background text-foreground rounded-md hover:bg-secondary border border-input transition-colors text-sm font-medium"
+          className="flex-1 flex items-center justify-center gap-1 px-0.5 py-2 bg-background text-foreground rounded-md hover:bg-secondary border border-input transition-colors text-sm font-medium"
           title="View presentation"
         >
           <MonitorPlay className="w-4 h-4 flex-shrink-0" />
           <span>View</span>
         </button>
 
+        {/* Use Template button (for all authenticated users) */}
+        {isTemplate && isAuthenticated && onUseTemplate && (
+          <button
+            onClick={() => onUseTemplate(pres)}
+            className="flex-1 flex items-center justify-center gap-1 px-0.5 py-2 bg-primary text-primary-foreground rounded-md hover:bg-secondary border border-input transition-colors text-sm font-medium"
+            title="Create presentation from template"
+          >
+            <FileSymlink className="w-4 h-4 flex-shrink-0" />
+            <span className="whitespace-nowrap">Use Template</span>
+          </button>
+        )}
+
         {isOwnProfile && (
           <>
             {/* Edit Content button */}
             <Link
               href={`/${username}/${pres.slug}`}
-              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-primary text-primary-foreground rounded-md hover:bg-secondary border border-input transition-colors text-sm font-medium"
+              className="flex-1 flex items-center justify-center gap-1 px-0.5 py-2 bg-primary text-primary-foreground rounded-md hover:bg-secondary border border-input transition-colors text-sm font-medium"
               title="Edit presentation content"
             >
               <Pencil className="w-4 h-4 flex-shrink-0" />

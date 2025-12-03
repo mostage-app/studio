@@ -12,11 +12,13 @@ interface EditPresentationModalProps {
   presentationName: string;
   slug: string;
   isPublic: boolean;
+  isTemplate?: boolean;
   username: string;
   onSave: (data: {
     name: string;
     slug: string;
     isPublic: boolean;
+    isTemplate?: boolean;
   }) => Promise<void>;
 }
 
@@ -30,12 +32,14 @@ export const EditPresentationModal: React.FC<EditPresentationModalProps> = ({
   presentationName,
   slug,
   isPublic,
+  isTemplate = false,
   username,
   onSave,
 }) => {
   const [editedName, setEditedName] = useState(presentationName);
   const [editedSlug, setEditedSlug] = useState(slug);
   const [editedIsPublic, setEditedIsPublic] = useState(isPublic);
+  const [editedIsTemplate, setEditedIsTemplate] = useState(isTemplate);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -45,9 +49,10 @@ export const EditPresentationModal: React.FC<EditPresentationModalProps> = ({
       setEditedName(presentationName);
       setEditedSlug(slug);
       setEditedIsPublic(isPublic);
+      setEditedIsTemplate(isTemplate);
       setError("");
     }
-  }, [isOpen, presentationName, slug, isPublic]);
+  }, [isOpen, presentationName, slug, isPublic, isTemplate]);
 
   const handleNameChange = useCallback((value: string) => {
     setEditedName(value);
@@ -78,6 +83,7 @@ export const EditPresentationModal: React.FC<EditPresentationModalProps> = ({
         name: editedName.trim(),
         slug: editedSlug.trim(),
         isPublic: editedIsPublic,
+        isTemplate: editedIsTemplate,
       });
       onClose();
     } catch (err) {
@@ -85,7 +91,14 @@ export const EditPresentationModal: React.FC<EditPresentationModalProps> = ({
     } finally {
       setIsSaving(false);
     }
-  }, [editedName, editedSlug, editedIsPublic, onSave, onClose]);
+  }, [
+    editedName,
+    editedSlug,
+    editedIsPublic,
+    editedIsTemplate,
+    onSave,
+    onClose,
+  ]);
 
   const handleClose = useCallback(() => {
     if (!isSaving) {
@@ -123,11 +136,14 @@ export const EditPresentationModal: React.FC<EditPresentationModalProps> = ({
           name={editedName}
           slug={editedSlug}
           isPublic={editedIsPublic}
+          isTemplate={editedIsTemplate}
           username={username}
           disabled={isSaving}
           onNameChange={handleNameChange}
           onSlugChange={handleSlugChange}
           onPrivacyChange={setEditedIsPublic}
+          onTemplateChange={setEditedIsTemplate}
+          showTemplateOption={true}
         />
 
         {/* Actions */}

@@ -8,24 +8,30 @@ import { PresentationCard } from "./PresentationCard";
 interface TemplatesGridProps {
   templates: Presentation[];
   username: string;
+  isOwnProfile: boolean;
+  isAuthenticated?: boolean;
   shareMenuOpen: string | null;
   presentationLinkCopied: string | null;
   onShare: (slug: string, name: string, platform?: SharePlatform) => void;
   onView: (slug: string) => void;
   onEdit: (presentation: Presentation) => void;
   onDelete: (slug: string, name: string) => void;
+  onUseTemplate?: (template: Presentation) => void;
   menuRefs: Record<string, HTMLDivElement | null>;
 }
 
 export function TemplatesGrid({
   templates,
   username,
+  isOwnProfile,
+  isAuthenticated = false,
   shareMenuOpen,
   presentationLinkCopied,
   onShare,
   onView,
   onEdit,
   onDelete,
+  onUseTemplate,
   menuRefs,
 }: TemplatesGridProps) {
   return (
@@ -36,7 +42,9 @@ export function TemplatesGrid({
           <FileSymlink className="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h3 className="text-base font-semibold text-foreground">Templates</h3>
+          <h3 className="text-base font-semibold text-foreground">
+            {isOwnProfile ? "My Templates" : "Templates"}
+          </h3>
           <p className="text-xs text-muted-foreground mt-0.5">
             Browse and use presentation templates
           </p>
@@ -51,13 +59,15 @@ export function TemplatesGrid({
               key={template.presentationId}
               presentation={template}
               username={username}
-              isOwnProfile={false}
+              isOwnProfile={isOwnProfile}
+              isAuthenticated={isAuthenticated}
               shareMenuOpen={shareMenuOpen}
               presentationLinkCopied={presentationLinkCopied}
               onShare={onShare}
               onView={onView}
               onEdit={onEdit}
               onDelete={onDelete}
+              onUseTemplate={onUseTemplate}
               menuRef={(el) => {
                 menuRefs[template.slug] = el;
               }}

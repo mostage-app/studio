@@ -28,6 +28,7 @@ export const NewPresentationModal: React.FC<NewPresentationModalProps> = ({
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [isPublic, setIsPublic] = useState(false);
+  const [isTemplate, setIsTemplate] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState("");
 
@@ -71,6 +72,7 @@ export const NewPresentationModal: React.FC<NewPresentationModalProps> = ({
           unknown
         >,
         isPublic,
+        isTemplate,
       };
 
       await createPresentation(user.username, data);
@@ -83,6 +85,7 @@ export const NewPresentationModal: React.FC<NewPresentationModalProps> = ({
       setName("");
       setSlug("");
       setIsPublic(false);
+      setIsTemplate(false);
     } catch (err) {
       console.error("Error creating presentation:", err);
       setError(
@@ -91,13 +94,23 @@ export const NewPresentationModal: React.FC<NewPresentationModalProps> = ({
     } finally {
       setIsCreating(false);
     }
-  }, [isAuthenticated, user, name, slug, isPublic, router, onClose]);
+  }, [
+    isAuthenticated,
+    user,
+    name,
+    slug,
+    isPublic,
+    isTemplate,
+    router,
+    onClose,
+  ]);
 
   const handleClose = useCallback(() => {
     if (!isCreating) {
       setName("");
       setSlug("");
       setIsPublic(false);
+      setIsTemplate(false);
       setError("");
       onClose();
     }
@@ -133,11 +146,14 @@ export const NewPresentationModal: React.FC<NewPresentationModalProps> = ({
           name={name}
           slug={slug}
           isPublic={isPublic}
+          isTemplate={isTemplate}
           username={user?.username}
           disabled={isCreating}
           onNameChange={handleNameChange}
           onSlugChange={handleSlugChange}
           onPrivacyChange={setIsPublic}
+          onTemplateChange={setIsTemplate}
+          showTemplateOption={true}
         />
 
         {/* Actions */}
