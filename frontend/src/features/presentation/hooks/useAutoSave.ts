@@ -46,18 +46,34 @@ export function useAutoSave({
   const isSavingRef = useRef(false);
   const lastSavedMarkdownRef = useRef(originalMarkdown);
   const lastSavedConfigRef = useRef(originalConfig);
+  // Track if refs have been initialized with original values
+  // This is needed because originalMarkdown/originalConfig might be set after mount
+  const isInitializedRef = useRef(false);
+
+  // Sync refs when original values change (e.g., when presentation is loaded)
+  // This effect runs on mount and whenever originalMarkdown/originalConfig change
+  useEffect(() => {
+    // Only update refs if we're not currently saving
+    // This handles the case when a new presentation is loaded
+    if (!isSavingRef.current) {
+      // Always sync refs with original values
+      // This ensures refs are properly initialized when presentation loads
+      lastSavedMarkdownRef.current = originalMarkdown;
+      lastSavedConfigRef.current = originalConfig;
+      isInitializedRef.current = true;
+    }
+  }, [originalMarkdown, originalConfig]);
 
   // Check if content has changed
   const hasChanges = useCallback(() => {
-    const markdownChanged =
-      markdown !== lastSavedMarkdownRef.current &&
-      markdown !== originalMarkdown;
+    // Check if markdown has changed from the last saved value
+    const markdownChanged = markdown !== lastSavedMarkdownRef.current;
+    // Check if config has changed from the last saved value
     const configChanged =
-      JSON.stringify(config) !== JSON.stringify(lastSavedConfigRef.current) &&
-      JSON.stringify(config) !== JSON.stringify(originalConfig);
+      JSON.stringify(config) !== JSON.stringify(lastSavedConfigRef.current);
 
     return markdownChanged || configChanged;
-  }, [markdown, config, originalMarkdown, originalConfig]);
+  }, [markdown, config]);
 
   // Save function
   const performSave = useCallback(
@@ -108,8 +124,21 @@ export function useAutoSave({
   );
 
   // Auto-save effect with debounce
+  // This effect runs whenever markdown, config, or original values change
+  // It updates the unsaved changes state and schedules auto-save
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled) {
+      // If disabled, clear any pending saves and reset state
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = null;
+      }
+      setState((prev) => ({
+        ...prev,
+        hasUnsavedChanges: false,
+      }));
+      return;
+    }
 
     // Clear previous timeout
     if (saveTimeoutRef.current) {
@@ -117,9 +146,11 @@ export function useAutoSave({
     }
 
     // Update unsaved changes state
+    // Only check for changes if we've been initialized (refs are set)
+    const hasChangesValue = isInitializedRef.current ? hasChanges() : false;
     setState((prev) => ({
       ...prev,
-      hasUnsavedChanges: hasChanges(),
+      hasUnsavedChanges: hasChangesValue,
     }));
 
     // Set new timeout for auto-save
@@ -132,7 +163,16 @@ export function useAutoSave({
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [markdown, config, enabled, debounceMs, performSave, hasChanges]);
+  }, [
+    markdown,
+    config,
+    enabled,
+    debounceMs,
+    performSave,
+    hasChanges,
+    originalMarkdown,
+    originalConfig,
+  ]);
 
   // Cleanup on unmount
   useEffect(() => {

@@ -102,14 +102,23 @@ export const EditorLayout: React.FC<EditorProps> = ({
   }, [presentation, setConfig]);
 
   // Auto-save hook (only enabled if presentation exists and save handler is provided)
+  // Use originalMarkdown directly (even if empty string) to properly track changes
+  // Only fallback to markdown if originalMarkdown is undefined/null
+  const effectiveOriginalMarkdown =
+    originalMarkdown !== undefined && originalMarkdown !== null
+      ? originalMarkdown
+      : markdown;
+  const effectiveOriginalConfig =
+    originalConfig !== null && originalConfig !== undefined
+      ? originalConfig
+      : (presentation?.config as unknown as PresentationConfig) ||
+        ({} as PresentationConfig);
+
   const autoSaveState = useAutoSave({
     markdown,
     config: presentationConfig,
-    originalMarkdown: originalMarkdown || markdown,
-    originalConfig:
-      originalConfig ||
-      (presentation?.config as unknown as PresentationConfig) ||
-      ({} as PresentationConfig),
+    originalMarkdown: effectiveOriginalMarkdown,
+    originalConfig: effectiveOriginalConfig,
     onSave: onSaveContent || (async () => {}),
     debounceMs: 30000, // 30 seconds
     enabled: !!presentation && !!onSaveContent,
