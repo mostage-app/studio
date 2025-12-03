@@ -453,6 +453,7 @@ export default function UserProfilePage() {
   }, [shareMenuOpen]);
 
   // Filter presentations and templates
+  // isTemplate is always stored (like isPublic), so we can use simple boolean checks
   const regularPresentations = isOwnProfile
     ? presentations.filter((p) => !p.isTemplate)
     : presentations.filter((p) => !p.isTemplate && p.isPublic);

@@ -134,6 +134,7 @@ export const handler = async (
       markdown: markdown,
       config: config as unknown as Presentation["config"],
       isPublic: false,
+      isTemplate: false,
       createdAt: now,
       updatedAt: now,
     };

@@ -95,13 +95,19 @@ export default function PresentationPage() {
   }, []);
 
   const handlePresentationUpdate = useCallback(
-    async (data: { name: string; slug: string; isPublic: boolean }) => {
+    async (data: {
+      name: string;
+      slug: string;
+      isPublic: boolean;
+      isTemplate?: boolean;
+    }) => {
       if (!presentation) return;
 
       await updatePresentation(username, slug, {
         name: data.name,
         slug: data.slug,
         isPublic: data.isPublic,
+        isTemplate: data.isTemplate,
       });
 
       // Update local state
@@ -112,6 +118,7 @@ export default function PresentationPage() {
               name: data.name,
               slug: data.slug,
               isPublic: data.isPublic,
+              isTemplate: data.isTemplate ?? false,
             }
           : null
       );

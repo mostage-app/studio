@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Shield, Database, Lock, User, FileText, Globe } from "lucide-react";
+import { Database, Lock, User, FileText, Globe } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Privacy Policy - Mostage Studio",

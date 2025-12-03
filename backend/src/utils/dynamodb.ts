@@ -101,39 +101,61 @@ export const PresentationsTable = {
     presentationId: string,
     updates: Partial<Presentation>
   ): Promise<void> {
-    const updateExpression: string[] = [];
+    const setExpressions: string[] = [];
+    const removeExpressions: string[] = [];
     const expressionAttributeNames: Record<string, string> = {};
     const expressionAttributeValues: Record<string, any> = {};
 
     // Build update expression dynamically
     Object.keys(updates).forEach((key) => {
-      if (
-        key !== "presentationId" &&
-        updates[key as keyof Presentation] !== undefined
-      ) {
-        const attrName = `#${key}`;
+      if (key === "presentationId") {
+        return; // Skip presentationId
+      }
+
+      const attrName = `#${key}`;
+      expressionAttributeNames[attrName] = key;
+
+      // If value is undefined, remove the attribute
+      if (updates[key as keyof Presentation] === undefined) {
+        removeExpressions.push(attrName);
+      } else {
+        // Otherwise, set the attribute
         const attrValue = `:${key}`;
-        updateExpression.push(`${attrName} = ${attrValue}`);
-        expressionAttributeNames[attrName] = key;
+        setExpressions.push(`${attrName} = ${attrValue}`);
         expressionAttributeValues[attrValue] =
           updates[key as keyof Presentation];
       }
     });
 
     // Always update updatedAt
-    updateExpression.push("#updatedAt = :updatedAt");
+    setExpressions.push("#updatedAt = :updatedAt");
     expressionAttributeNames["#updatedAt"] = "updatedAt";
     expressionAttributeValues[":updatedAt"] = new Date().toISOString();
 
-    await dynamodb
-      .update({
-        TableName: getTableName("presentations"),
-        Key: { presentationId },
-        UpdateExpression: `SET ${updateExpression.join(", ")}`,
-        ExpressionAttributeNames: expressionAttributeNames,
-        ExpressionAttributeValues: expressionAttributeValues,
-      })
-      .promise();
+    // Build the final update expression
+    const updateParts: string[] = [];
+    if (setExpressions.length > 0) {
+      updateParts.push(`SET ${setExpressions.join(", ")}`);
+    }
+    if (removeExpressions.length > 0) {
+      updateParts.push(`REMOVE ${removeExpressions.join(", ")}`);
+    }
+
+    // Only perform update if there are changes
+    if (updateParts.length > 0) {
+      await dynamodb
+        .update({
+          TableName: getTableName("presentations"),
+          Key: { presentationId },
+          UpdateExpression: updateParts.join(" "),
+          ExpressionAttributeNames: expressionAttributeNames,
+          ExpressionAttributeValues:
+            Object.keys(expressionAttributeValues).length > 0
+              ? expressionAttributeValues
+              : undefined,
+        })
+        .promise();
+    }
   },
 
   /**

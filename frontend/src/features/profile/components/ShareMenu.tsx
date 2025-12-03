@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Copy, Share2 } from "lucide-react";
+import { Check, Copy } from "lucide-react";
 import type { SharePlatform } from "../types";
 
 interface ShareMenuProps {

@@ -9,11 +9,13 @@ interface EditablePresentationInfoProps {
   presentationName?: string;
   slug?: string;
   isPublic?: boolean;
+  isTemplate?: boolean;
   onOpenLoginRequiredModal?: () => void;
   onSave?: (data: {
     name: string;
     slug: string;
     isPublic: boolean;
+    isTemplate?: boolean;
   }) => Promise<void>;
 }
 
@@ -23,6 +25,7 @@ export const EditablePresentationInfo: React.FC<
   presentationName = "Untitled",
   slug = "untitled",
   isPublic = false,
+  isTemplate = false,
   onOpenLoginRequiredModal,
   onSave,
 }) => {
@@ -51,7 +54,12 @@ export const EditablePresentationInfo: React.FC<
   }, []);
 
   const handleSave = useCallback(
-    async (data: { name: string; slug: string; isPublic: boolean }) => {
+    async (data: {
+      name: string;
+      slug: string;
+      isPublic: boolean;
+      isTemplate?: boolean;
+    }) => {
       if (onSave) {
         await onSave(data);
       }
@@ -78,6 +86,14 @@ export const EditablePresentationInfo: React.FC<
         <span className="text-[10px] text-muted-foreground font-bold">
           {isPublic ? "Public" : "Private"}
         </span>
+        {isTemplate && (
+          <>
+            <span className="text-[10px] text-muted-foreground">•</span>
+            <span className="text-[10px] text-blue-600 dark:text-blue-400 font-bold">
+              Template
+            </span>
+          </>
+        )}
         <Pencil className="w-3 h-3 text-muted-foreground transition-opacity flex-shrink-0" />
       </button>
 
@@ -88,6 +104,7 @@ export const EditablePresentationInfo: React.FC<
         presentationName={presentationName}
         slug={slug}
         isPublic={isPublic}
+        isTemplate={isTemplate}
         username={username}
         onSave={handleSave}
       />

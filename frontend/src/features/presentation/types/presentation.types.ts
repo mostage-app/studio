@@ -90,11 +90,13 @@ export interface ContentPreviewProps {
     name: string;
     slug: string;
     isPublic: boolean;
+    isTemplate?: boolean;
   };
   onPresentationUpdate?: (data: {
     name: string;
     slug: string;
     isPublic: boolean;
+    isTemplate?: boolean;
   }) => Promise<void>;
 }
 

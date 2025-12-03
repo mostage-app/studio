@@ -72,6 +72,7 @@ export function ProfileCard({
               height={96}
               className="w-24 h-24 rounded-md object-cover border-2 border-primary/20"
               onError={onGravatarError}
+              priority
               unoptimized
             />
           </div>
@@ -152,7 +153,7 @@ export function ProfileCard({
             {isOwnProfile && (
               <button
                 onClick={onStartEditName}
-                className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-secondary/50 rounded-md transition-colors"
+                className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-secondary/50 rounded-md transition-colors cursor-pointer"
                 title="Edit name"
                 aria-label="Edit name"
               >

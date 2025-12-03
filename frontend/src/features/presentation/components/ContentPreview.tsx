@@ -267,6 +267,7 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
               presentationName={presentation?.name || "Basic Sample"}
               slug={presentation?.slug || "sample"}
               isPublic={presentation?.isPublic || false}
+              isTemplate={presentation?.isTemplate || false}
               onOpenLoginRequiredModal={onOpenLoginRequiredModal}
               onSave={onPresentationUpdate}
             />
