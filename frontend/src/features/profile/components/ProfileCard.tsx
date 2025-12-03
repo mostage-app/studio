@@ -218,7 +218,7 @@ export function ProfileCard({
             className="w-full flex items-center justify-center gap-2.5 px-4 py-3 bg-background hover:bg-secondary border border-input rounded-md transition-all hover:border-primary/50 text-sm font-medium group"
           >
             <Settings className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-            <span className="text-muted-foreground group-hover:text-foreground transition-colors">
+            <span className="text-muted-foreground group-hover:text-foreground transition-colors cursor-pointer">
               Change Plan
             </span>
           </button>

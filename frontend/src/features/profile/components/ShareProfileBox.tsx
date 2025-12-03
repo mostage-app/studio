@@ -33,7 +33,7 @@ export function ShareProfileBox({
       {/* Copy Link Button */}
       <button
         onClick={onCopyLink}
-        className="w-full flex items-center justify-center gap-2.5 px-4 py-3 bg-background hover:bg-secondary border border-input rounded-md transition-all hover:border-primary/50 text-sm font-medium mb-4 group"
+        className="w-full flex items-center justify-center gap-2.5 px-4 py-3 bg-background hover:bg-secondary border border-input rounded-md transition-all hover:border-primary/50 text-sm font-medium mb-4 group cursor-pointer"
       >
         {linkCopied ? (
           <>
@@ -63,7 +63,7 @@ export function ShareProfileBox({
       <div className="grid grid-cols-3 gap-3">
         <button
           onClick={() => onShare("twitter")}
-          className="flex flex-col items-center justify-center gap-2 px-3 py-3 bg-background hover:bg-secondary border border-input rounded-md transition-all hover:border-primary/50 group"
+          className="flex flex-col items-center justify-center gap-2 px-3 py-3 bg-background hover:bg-secondary border border-input rounded-md transition-all hover:border-primary/50 group cursor-pointer"
           title="Share on Twitter"
         >
           <svg
@@ -81,7 +81,7 @@ export function ShareProfileBox({
 
         <button
           onClick={() => onShare("facebook")}
-          className="flex flex-col items-center justify-center gap-2 px-3 py-3 bg-background hover:bg-secondary border border-input rounded-md transition-all hover:border-primary/50 group"
+          className="flex flex-col items-center justify-center gap-2 px-3 py-3 bg-background hover:bg-secondary border border-input rounded-md transition-all hover:border-primary/50 group cursor-pointer"
           title="Share on Facebook"
         >
           <svg
@@ -103,7 +103,7 @@ export function ShareProfileBox({
 
         <button
           onClick={() => onShare("linkedin")}
-          className="flex flex-col items-center justify-center gap-2 px-3 py-3 bg-background hover:bg-secondary border border-input rounded-md transition-all hover:border-primary/50 group"
+          className="flex flex-col items-center justify-center gap-2 px-3 py-3 bg-background hover:bg-secondary border border-input rounded-md transition-all hover:border-primary/50 group cursor-pointer"
           title="Share on LinkedIn"
         >
           <svg
