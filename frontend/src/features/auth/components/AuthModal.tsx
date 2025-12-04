@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   Eye,
   EyeOff,
@@ -50,7 +51,6 @@ const PASSWORD_MIN_LENGTH = 6;
 const USERNAME_PATTERN = /^[a-zA-Z][a-zA-Z0-9.-]*$/;
 
 const VALIDATION_MESSAGES = {
-  COOKIE_REQUIRED: "Please accept cookies to continue.",
   USERNAME_TOO_SHORT: `Username must be at least ${USERNAME_MIN_LENGTH} characters long`,
   USERNAME_TOO_LONG: `Username must be at most ${USERNAME_MAX_LENGTH} characters long`,
   USERNAME_INVALID:
@@ -79,8 +79,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     confirmForgotPassword,
     isLoading: authLoading,
   } = useAuthContext();
-  const { hasConsent, acceptAnalytics, declineAnalytics } =
-    useCookieConsentContext();
+  const { acceptAnalytics, declineAnalytics } = useCookieConsentContext();
   const router = useRouter();
 
   const [mode, setMode] = useState<AuthMode>("login");
@@ -131,14 +130,6 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     []
   );
 
-  const validateCookieConsent = useCallback((): boolean => {
-    if (!hasConsent) {
-      setError(VALIDATION_MESSAGES.COOKIE_REQUIRED);
-      return false;
-    }
-    return true;
-  }, [hasConsent]);
-
   const validateUsername = useCallback((username: string): string | null => {
     if (username.length < USERNAME_MIN_LENGTH) {
       return VALIDATION_MESSAGES.USERNAME_TOO_SHORT;
@@ -172,8 +163,6 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
       setError("");
       setSuccess("");
 
-      if (!validateCookieConsent()) return;
-
       setIsLoading(true);
       analytics.trackAuthAttempt("login");
 
@@ -184,19 +173,16 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         });
 
         if (result.success) {
-          setSuccess(SUCCESS_MESSAGES.LOGIN);
           analytics.trackAuthSuccess("login");
-          setTimeout(() => {
-            onClose();
-            // Redirect to user's dashboard after login
-            // Use username from login result (real username, not email)
-            if (result.username) {
-              router.push(`/${result.username}`);
-            } else if (user?.username) {
-              // Fallback to user from context if username not in result
-              router.push(`/${user.username}`);
-            }
-          }, 1000);
+          onClose();
+          // Redirect to user's dashboard after login
+          // Use username from login result (real username, not email)
+          if (result.username) {
+            router.push(`/${result.username}`);
+          } else if (user?.username) {
+            // Fallback to user from context if username not in result
+            router.push(`/${user.username}`);
+          }
         } else {
           setError(result.error || "Login failed");
           analytics.trackAuthError("login_error");
@@ -213,7 +199,6 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
       formData.password,
       login,
       onClose,
-      validateCookieConsent,
       router,
       user?.username,
     ]
@@ -224,8 +209,6 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
       e.preventDefault();
       setError("");
       setSuccess("");
-
-      if (!validateCookieConsent()) return;
 
       const usernameError = validateUsername(formData.username);
       if (usernameError) {
@@ -274,14 +257,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         setIsLoading(false);
       }
     },
-    [
-      formData,
-      register,
-      validateCookieConsent,
-      validateUsername,
-      validatePassword,
-      validateName,
-    ]
+    [formData, register, validateUsername, validatePassword, validateName]
   );
 
   const handleVerify = useCallback(
@@ -299,15 +275,51 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         });
 
         if (result.success) {
-          setSuccess(result.message || SUCCESS_MESSAGES.VERIFY);
           analytics.trackAuthSuccess("verify");
-          setTimeout(() => {
+
+          // Auto-login after successful verification
+          try {
+            const loginResult = await login({
+              username: pendingUsername,
+              password: formData.password,
+            });
+
+            if (loginResult.success) {
+              analytics.trackAuthSuccess("login");
+              onClose();
+              // Redirect to user's dashboard after auto-login
+              if (loginResult.username) {
+                router.push(`/${loginResult.username}`);
+              } else if (user?.username) {
+                router.push(`/${user.username}`);
+              }
+            } else {
+              // If auto-login fails, show error but verification was successful
+              setError(
+                loginResult.error ||
+                  "Verification successful, but login failed. Please sign in manually."
+              );
+              setMode("login");
+              setFormData((prev) => ({
+                ...prev,
+                verificationCode: "",
+                password: "", // Clear password for security
+              }));
+            }
+          } catch (loginError) {
+            // If auto-login fails, show error but verification was successful
+            setError(
+              loginError instanceof Error
+                ? `Verification successful, but login failed: ${loginError.message}. Please sign in manually.`
+                : "Verification successful, but login failed. Please sign in manually."
+            );
             setMode("login");
             setFormData((prev) => ({
               ...prev,
               verificationCode: "",
+              password: "", // Clear password for security
             }));
-          }, 2000);
+          }
         } else {
           setError(result.error || "Verification failed");
           analytics.trackAuthError("verify_error");
@@ -321,7 +333,16 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         setIsLoading(false);
       }
     },
-    [formData.verificationCode, pendingUsername, verify]
+    [
+      formData.verificationCode,
+      formData.password,
+      pendingUsername,
+      verify,
+      login,
+      onClose,
+      router,
+      user?.username,
+    ]
   );
 
   const handleResendCode = useCallback(async () => {
@@ -499,8 +520,6 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   }, [mode]);
 
   const isLoadingState = isLoading || authLoading;
-  const showCookieWarning =
-    !hasConsent && (mode === "login" || mode === "signup");
   const showFooter = mode !== "verify" && mode !== "resetPassword";
 
   return (
@@ -512,24 +531,6 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         maxWidth="md"
       >
         <div>
-          {/* Cookie Consent Warning */}
-          {showCookieWarning && (
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md p-2 sm:p-3 mb-3 sm:mb-4">
-              <div className="flex items-start gap-2">
-                <p className="text-xs sm:text-sm text-yellow-800 dark:text-yellow-200 flex-1">
-                  Please accept cookies to continue with sign in or sign up.{" "}
-                  <button
-                    type="button"
-                    onClick={() => setShowCookieBanner(true)}
-                    className="text-yellow-900 dark:text-yellow-100 font-medium hover:text-yellow-600 cursor-pointer "
-                  >
-                    Manage cookies
-                  </button>
-                </p>
-              </div>
-            </div>
-          )}
-
           {/* Success Message */}
           {success && (
             <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md p-2 sm:p-3 mb-3 sm:mb-4">
@@ -568,6 +569,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   placeholder="Enter verification code"
                   required
                   maxLength={6}
+                  autoComplete="one-time-code"
                 />
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                   Enter the 6-digit code sent to your email
@@ -621,6 +623,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   placeholder="Enter your username or email"
                   required
                   minLength={1}
+                  autoComplete="username"
                 />
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                   We&apos;ll send a password reset code to your email
@@ -663,6 +666,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   placeholder="Enter verification code"
                   required
                   maxLength={6}
+                  autoComplete="one-time-code"
                 />
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                   Enter the 6-digit code sent to your email
@@ -683,6 +687,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     placeholder="Enter new password"
                     required
                     minLength={6}
+                    autoComplete="new-password"
                   />
                   <button
                     type="button"
@@ -725,6 +730,46 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
               onSubmit={mode === "login" ? handleLogin : handleSignup}
               className="space-y-3 sm:space-y-4 mb-6"
             >
+              {/* Full Name (only for signup) */}
+              {mode === "signup" && (
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    id="signup-name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    className="w-full px-2 sm:px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter your full name"
+                    required
+                    autoComplete="name"
+                  />
+                </div>
+              )}
+
+              {/* Email (only for signup) */}
+              {mode === "signup" && (
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    id="signup-email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    className="w-full px-2 sm:px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter your email"
+                    required
+                    autoComplete="email"
+                  />
+                </div>
+              )}
+
               {/* Username or Email */}
               <div>
                 <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -733,6 +778,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 <input
                   type="text"
                   name="username"
+                  id={mode === "signup" ? "signup-username" : "login-username"}
                   value={formData.username}
                   onChange={handleInputChange}
                   className="w-full px-2 sm:px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -744,44 +790,15 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   required
                   minLength={mode === "login" ? 1 : USERNAME_MIN_LENGTH}
                   maxLength={mode === "login" ? undefined : USERNAME_MAX_LENGTH}
+                  autoComplete={mode === "login" ? "username" : "off"}
                 />
+                {mode === "signup" && (
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    This will be your unique identifier and appear in your
+                    profile URL
+                  </p>
+                )}
               </div>
-
-              {/* Email (only for signup) */}
-              {mode === "signup" && (
-                <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    className="w-full px-2 sm:px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Enter your email"
-                    required
-                  />
-                </div>
-              )}
-
-              {/* Name (required for signup) */}
-              {mode === "signup" && (
-                <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Full Name
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    className="w-full px-2 sm:px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Enter your full name"
-                    required
-                  />
-                </div>
-              )}
 
               {/* Password */}
               <div>
@@ -798,6 +815,9 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     placeholder="Enter your password"
                     required
                     minLength={PASSWORD_MIN_LENGTH}
+                    autoComplete={
+                      mode === "login" ? "current-password" : "new-password"
+                    }
                   />
                   <button
                     type="button"
@@ -821,7 +841,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
               <button
                 type="submit"
-                disabled={isLoadingState || !hasConsent}
+                disabled={isLoadingState}
                 className="w-full bg-primary hover:bg-primary/90 disabled:bg-primary/50 disabled:cursor-not-allowed text-primary-foreground font-medium py-2 px-3 sm:px-4 text-sm sm:text-base rounded-md transition-colors focus:ring-2 focus:ring-primary focus:ring-offset-2 flex items-center justify-center cursor-pointer"
               >
                 {isLoadingState ? (
@@ -835,6 +855,30 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   "Sign In"
                 )}
               </button>
+
+              {/* Terms and Privacy - Only for signup */}
+              {mode === "signup" && (
+                <p className="text-center text-xs text-gray-500 dark:text-gray-400 mt-3">
+                  By signing up, you agree to our{" "}
+                  <Link
+                    href="/terms"
+                    className="text-primary hover:text-primary/80 underline transition-colors"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Terms of Service
+                  </Link>
+                  {" and "}
+                  <Link
+                    href="/privacy"
+                    className="text-primary hover:text-primary/80 underline transition-colors"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Privacy Policy
+                  </Link>
+                </p>
+              )}
             </form>
           )}
 

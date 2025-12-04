@@ -133,10 +133,16 @@ export function useAutoSave({
         clearTimeout(saveTimeoutRef.current);
         saveTimeoutRef.current = null;
       }
-      setState((prev) => ({
-        ...prev,
-        hasUnsavedChanges: false,
-      }));
+      // Only update state if hasUnsavedChanges is currently true to avoid unnecessary updates
+      setState((prev) => {
+        if (prev.hasUnsavedChanges) {
+          return {
+            ...prev,
+            hasUnsavedChanges: false,
+          };
+        }
+        return prev;
+      });
       return;
     }
 
@@ -147,11 +153,24 @@ export function useAutoSave({
 
     // Update unsaved changes state
     // Only check for changes if we've been initialized (refs are set)
-    const hasChangesValue = isInitializedRef.current ? hasChanges() : false;
-    setState((prev) => ({
-      ...prev,
-      hasUnsavedChanges: hasChangesValue,
-    }));
+    // Calculate hasChanges directly here instead of using the callback to avoid dependency issues
+    const markdownChanged = markdown !== lastSavedMarkdownRef.current;
+    const configChanged =
+      JSON.stringify(config) !== JSON.stringify(lastSavedConfigRef.current);
+    const hasChangesValue = isInitializedRef.current
+      ? markdownChanged || configChanged
+      : false;
+
+    // Only update state if the value actually changed
+    setState((prev) => {
+      if (prev.hasUnsavedChanges !== hasChangesValue) {
+        return {
+          ...prev,
+          hasUnsavedChanges: hasChangesValue,
+        };
+      }
+      return prev;
+    });
 
     // Set new timeout for auto-save
     saveTimeoutRef.current = setTimeout(() => {
@@ -163,16 +182,7 @@ export function useAutoSave({
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [
-    markdown,
-    config,
-    enabled,
-    debounceMs,
-    performSave,
-    hasChanges,
-    originalMarkdown,
-    originalConfig,
-  ]);
+  }, [markdown, config, enabled, debounceMs, performSave]);
 
   // Cleanup on unmount
   useEffect(() => {

@@ -11,6 +11,7 @@ import {
   LogIn,
   Package,
   Cloud,
+  Sparkles,
 } from "lucide-react";
 import { Modal } from "@/lib/components/ui/Modal";
 import { useAuthContext } from "@/features/auth/components/AuthProvider";
@@ -23,8 +24,14 @@ interface LoginRequiredModalProps {
 
 const features = [
   {
+    name: "AI Content Generator",
+    description: "Generate presentation content with AI assistance",
+    icon: Sparkles,
+    color: "purple",
+  },
+  {
     name: "Cloud Storage",
-    description: "Save and sync your presentations in the cloud",
+    description: "Cloud storage to collaborate with your team in real-time",
     icon: Cloud,
     color: "blue",
   },
@@ -96,7 +103,7 @@ export function LoginRequiredModal({
       isOpen={isOpen}
       onClose={onClose}
       headerContent={headerContent}
-      maxWidth="lg"
+      maxWidth="4xl"
     >
       <div className="space-y-6">
         {/* Main Message */}
@@ -118,7 +125,7 @@ export function LoginRequiredModal({
           <h3 className="text-sm sm:text-base font-medium text-gray-900 dark:text-gray-100">
             Features that require plan upgrade:
           </h3>
-          <div className="grid gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {features.map((feature, index) => {
               const IconComponent = feature.icon;
 

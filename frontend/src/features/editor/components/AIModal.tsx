@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Sparkles, Loader2, X } from "lucide-react";
+import React, { useState } from "react";
+import { Sparkles, Loader2 } from "lucide-react";
 
 import { Modal } from "@/lib/components/ui/Modal";
 import { analytics } from "@/lib/utils/analytics";
-import { useAuthContext } from "@/features/auth/components/AuthProvider";
 
 interface AIModalProps {
   isOpen: boolean;
@@ -20,13 +19,11 @@ export function AIModal({
   onInsertContent,
   onOpenLoginRequiredModal,
 }: AIModalProps) {
-  const { isAuthenticated } = useAuthContext();
   const [isGenerating, setIsGenerating] = useState(false);
   const [prompt, setPrompt] = useState("");
   const [generatedContent, setGeneratedContent] = useState("");
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState("");
-  const [showAuthError, setShowAuthError] = useState(false);
 
   // Track AI modal open
   React.useEffect(() => {
@@ -41,8 +38,9 @@ export function AIModal({
     // Track AI usage with prompt
     analytics.trackAIUsage("generate_content", prompt);
 
-    // Show authentication error instead of generating content
-    setShowAuthError(true);
+    // Close AI modal and open Login Required / Plan Upgrade modal
+    handleClose();
+    onOpenLoginRequiredModal?.();
     return;
 
     // Original generation logic (commented out for now)
@@ -124,13 +122,6 @@ export function AIModal({
     }
   };
 
-  const handleSignInClick = () => {
-    setShowAuthError(false);
-    setPrompt("");
-    onClose();
-    onOpenLoginRequiredModal?.();
-  };
-
   const handleClose = () => {
     // Reset all states when modal closes
     setGeneratedContent("");
@@ -138,16 +129,8 @@ export function AIModal({
     setError("");
     setCopied(false);
     setIsGenerating(false);
-    setShowAuthError(false);
     onClose();
   };
-
-  // Reset error when modal closes
-  useEffect(() => {
-    if (!isOpen) {
-      setShowAuthError(false);
-    }
-  }, [isOpen]);
 
   const headerContent = (
     <div className="flex items-center gap-2 sm:gap-3">
@@ -212,46 +195,6 @@ export function AIModal({
           </>
         )}
       </button>
-
-      {/* Authentication/Plan Error */}
-      {showAuthError && (
-        <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
-          <div className="flex items-start gap-2 sm:gap-3">
-            <div className="p-1 bg-red-100 dark:bg-red-900/30 rounded">
-              <X className="w-4 h-4 text-red-600" />
-            </div>
-            <div>
-              {isAuthenticated ? (
-                <>
-                  <h4 className="text-sm sm:text-base font-medium text-red-800 dark:text-red-200 mb-1">
-                    Plan Upgrade Required
-                  </h4>
-                  <p className="text-xs sm:text-sm text-red-700 dark:text-red-300">
-                    AI Content Generation is not available with Basic Plan.
-                    Please upgrade your plan to access this feature.
-                  </p>
-                </>
-              ) : (
-                <>
-                  <h4 className="text-sm sm:text-base font-medium text-red-800 dark:text-red-200 mb-1">
-                    Authentication Required
-                  </h4>
-                  <p className="text-xs sm:text-sm text-red-700 dark:text-red-300">
-                    AI Content Generation requires authentication. Please{" "}
-                    <button
-                      onClick={handleSignInClick}
-                      className="underline hover:no-underline font-medium"
-                    >
-                      sign in
-                    </button>{" "}
-                    to continue.
-                  </p>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Error Message */}
       {error && (

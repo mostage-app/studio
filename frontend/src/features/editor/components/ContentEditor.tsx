@@ -919,7 +919,12 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
           onOpenNewFileConfirmation={() => setShowNewFileConfirmation(true)}
           onOpenFile={handleFileOpen}
           onOpenSaveModal={() => setShowSaveModal(true)}
-          onOpenAIModal={() => setShowAIModal(true)}
+          // onOpenAIModal={() => setShowAIModal(true)}
+          onOpenAIModal={() => {
+            // Always show login/upgrade modal before opening AI modal
+            // AI Content Generation requires authentication and plan upgrade
+            onOpenLoginRequiredModal?.();
+          }}
           onOpenUnsplashModal={() => setShowUnsplashModal(true)}
           onOpenLoginRequiredModal={onOpenLoginRequiredModal || (() => {})}
           getSelectedText={getSelectedText}

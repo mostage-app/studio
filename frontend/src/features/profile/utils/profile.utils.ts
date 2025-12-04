@@ -12,7 +12,7 @@ export function getGravatarUrl(
 ): string {
   const normalizedEmail = email.toLowerCase().trim();
   const emailHash = CryptoJS.MD5(normalizedEmail).toString();
-  return `https://www.gravatar.com/avatar/${emailHash}?s=${size}&d=identicon&r=pg`;
+  return `https://www.gravatar.com/avatar/${emailHash}?s=${size}&d=404&r=pg`;
 }
 
 /**

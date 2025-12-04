@@ -31,7 +31,6 @@ import {
   Settings,
   HelpCircle,
   Heart,
-  Shield,
   Bug,
   Sparkles,
 } from "lucide-react";
@@ -475,26 +474,17 @@ export const GlobalHeader: React.FC = () => {
                   <span>Feature Request</span>
                 </a>
 
-                {!isAuthenticated && (
-                  <button
-                    onClick={() => {
-                      resetConsent();
-                      setShowMenuDropdown(false);
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-secondary transition-colors"
-                  >
-                    <Settings className="w-4 h-4" />
-                    <span>Privacy Settings</span>
-                  </button>
-                )}
-                <Link
-                  href="/privacy"
-                  onClick={() => setShowMenuDropdown(false)}
+                <button
+                  onClick={() => {
+                    resetConsent();
+                    setShowMenuDropdown(false);
+                  }}
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-secondary transition-colors"
                 >
-                  <Shield className="w-4 h-4" />
-                  <span>Privacy Policy</span>
-                </Link>
+                  <Settings className="w-4 h-4" />
+                  <span>Privacy Settings</span>
+                </button>
+
                 <a
                   href="https://github.com/sponsors/mostage-app"
                   target="_blank"
