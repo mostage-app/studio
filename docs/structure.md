@@ -21,7 +21,10 @@ frontend/src/
 ├── features/              # Feature-based modules
 │   ├── app-info/          # About modal
 │   ├── auth/              # Authentication (Cognito)
-│   ├── editor/            # Content editor + AI
+│   ├── editor/            # Content editor + AI + Image upload
+│   │   ├── components/    # Editor components (toolbar, modals)
+│   │   ├── services/      # Image upload service
+│   │   └── hooks/         # Editor hooks (undo/redo)
 │   ├── export/            # File export
 │   ├── import/            # File import
 │   └── presentation/      # Settings + preview
@@ -36,7 +39,8 @@ frontend/src/
 
 ## Features
 
-- **Editor**: Markdown editor with AI generation, undo/redo
+- **Editor**: Markdown editor with AI generation, undo/redo, image upload
+- **Image Upload**: Drag-and-drop image upload to S3, URL input, Unsplash integration
 - **Presentation**: Live preview with Mostage, customizable themes
 - **Authentication**: AWS Cognito integration (sign up, sign in, password reset)
 - **Export/Import**: Multiple formats (HTML, PDF, PPTX, JPG, Mostage)

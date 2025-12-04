@@ -62,6 +62,7 @@ Mostage JS is a presentation framework based on Markdown and HTML. Available as 
   - [AWS API Gateway](https://aws.amazon.com/api-gateway/) - REST API for backend services
   - [AWS Lambda](https://aws.amazon.com/lambda/) - Serverless functions
   - [AWS DynamoDB](https://aws.amazon.com/dynamodb/) - Database for presentations and users
+  - [AWS S3](https://aws.amazon.com/s3/) - Object storage for image uploads
   - [AWS Amplify](https://aws.amazon.com/amplify/) - Frontend hosting and deployment
   - [AWS SES](https://aws.amazon.com/ses/) - Email delivery (optional)
   - [AWS Resource Groups](https://aws.amazon.com/resource-groups/) - Resource organization and management

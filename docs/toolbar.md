@@ -28,15 +28,17 @@ The toolbar is built using React functional components and hooks. It's organized
 ### Main Components
 
 - **`MarkdownToolbar.tsx`**: Main toolbar component
+- **`ImagePicker.tsx`**: Reusable image picker component (upload, URL, Unsplash)
 - **`ToolbarButton.tsx`**: Reusable button component
 - **`ToolbarDivider.tsx`**: Visual separator component
-- **`PopupForm.tsx`**: Generic popup form component
+- **`PopupForm.tsx`**: Generic popup form component with file upload support
 
 ### File Structure
 
 ```text
 src/features/editor/components/
 ├── MarkdownToolbar.tsx       # Main toolbar component
+├── ImagePicker.tsx           # Reusable image picker component
 └── toolbar/
     ├── ToolbarButton.tsx     # Reusable button component
     ├── ToolbarDivider.tsx    # Visual divider
@@ -193,19 +195,38 @@ Opens when clicking the Image button:
 **Fields:**
 
 - Alt Text: Alternative text for the image
-- Image URL: The image source URL
+- Upload Image: File upload with drag-and-drop support
+- Enter Image URL: Manual URL input
+- Search Images from Unsplash: Opens Unsplash image search modal
+
+**Image Upload Features:**
+
+- **Drag & Drop**: Drag images directly into the upload area
+- **File Selection**: Click to browse and select image files
+- **Paste Support**: Paste images from clipboard (handled in ContentEditor)
+- **File Validation**:
+  - Supported formats: JPG, PNG, GIF, WebP
+  - Maximum file size: 2MB
+- **Upload Progress**: Real-time progress bar during upload
+- **Image Preview**: Preview before upload
+- **Error Handling**: Clear error messages for validation failures
 
 **Behavior:**
 
 - Pre-fills "Alt Text" if text is selected
+- Three options available: Upload, URL, or Unsplash search
+- Options are separated with dividers ("or")
+- When file is selected, URL field is hidden
+- When URL is entered, upload field is hidden
 - Closes on outside click
 - Clears values when canceled
 - Inserts: `![Alt Text](Image URL)`
 
 **Validation:**
 
-- URL field required
-- Submit button disabled if URL is empty
+- Either file upload or URL required
+- Alt text required when uploading file
+- Submit button disabled if no image source is provided
 
 ### Table Popup
 
@@ -554,14 +575,34 @@ The toolbar is integrated into `ContentEditor.tsx`:
 5. **Responsive**: Works seamlessly on mobile and desktop
 6. **Language Independence**: Keyboard shortcuts work regardless of keyboard layout
 
+## Image Upload Service
+
+The image upload feature uses a dedicated service that handles:
+
+- **File Validation**: Type and size validation (max 2MB)
+- **Base64 Encoding**: Converts image to base64 for API transmission
+- **Progress Tracking**: Real-time upload progress updates
+- **Error Handling**: Comprehensive error messages
+- **S3 Integration**: Uploads to AWS S3 via Lambda function
+- **Authentication**: Requires user authentication (AWS Cognito)
+
+**Service Location**: `src/features/editor/services/imageUploadService.ts`
+
+**Backend Integration**:
+
+- Lambda function: `backend/src/lambda/images/upload.ts`
+- API endpoint: `POST /images/upload`
+- Storage: AWS S3 bucket with public read access
+- CORS: Configured for cross-origin requests
+
 ## Future Enhancements
 
 Potential improvements for future versions:
 
 - Custom table styling options
-- Image upload and preview
 - Link validation
 - Formatting presets/templates
 - Undo/redo for individual formatting actions
-- Drag-and-drop image insertion
 - Emoji picker integration
+- Image editing (crop, resize)
+- Multiple image upload
