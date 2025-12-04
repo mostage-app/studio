@@ -9,6 +9,8 @@ import { UsersLambdaConstruct } from "../services/api/users";
 import { CognitoTriggerConstruct } from "../services/cognito-trigger";
 import { ResourceGroupConstruct } from "../services/resource-group";
 import { DynamoDBConstruct } from "../services/dynamodb";
+import { StorageConstruct } from "../services/storage";
+import { ImagesLambdaConstruct } from "../services/api/images";
 
 /**
  * Configuration interface for Stack
@@ -86,6 +88,11 @@ export abstract class BaseStudioStack extends cdk.Stack {
     this.presentationsTableName =
       dynamoDBConstruct.presentationsTable.tableName;
     this.usersTableName = dynamoDBConstruct.usersTable.tableName;
+
+    // Storage Construct (S3 bucket for images)
+    const storageConstruct = new StorageConstruct(this, "Storage", {
+      environment,
+    });
 
     // SES Construct (optional)
     const sesConstruct = new SesConstruct(this, "Ses", {
@@ -166,6 +173,13 @@ export abstract class BaseStudioStack extends cdk.Stack {
         unsplashAccessKey: apiConfig.unsplashAccessKey,
       });
     }
+
+    // Images Lambda Construct (for image uploads)
+    new ImagesLambdaConstruct(this, "ImagesLambda", {
+      environment,
+      apiGateway,
+      imagesBucket: storageConstruct.imagesBucket,
+    });
 
     // Stack outputs - assign values first
     this.cognitoUserPoolId = cognitoConstruct.userPool.ref;

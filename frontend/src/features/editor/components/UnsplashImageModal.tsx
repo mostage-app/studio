@@ -396,7 +396,7 @@ export function UnsplashImageModal({
                     {mode === "markdown" && (
                       <div className="flex-1">
                         <label className="block text-xs sm:text-xs font-medium text-foreground mb-1.5">
-                          Alt Text
+                          Description
                         </label>
                         <input
                           type="text"

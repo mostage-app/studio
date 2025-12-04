@@ -6,10 +6,11 @@ import {
 } from "../types/presentation.types";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Mostage } from "mostage";
-import { Maximize, Upload, Download, MonitorPlay } from "lucide-react";
+import { Maximize, Upload, Download, MonitorPlay, Share2 } from "lucide-react";
 import { analytics } from "@/lib/utils/analytics";
 import { EditablePresentationInfo } from "./EditablePresentationInfo";
 import { useParams } from "next/navigation";
+import { ShareMenu, useSharePresentation } from "@/features/profile";
 
 export const ContentPreview: React.FC<ContentPreviewProps> = ({
   markdown,
@@ -30,6 +31,19 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
   const [currentSlide, setCurrentSlide] = useState<number>(1);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastConfigRef = useRef<PresentationConfig | null>(null);
+
+  // Share presentation hook
+  const {
+    shareMenuOpen,
+    presentationLinkCopied,
+    shareMenuRef,
+    handleShare,
+    handleShareMenuRef,
+  } = useSharePresentation({
+    username: username || "",
+    slug: presentation?.slug || "",
+    name: presentation?.name || "",
+  });
 
   // Helper function to get display content
   const getDisplayContent = useCallback((content: string) => {
@@ -339,6 +353,28 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
             >
               <Download className="w-3 h-3 sm:w-4 sm:h-4" />
             </button>
+          )}
+
+          {/* Share button */}
+          {username && presentation?.slug && presentation?.name && (
+            <div className="relative flex-shrink-0">
+              <button
+                onClick={() => handleShare()}
+                className="flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-md transition-colors"
+                title="Share presentation"
+              >
+                <Share2 className="w-3 h-3 sm:w-4 sm:h-4" />
+              </button>
+
+              <ShareMenu
+                isOpen={shareMenuOpen}
+                slug={presentation.slug}
+                name={presentation.name}
+                isCopied={presentationLinkCopied}
+                onShare={(slug, name, platform) => handleShare(platform)}
+                menuRef={handleShareMenuRef}
+              />
+            </div>
           )}
 
           {username && presentation?.slug && (

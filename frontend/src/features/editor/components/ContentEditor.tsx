@@ -18,6 +18,12 @@ import {
   isInCodeBlock,
 } from "../utils";
 import { useUndoRedo } from "../hooks/useUndoRedo";
+import {
+  uploadImage,
+  validateImageFile,
+  createImagePreview,
+} from "../services/imageUploadService";
+import { AuthService } from "@/features/auth/services/authService";
 
 export const ContentEditor: React.FC<ContentEditorProps> = ({
   value: externalValue,
@@ -32,6 +38,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showNewFileConfirmation, setShowNewFileConfirmation] = useState(false);
   const [showUnsplashModal, setShowUnsplashModal] = useState(false);
+  const [uploadingPastedImage, setUploadingPastedImage] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // ==================== Undo/Redo Management ====================
@@ -83,6 +90,70 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
     const currentSlide = (beforeCursor.match(/^---$/gm) || []).length + 1;
 
     updateEditingSlide(currentSlide);
+  };
+
+  // ==================== Paste Image Handler ====================
+  const handlePaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    // Check if clipboard contains image
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.type.startsWith("image/")) {
+        e.preventDefault();
+
+        // Check if user is authenticated
+        if (!AuthService.isAuthenticated()) {
+          onOpenLoginRequiredModal?.();
+          return;
+        }
+
+        const file = item.getAsFile();
+        if (!file) return;
+
+        // Validate file
+        const validation = validateImageFile(file);
+        if (!validation.valid) {
+          // Show error (could use a toast notification here)
+          console.error(validation.error);
+          return;
+        }
+
+        setUploadingPastedImage(true);
+
+        try {
+          // Upload image
+          const imageUrl = await uploadImage(file);
+
+          // Insert image markdown at cursor position
+          const textarea = textareaRef.current;
+          if (textarea) {
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const fileName = file.name.replace(/\.[^/.]+$/, ""); // Remove extension
+            const imageMarkdown = `![${fileName}](${imageUrl})`;
+            const newText =
+              value.substring(0, start) + imageMarkdown + value.substring(end);
+            executeCommand(newText);
+
+            // Set cursor position after inserted image
+            setTimeout(() => {
+              const newCursorPos = start + imageMarkdown.length;
+              textarea.setSelectionRange(newCursorPos, newCursorPos);
+              textarea.focus();
+            }, 0);
+          }
+        } catch (error) {
+          console.error("Failed to upload pasted image:", error);
+          // Could show error notification here
+        } finally {
+          setUploadingPastedImage(false);
+        }
+
+        return; // Only handle first image
+      }
+    }
   };
 
   // ==================== Text Manipulation Functions ====================
@@ -993,6 +1064,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
           onKeyUp={handleCursorChange}
           onMouseUp={handleCursorChange}
           onFocus={handleCursorChange}
+          onPaste={handlePaste}
           placeholder={placeholder}
           className="
               flex-1 w-full p-4 border-0 resize-none outline-none

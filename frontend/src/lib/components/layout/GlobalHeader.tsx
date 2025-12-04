@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import React, {
+  useState,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+} from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
@@ -118,24 +124,28 @@ export function emitAutoSaveHandlers(handlers: AutoSaveHandlers | null) {
   autoSaveHandlersListeners.forEach((cb) => cb(handlers));
 }
 
+/**
+ * Helper function to check if current path is a view route
+ */
+const isViewRoute = (path: string): boolean => {
+  return path.endsWith("/view") || path.includes("/view/");
+};
+
 export const GlobalHeader: React.FC = () => {
   const { isAuthenticated, logout, user } = useAuthContext();
-
-  // Subscribe to global login required modal events
-  useEffect(() => {
-    const unsubscribe = subscribeToLoginRequiredModal(() => {
-      setShowLoginRequiredModal(true);
-    });
-    return unsubscribe;
-  }, []);
   const { resetConsent } = useCookieConsentContext();
   const router = useRouter();
   const pathname = usePathname();
 
-  // Determine if we're on an editor page (home or /{username}/{slug} without ?mode=view)
+  /**
+   * Determine if we're on an editor page
+   * Editor pages: home (/) or /{username}/{slug} without ?mode=view
+   * Explicitly exclude /view routes to prevent onboarding from showing in view mode
+   */
   const isEditorPage =
     pathname === "/" ||
     (pathname?.match(/^\/[^/]+\/[^/]+$/) &&
+      !isViewRoute(pathname) &&
       typeof window !== "undefined" &&
       !new URLSearchParams(window.location.search).has("mode"));
 
@@ -155,7 +165,10 @@ export const GlobalHeader: React.FC = () => {
   // Responsive state
   const [isMobile, setIsMobile] = useState(false);
 
-  // Tour state
+  /**
+   * Tour state - initialize based on current route to prevent flash
+   * Always starts as false, will be set by useLayoutEffect if conditions are met
+   */
   const [showTour, setShowTour] = useState(false);
   const [tourError, setTourError] = useState<string | null>(null);
   const [isLoadingTour, setIsLoadingTour] = useState(false);
@@ -166,6 +179,36 @@ export const GlobalHeader: React.FC = () => {
   );
   const [autoSaveHandlers, setAutoSaveHandlers] =
     useState<AutoSaveHandlers | null>(null);
+
+  // Subscribe to global login required modal events
+  useEffect(() => {
+    const unsubscribe = subscribeToLoginRequiredModal(() => {
+      setShowLoginRequiredModal(true);
+    });
+    return unsubscribe;
+  }, []);
+
+  // Subscribe to auth modal events from other components
+  useEffect(() => {
+    const unsubscribe = subscribeToAuthModal(() => {
+      setShowAuthModal(true);
+    });
+    return unsubscribe;
+  }, []);
+
+  // Subscribe to auto-save state from EditorLayout
+  useEffect(() => {
+    const unsubscribeState = subscribeToAutoSaveState((state) => {
+      setAutoSaveState(state);
+    });
+    const unsubscribeHandlers = subscribeToAutoSaveHandlers((handlers) => {
+      setAutoSaveHandlers(handlers);
+    });
+    return () => {
+      unsubscribeState();
+      unsubscribeHandlers();
+    };
+  }, []);
 
   // Handle responsive layout
   useEffect(() => {
@@ -198,28 +241,6 @@ export const GlobalHeader: React.FC = () => {
     };
   }, [showMenuDropdown]);
 
-  // Subscribe to auth modal events from other components
-  useEffect(() => {
-    const unsubscribe = subscribeToAuthModal(() => {
-      setShowAuthModal(true);
-    });
-    return unsubscribe;
-  }, []);
-
-  // Subscribe to auto-save state from EditorLayout
-  useEffect(() => {
-    const unsubscribeState = subscribeToAutoSaveState((state) => {
-      setAutoSaveState(state);
-    });
-    const unsubscribeHandlers = subscribeToAutoSaveHandlers((handlers) => {
-      setAutoSaveHandlers(handlers);
-    });
-    return () => {
-      unsubscribeState();
-      unsubscribeHandlers();
-    };
-  }, []);
-
   const handleTourClose = useCallback(() => {
     setShowTour(false);
   }, []);
@@ -229,18 +250,37 @@ export const GlobalHeader: React.FC = () => {
     localStorage.setItem("tour-completed-v2", "true");
   }, []);
 
-  // Auto-show tour on first visit (only on editor pages)
-  useEffect(() => {
+  /**
+   * Auto-show tour on first visit (only on editor pages)
+   * Uses useLayoutEffect to prevent flash of onboarding (runs synchronously before paint)
+   */
+  useLayoutEffect(() => {
+    // Get current path - prefer window.location.pathname for reliability
+    const currentPath =
+      typeof window !== "undefined" ? window.location.pathname : pathname || "";
+
+    // First check: explicitly prevent onboarding on /view routes
+    if (isViewRoute(currentPath)) {
+      setShowTour(false);
+      return;
+    }
+
     // Only show on editor pages
-    if (!isEditorPage) return;
+    if (!isEditorPage) {
+      setShowTour(false);
+      return;
+    }
 
     // Check if user has already seen the tour
     const hasSeenTour = localStorage.getItem("tour-completed-v2");
-    if (hasSeenTour) return;
+    if (hasSeenTour) {
+      setShowTour(false);
+      return;
+    }
 
-    // Show tour immediately
+    // All conditions met - show tour
     setShowTour(true);
-  }, [isEditorPage]);
+  }, [isEditorPage, pathname]);
 
   const handleStartTour = useCallback(async () => {
     setShowMenuDropdown(false);

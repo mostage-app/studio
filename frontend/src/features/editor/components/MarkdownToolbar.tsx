@@ -31,6 +31,11 @@ import {
 import { LoginRequiredModal } from "./LoginRequiredModal";
 import { ToolbarButton, ToolbarDivider, PopupForm } from "./toolbar";
 import { EmojiPicker } from "./EmojiPicker";
+import {
+  uploadImage,
+  createImagePreview,
+  validateImageFile,
+} from "../services/imageUploadService";
 
 interface MarkdownToolbarProps {
   onInsert: (before: string, after?: string, placeholder?: string) => void;
@@ -59,7 +64,7 @@ const DROPDOWN_MENU_CLASSES =
   "absolute top-full left-0 mt-1 bg-white dark:bg-gray-800 border border-input rounded-md shadow-lg z-[100] min-w-[180px] max-w-[calc(100vw-1rem)]";
 // Popup classes: Always use fixed positioning with portal to avoid overflow issues in ResizableSplitPane
 const POPUP_CLASSES =
-  "bg-white dark:bg-gray-800 border border-input rounded-md shadow-xl z-[9997] p-4 min-w-[280px] max-w-[calc(100vw-2rem)] w-[calc(100vw-2rem)] sm:w-auto sm:shadow-lg";
+  "bg-white dark:bg-gray-800 border border-input rounded-md shadow-xl z-[9997] p-4 min-w-[320px] w-[320px] max-w-[calc(100vw-2rem)] sm:shadow-lg";
 const POPUP_BACKDROP_CLASSES = "fixed inset-0 bg-black/50 z-[9996] sm:hidden";
 
 // Table generation constants
@@ -101,6 +106,11 @@ export function MarkdownToolbar({
   const [showImagePopup, setShowImagePopup] = useState(false);
   const [imageAlt, setImageAlt] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const imageSelectedTextRef = useRef<string>("");
 
   // Table popup state
@@ -222,6 +232,11 @@ export function MarkdownToolbar({
     setShowImagePopup(false);
     setImageAlt("");
     setImageUrl("");
+    setSelectedFile(null);
+    setImagePreview(null);
+    setUploading(false);
+    setUploadProgress(0);
+    setUploadError(null);
     imageSelectedTextRef.current = "";
   };
 
@@ -377,10 +392,81 @@ export function MarkdownToolbar({
     setShowImagePopup(true);
     setImageAlt(selectedText);
     setImageUrl("");
+    setSelectedFile(null);
+    setImagePreview(null);
+    setUploadError(null);
   };
 
-  const handleImageSubmit = (e: React.FormEvent) => {
+  const handleFileSelect = async (file: File | null) => {
+    setUploadError(null);
+    setSelectedFile(file);
+    setImageUrl(""); // Clear URL when file is selected
+
+    if (file) {
+      // Validate file
+      const validation = validateImageFile(file);
+      if (!validation.valid) {
+        setUploadError(validation.error || "Invalid file");
+        setSelectedFile(null);
+        return;
+      }
+
+      // Create preview
+      try {
+        const preview = await createImagePreview(file);
+        setImagePreview(preview);
+        // Auto-fill alt text with filename if empty
+        if (!imageAlt.trim()) {
+          const fileName = file.name.replace(/\.[^/.]+$/, ""); // Remove extension
+          setImageAlt(fileName);
+        }
+      } catch {
+        setUploadError("Failed to create preview");
+      }
+    } else {
+      setImagePreview(null);
+    }
+  };
+
+  const handleImageUpload = async () => {
+    if (!selectedFile) return;
+
+    setUploading(true);
+    setUploadError(null);
+    setUploadProgress(0);
+
+    try {
+      const uploadedUrl = await uploadImage(selectedFile, (progress) => {
+        setUploadProgress(progress.percentage);
+      });
+
+      // Insert image markdown
+      const altText =
+        imageSelectedTextRef.current.trim() ||
+        imageAlt.trim() ||
+        selectedFile.name;
+      onInsert(`![`, `](${uploadedUrl})`, altText);
+      closeImagePopup();
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to upload image";
+      setUploadError(errorMessage);
+    } finally {
+      setUploading(false);
+      setUploadProgress(0);
+    }
+  };
+
+  const handleImageSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // If file is selected, upload it
+    if (selectedFile) {
+      await handleImageUpload();
+      return;
+    }
+
+    // Otherwise, use URL
     if (imageUrl.trim()) {
       // Use selected text if available, otherwise use altText or default
       // Pass the alt text as placeholder so insertText uses it if selection is lost
@@ -497,14 +583,6 @@ export function MarkdownToolbar({
 
         <ToolbarDivider />
 
-        {onOpenUnsplashModal && (
-          <ToolbarButton
-            onClick={onOpenUnsplashModal}
-            title="Search Images from Unsplash"
-            icon={<ImagePlusIcon className="w-4 h-4" />}
-          />
-        )}
-
         <div className="relative">
           <div ref={emojiButtonRef}>
             <ToolbarButton
@@ -527,6 +605,15 @@ export function MarkdownToolbar({
         </div>
 
         <ToolbarButton
+          onClick={requireAuth}
+          title="QR Code"
+          icon={<QrCodeIcon className="w-4 h-4" />}
+          disabled={true}
+        />
+
+        <ToolbarDivider />
+
+        <ToolbarButton
           onClick={insertConfetti}
           title="Confetti"
           icon={<PartyPopperIcon className="w-4 h-4" />}
@@ -541,23 +628,21 @@ export function MarkdownToolbar({
 
         <ToolbarButton
           onClick={requireAuth}
-          title="QR Code"
-          icon={<QrCodeIcon className="w-4 h-4" />}
-        />
-        <ToolbarButton
-          onClick={requireAuth}
           title="Live Polling"
           icon={<BarChart3Icon className="w-4 h-4" />}
+          disabled={true}
         />
         <ToolbarButton
           onClick={requireAuth}
           title="Live Quiz"
           icon={<HelpCircleIcon className="w-4 h-4" />}
+          disabled={true}
         />
         <ToolbarButton
           onClick={requireAuth}
           title="Q&A"
           icon={<MessageSquareIcon className="w-4 h-4" />}
+          disabled={true}
         />
       </div>
 
@@ -756,47 +841,211 @@ export function MarkdownToolbar({
                     ...imagePopupPosition,
                   }}
                 >
-                  <PopupForm
-                    onSubmit={handleImageSubmit}
-                    onCancel={closeImagePopup}
-                    fields={[
-                      {
-                        label: "Alt Text",
-                        value: imageAlt,
-                        onChange: (e) => setImageAlt(e.target.value),
-                        placeholder: "Image description",
-                        autoFocus: true,
-                      },
-                      {
-                        label: "Image URL",
-                        value: imageUrl,
-                        onChange: (e) => setImageUrl(e.target.value),
-                        placeholder: "https://example.com/image.jpg",
-                      },
-                      ...(onOpenUnsplashModal
-                        ? [
+                  <div className="space-y-3">
+                    {/* Alt Text - Always shown */}
+                    <div>
+                      <label className="block text-xs sm:text-xs font-medium text-foreground mb-1.5">
+                        Description
+                      </label>
+                      <input
+                        type="text"
+                        value={imageAlt}
+                        onChange={(e) => setImageAlt(e.target.value)}
+                        placeholder="Image description"
+                        className="w-full px-3 py-2.5 sm:px-2 sm:py-1.5 text-base sm:text-sm border border-input rounded bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                        autoFocus={!selectedFile && !imageUrl.trim()}
+                      />
+                    </div>
+
+                    {/* Upload Image - with upload box - hidden when URL is entered */}
+                    {!imageUrl.trim() && (
+                      <div>
+                        <PopupForm
+                          onSubmit={(e) => {
+                            e.preventDefault();
+                          }}
+                          onCancel={() => {}}
+                          fields={[
                             {
-                              label: "",
+                              label: "Upload Image",
                               value: "",
                               onChange: () => {},
                               placeholder: "",
-                              type: "action" as const,
-                              actionLabel: "Search Images from Unsplash",
-                              onActionClick: () => {
-                                closeImagePopup();
-                                onOpenUnsplashModal();
+                              type: "file" as const,
+                              accept: "image/*",
+                              onFileChange: handleFileSelect,
+                              selectedFile: selectedFile,
+                              onClear: () => {
+                                setSelectedFile(null);
+                                setImagePreview(null);
+                                setUploadError(null);
                               },
                             },
-                          ]
-                        : []),
-                    ]}
-                    isSubmitDisabled={!imageUrl.trim()}
-                  />
+                          ]}
+                          isSubmitDisabled={true}
+                          submitLabel=""
+                          hidden={true}
+                        />
+                      </div>
+                    )}
+
+                    {/* Divider - only show when no file selected and no URL entered */}
+                    {!selectedFile && !imageUrl.trim() && (
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-px bg-border"></div>
+                        <span className="text-xs text-muted-foreground">
+                          or
+                        </span>
+                        <div className="flex-1 h-px bg-border"></div>
+                      </div>
+                    )}
+
+                    {/* Enter Image URL - always shown */}
+                    <div>
+                      <label className="block text-xs sm:text-xs font-medium text-foreground mb-1.5">
+                        Enter Image URL
+                      </label>
+                      <input
+                        type="text"
+                        value={imageUrl}
+                        onChange={(e) => {
+                          setImageUrl(e.target.value);
+                          if (e.target.value.trim()) {
+                            setSelectedFile(null);
+                            setImagePreview(null);
+                            setUploadError(null);
+                          }
+                        }}
+                        placeholder="https://example.com/image.jpg"
+                        className="w-full px-3 py-2.5 sm:px-2 sm:py-1.5 text-base sm:text-sm border border-input rounded bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+
+                    {/* Divider - only show when Unsplash available, no file selected, and no URL entered */}
+                    {onOpenUnsplashModal &&
+                      !selectedFile &&
+                      !imageUrl.trim() && (
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 h-px bg-border"></div>
+                          <span className="text-xs text-muted-foreground">
+                            or
+                          </span>
+                          <div className="flex-1 h-px bg-border"></div>
+                        </div>
+                      )}
+
+                    {/* Search Images from Unsplash - hidden when URL is entered */}
+                    {onOpenUnsplashModal &&
+                      !selectedFile &&
+                      !imageUrl.trim() && (
+                        <div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              closeImagePopup();
+                              onOpenUnsplashModal();
+                            }}
+                            className="w-full px-4 py-3 text-sm font-medium text-left border-2 border-input rounded-lg hover:border-primary hover:bg-primary/5 transition-colors flex items-center gap-2"
+                          >
+                            <ImagePlusIcon className="w-4 h-4" />
+                            <span>Search Images from Unsplash</span>
+                          </button>
+                        </div>
+                      )}
+
+                    {/* Image Preview */}
+                    {(imagePreview || imageUrl.trim()) && (
+                      <div className="space-y-2">
+                        <div className="relative rounded-lg border border-input overflow-hidden bg-muted">
+                          <img
+                            src={imagePreview || imageUrl}
+                            alt="Preview"
+                            className="w-full max-h-48 object-contain"
+                            onError={(e) => {
+                              // Hide broken image preview
+                              e.currentTarget.style.display = "none";
+                            }}
+                          />
+                        </div>
+                        {imagePreview && (
+                          <p className="text-xs text-muted-foreground text-center">
+                            Preview
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Upload Progress */}
+                    {uploading && (
+                      <div className="space-y-1">
+                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                          <div
+                            className="bg-primary h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${uploadProgress}%` }}
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground text-center">
+                          Uploading... {uploadProgress}%
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Error Message */}
+                    {uploadError && (
+                      <div className="p-2 rounded bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                        <p className="text-xs text-red-600 dark:text-red-400">
+                          {uploadError}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Submit and Cancel buttons */}
+                    <div className="flex gap-2 justify-end pt-2">
+                      <button
+                        type="button"
+                        onClick={closeImagePopup}
+                        className="px-4 py-2 text-sm sm:text-xs text-muted-foreground hover:text-foreground transition-colors touch-manipulation"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          const syntheticEvent = {
+                            ...e,
+                            preventDefault: () => e.preventDefault(),
+                            currentTarget: e.currentTarget,
+                            target: e.target,
+                          } as React.FormEvent<HTMLButtonElement>;
+                          handleImageSubmit(syntheticEvent);
+                        }}
+                        disabled={
+                          !!uploading ||
+                          (!selectedFile && !imageUrl.trim()) ||
+                          (!!selectedFile && !imageAlt.trim())
+                        }
+                        className="px-4 py-2 text-sm sm:text-xs bg-primary text-primary-foreground rounded hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors touch-manipulation"
+                      >
+                        {uploading
+                          ? `Uploading... ${uploadProgress}%`
+                          : "Insert"}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </>,
               document.body
             )}
         </div>
+
+        {onOpenUnsplashModal && (
+          <ToolbarButton
+            onClick={onOpenUnsplashModal}
+            title="Search Images from Unsplash"
+            icon={<ImagePlusIcon className="w-4 h-4" />}
+          />
+        )}
 
         <div className="relative">
           <div ref={tableButtonRef}>
