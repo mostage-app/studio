@@ -1,10 +1,18 @@
 "use client";
 
+import { createPortal } from "react-dom";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import logo from "@/assets/images/logo.svg";
 
 export function Loading() {
-  return (
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const loadingContent = (
     <div className="fixed inset-0 bg-white dark:bg-gray-900 flex items-center justify-center z-50">
       <div className="text-center">
         {/* Logo */}
@@ -42,4 +50,11 @@ export function Loading() {
       </div>
     </div>
   );
+
+  if (!mounted) {
+    return null;
+  }
+
+  // Use portal to render outside the main DOM tree to avoid interfering with Next.js scroll restoration
+  return createPortal(loadingContent, document.body);
 }

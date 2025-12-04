@@ -26,9 +26,11 @@ import {
   Type as TypeIcon,
   Undo2 as UndoIcon,
   Redo2 as RedoIcon,
+  Smile as SmileIcon,
 } from "lucide-react";
 import { LoginRequiredModal } from "./LoginRequiredModal";
 import { ToolbarButton, ToolbarDivider, PopupForm } from "./toolbar";
+import { EmojiPicker } from "./EmojiPicker";
 
 interface MarkdownToolbarProps {
   onInsert: (before: string, after?: string, placeholder?: string) => void;
@@ -108,6 +110,9 @@ export function MarkdownToolbar({
   );
   const [tableRows, setTableRows] = useState(String(DEFAULT_TABLE_ROWS));
 
+  // Emoji popup state
+  const [showEmojiPopup, setShowEmojiPopup] = useState(false);
+
   // ==================== Refs ====================
   const titleDropdownRef = useRef<HTMLDivElement>(null);
   const linkPopupRef = useRef<HTMLDivElement>(null);
@@ -116,6 +121,7 @@ export function MarkdownToolbar({
   const linkButtonRef = useRef<HTMLDivElement>(null);
   const imageButtonRef = useRef<HTMLDivElement>(null);
   const tableButtonRef = useRef<HTMLDivElement>(null);
+  const emojiButtonRef = useRef<HTMLDivElement>(null);
 
   // State for popup positions (updated on scroll/resize)
   const [linkPopupPosition, setLinkPopupPosition] = useState({
@@ -223,6 +229,10 @@ export function MarkdownToolbar({
     setShowTablePopup(false);
     setTableColumns(String(DEFAULT_TABLE_COLUMNS));
     setTableRows(String(DEFAULT_TABLE_ROWS));
+  };
+
+  const closeEmojiPopup = () => {
+    setShowEmojiPopup(false);
   };
 
   const closeTitleDropdown = () => {
@@ -459,6 +469,16 @@ export function MarkdownToolbar({
   const insertConfetti = () => onInsert("\n<!-- confetti -->\n", "", "");
   const insertNewSlide = () => onInsert("\n---\n", "", "");
 
+  // Emoji functions
+  const formatEmoji = () => {
+    setShowEmojiPopup(true);
+  };
+
+  const handleEmojiSelect = (emoji: string) => {
+    onInsert(emoji, "", "");
+    closeEmojiPopup();
+  };
+
   // ==================== Auth-Required Features ====================
   const requireAuth = () => setShowLoginRequiredModal(true);
 
@@ -484,6 +504,27 @@ export function MarkdownToolbar({
             icon={<ImagePlusIcon className="w-4 h-4" />}
           />
         )}
+
+        <div className="relative">
+          <div ref={emojiButtonRef}>
+            <ToolbarButton
+              onClick={formatEmoji}
+              title="Emoji"
+              icon={<SmileIcon className="w-4 h-4" />}
+            />
+          </div>
+          <EmojiPicker
+            isOpen={showEmojiPopup}
+            onClose={closeEmojiPopup}
+            onSelect={handleEmojiSelect}
+            buttonRef={emojiButtonRef}
+            initialPosition={
+              showEmojiPopup && emojiButtonRef.current
+                ? getButtonPosition(emojiButtonRef)
+                : undefined
+            }
+          />
+        </div>
 
         <ToolbarButton
           onClick={insertConfetti}
