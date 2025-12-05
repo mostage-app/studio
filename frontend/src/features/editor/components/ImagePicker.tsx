@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import { ImagePlusIcon } from "lucide-react";
 import {
   uploadImage,
@@ -193,10 +194,13 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
       {(imagePreview || imageUrl.trim()) && (
         <div className="space-y-2">
           <div className="relative rounded-lg border border-input overflow-hidden bg-muted">
-            <img
+            <Image
               src={imagePreview || imageUrl}
               alt="Preview"
+              width={320}
+              height={192}
               className="w-full max-h-48 object-contain"
+              unoptimized
               onError={(e) => {
                 // Hide broken image preview
                 e.currentTarget.style.display = "none";

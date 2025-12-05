@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useLayoutEffect } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useLayoutEffect,
+  useCallback,
+} from "react";
 import { createPortal } from "react-dom";
 import { Search as SearchIcon } from "lucide-react";
 import { emojiCategories, emojiNames } from "../utils/emojis";
@@ -37,7 +43,7 @@ export function EmojiPicker({
   const popupRef = useRef<HTMLDivElement>(null);
 
   // Get button position for popup positioning
-  const getButtonPosition = (): {
+  const getButtonPosition = useCallback((): {
     top: string;
     left: string;
     transform?: string;
@@ -79,7 +85,7 @@ export function EmojiPicker({
       top: `${rect.bottom + 4}px`,
       left: `${left}px`,
     };
-  };
+  }, [buttonRef]);
 
   // Calculate position immediately when opening - useLayoutEffect runs before paint
   useLayoutEffect(() => {
@@ -90,7 +96,7 @@ export function EmojiPicker({
     } else {
       setPopupPosition(null);
     }
-  }, [isOpen, initialPosition]);
+  }, [isOpen, initialPosition, getButtonPosition]);
 
   // Update popup position when window is resized/scrolled
   useEffect(() => {
@@ -108,7 +114,7 @@ export function EmojiPicker({
       window.removeEventListener("scroll", updatePosition, true);
       window.removeEventListener("resize", updatePosition);
     };
-  }, [isOpen]);
+  }, [isOpen, getButtonPosition]);
 
   // Close popup when clicking outside
   useEffect(() => {

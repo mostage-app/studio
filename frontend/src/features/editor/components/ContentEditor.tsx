@@ -21,7 +21,6 @@ import { useUndoRedo } from "../hooks/useUndoRedo";
 import {
   uploadImage,
   validateImageFile,
-  createImagePreview,
 } from "../services/imageUploadService";
 import { AuthService } from "@/features/auth/services/authService";
 
@@ -38,7 +37,6 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showNewFileConfirmation, setShowNewFileConfirmation] = useState(false);
   const [showUnsplashModal, setShowUnsplashModal] = useState(false);
-  const [uploadingPastedImage, setUploadingPastedImage] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // ==================== Undo/Redo Management ====================
@@ -120,8 +118,6 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
           return;
         }
 
-        setUploadingPastedImage(true);
-
         try {
           // Upload image
           const imageUrl = await uploadImage(file);
@@ -147,8 +143,6 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
         } catch (error) {
           console.error("Failed to upload pasted image:", error);
           // Could show error notification here
-        } finally {
-          setUploadingPastedImage(false);
         }
 
         return; // Only handle first image

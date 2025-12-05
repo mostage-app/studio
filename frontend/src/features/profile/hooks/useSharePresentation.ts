@@ -20,7 +20,7 @@ interface UseSharePresentationOptions {
 interface UseSharePresentationReturn {
   shareMenuOpen: boolean;
   presentationLinkCopied: boolean;
-  shareMenuRef: React.RefObject<HTMLDivElement>;
+  shareMenuRef: React.RefObject<HTMLDivElement | null>;
   handleShare: (platform?: SharePlatform) => void;
   handleShareMenuRef: (el: HTMLDivElement | null) => void;
   setShareMenuOpen: (open: boolean) => void;
@@ -80,7 +80,7 @@ export function useSharePresentation({
       }
 
       // Try Web Share API first (works on mobile and some desktop browsers)
-      if (navigator.share) {
+      if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
         shareViaWebShareAPI(
           `${name} - Mostage`,
           shareText,

@@ -138,13 +138,13 @@ export async function uploadImage(
         try {
           const response: ImageUploadResponse = JSON.parse(xhr.responseText);
           resolve(response.url);
-        } catch (error) {
+        } catch {
           reject(new Error("Failed to parse upload response"));
         }
       } else {
         try {
-          const error = JSON.parse(xhr.responseText);
-          reject(new Error(error.error || "Upload failed"));
+          const errorResponse = JSON.parse(xhr.responseText);
+          reject(new Error(errorResponse.error || "Upload failed"));
         } catch {
           reject(new Error(`Upload failed with status ${xhr.status}`));
         }

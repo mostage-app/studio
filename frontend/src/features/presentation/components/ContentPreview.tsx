@@ -36,7 +36,6 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
   const {
     shareMenuOpen,
     presentationLinkCopied,
-    shareMenuRef,
     handleShare,
     handleShareMenuRef,
   } = useSharePresentation({
